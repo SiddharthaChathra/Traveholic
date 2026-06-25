@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
-  const { user, loading, login, signup, logout, updateTravellerType } = useAuth();
+  const { user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword } = useAuth();
 
   // Splash Screen States
   const [showSplash, setShowSplash] = useState(true);
@@ -20,9 +20,9 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Input states (Common)
-  const [identifier, setIdentifier] = useState(''); // email or username
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState(''); // email or username for login
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -47,6 +47,44 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Forgot Password Modal States
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState<1 | 2 | 3>(1);
+  const [forgotIdentifier, setForgotIdentifier] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Password Validation
+  const checkPassword = (val: string) => {
+    return {
+      length: val.length >= 8,
+      uppercase: /[A-Z]/.test(val),
+      lowercase: /[a-z]/.test(val),
+      number: /[0-9]/.test(val),
+      special: /[^A-Za-z0-9]/.test(val)
+    };
+  };
+
+  const PasswordChecklist = ({ pwd }: { pwd: string }) => {
+    if (!pwd) return null;
+    const checks = checkPassword(pwd);
+    if (Object.values(checks).every(Boolean)) return null;
+
+    return (
+      <ul style={{ fontSize: '11px', color: 'var(--accent-red)', marginTop: '8px', paddingLeft: '16px', lineHeight: '1.6', fontWeight: 500 }}>
+        {!checks.length && <li>At least 8 characters</li>}
+        {!checks.uppercase && <li>One uppercase letter</li>}
+        {!checks.lowercase && <li>One lowercase letter</li>}
+        {!checks.number && <li>One number</li>}
+        {!checks.special && <li>One special character</li>}
+      </ul>
+    );
+  };
 
   useEffect(() => {
     // Start splash sequence on mount
@@ -84,25 +122,33 @@ export default function Home() {
         }
       } else {
         // Sign Up Flow
+        if (!Object.values(checkPassword(password)).every(Boolean)) {
+          setErrorMsg('Please fix the errors before submitting.');
+          setSubmitting(false);
+          return;
+        }
+
         const signupData: any = {
           role: userRole,
           username,
           email,
+          phone,
           password,
           fullName,
-          phone: phone || undefined,
         };
 
         if (userRole === 'traveller') {
           signupData.travellerType = isVlogger ? 'vlogger' : 'normal';
         } else {
-          signupData.businessType = businessType;
-          signupData.businessName = businessName;
-          signupData.registrationNumber = registrationNumber;
-          signupData.address = address;
-          signupData.websiteUrl = websiteUrl || undefined;
-          signupData.bookingModel = bookingModel;
-          signupData.phone = phone; // Business accounts must have phone
+          signupData.businessProfile = {
+            businessType,
+            businessName,
+            registrationNumber,
+            phone,
+            address,
+            websiteUrl: websiteUrl || undefined,
+            bookingModel: bookingModel
+          };
         }
 
         const result = await signup(signupData);
@@ -141,6 +187,57 @@ export default function Home() {
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
   const years = Array.from({ length: 80 }, (_, i) => String(2026 - i));
+
+  // Forgot Password Handlers
+  const handleForgotStep1 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(''); setForgotSuccess(''); setForgotLoading(true);
+    const res = await forgotPassword(forgotIdentifier);
+    setForgotLoading(false);
+    if (res.success) {
+      setForgotStep(2);
+      alert('Simulated OTP sent to your email/phone: ' + res.simulatedOtp);
+    } else {
+      setForgotError(res.error || 'Failed to send OTP');
+    }
+  };
+
+  const handleForgotStep2 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotError(''); setForgotSuccess(''); setForgotLoading(true);
+    const res = await verifyOtp(forgotIdentifier, forgotOtp);
+    setForgotLoading(false);
+    if (res.success) {
+      setForgotStep(3);
+    } else {
+      setForgotError(res.error || 'Invalid OTP');
+    }
+  };
+
+  const handleForgotStep3 = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('Passwords do not match');
+      return;
+    }
+    if (!Object.values(checkPassword(forgotNewPassword)).every(Boolean)) {
+      setForgotError('Please fix the password errors before submitting.');
+      return;
+    }
+    setForgotError(''); setForgotSuccess(''); setForgotLoading(true);
+    const res = await resetPassword(forgotIdentifier, forgotOtp, forgotNewPassword);
+    setForgotLoading(false);
+    if (res.success) {
+      setForgotSuccess('Password reset successfully!');
+      setTimeout(() => {
+        setShowForgotModal(false);
+        setForgotStep(1);
+        setForgotIdentifier(''); setForgotOtp(''); setForgotNewPassword(''); setForgotConfirmPassword('');
+      }, 2000);
+    } else {
+      setForgotError(res.error || 'Failed to reset password');
+    }
+  };
 
   if (loading) {
     return (
@@ -398,7 +495,7 @@ export default function Home() {
                     {submitting ? 'Logging in...' : 'Log in'}
                   </button>
 
-                  <a className="text-link-center" href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset is simulated.'); }}>
+                  <a className="text-link-center" href="#forgot" onClick={(e) => { e.preventDefault(); setShowForgotModal(true); }}>
                     Forgot password?
                   </a>
 
@@ -412,7 +509,12 @@ export default function Home() {
                   <button
                     type="button"
                     className="btn-outline"
-                    onClick={() => { setFormMode('signup'); setErrorMsg(''); setSuccessMsg(''); }}
+                    onClick={() => { 
+                      setFormMode('signup'); 
+                      setErrorMsg(''); 
+                      setSuccessMsg(''); 
+                      setPassword(''); // Clear shared password state
+                    }}
                   >
                     Create new account
                   </button>
@@ -441,18 +543,44 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* 1. Mobile number or email */}
-                  <div className="form-group">
-                    <div className="form-input-container">
-                      <input
-                        type="email"
-                        className="form-input"
-                        placeholder="Mobile number or email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
+                  {/* 1. Email and Phone */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <div className="form-input-container">
+                        <input
+                          type="email"
+                          name="signup-email-new"
+                          className="form-input"
+                          placeholder="Email address"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          autoComplete="off"
+                        />
+                      </div>
                     </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <div className="form-input-container">
+                        <input
+                          type="tel"
+                          name="signup-phone-new"
+                          className="form-input"
+                          placeholder="Phone number"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          required
+                          pattern="\d{10}"
+                          title="10-digit phone number"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Honeypots to trap browser autofill */}
+                  <div style={{ position: 'absolute', opacity: 0, zIndex: -1, pointerEvents: 'none' }} aria-hidden="true">
+                    <input type="text" name="fake-email" tabIndex={-1} autoComplete="username" />
+                    <input type="password" name="fake-password" tabIndex={-1} autoComplete="current-password" />
                   </div>
 
                   {/* 2. Password with visibility toggle */}
@@ -460,12 +588,14 @@ export default function Home() {
                     <div className="form-input-container">
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        name="signup-new-secure-password"
                         className="form-input"
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={8}
+                        autoComplete="new-password"
                       />
                       <button
                         type="button"
@@ -475,6 +605,7 @@ export default function Home() {
                         {showPassword ? 'Hide' : 'Show'}
                       </button>
                     </div>
+                    <PasswordChecklist pwd={password} />
                   </div>
 
                   {/* 3. Birthday */}
@@ -569,19 +700,11 @@ export default function Home() {
                           className="form-input"
                           placeholder="License No."
                           value={registrationNumber}
-                          onChange={(e) => setRegistrationNumber(e.target.value)}
+                          onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
                           required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <input
-                          type="tel"
-                          className="form-input"
-                          placeholder="Venture Phone"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          required
+                          pattern="^[A-Z0-9]{8,15}$"
+                          title="Must be 8-15 uppercase letters or numbers"
+                          autoComplete="off"
                         />
                       </div>
 
@@ -605,20 +728,6 @@ export default function Home() {
                           onChange={(e) => setWebsiteUrl(e.target.value)}
                         />
                       </div>
-
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>Booking Flow</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                          <label style={{ display: 'flex', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${bookingModel === 'direct' ? 'var(--primary)' : 'var(--input-border)'}`, background: bookingModel === 'direct' ? 'var(--primary-glow)' : 'var(--input-bg)', cursor: 'pointer', gap: '10px', alignItems: 'center' }}>
-                            <input type="radio" name="bookingModel" checked={bookingModel === 'direct'} onChange={() => setBookingModel('direct')} style={{ accentColor: 'var(--primary)' }} />
-                            <span style={{ fontSize: '12px', fontWeight: 600 }}>📥 In-app Direct Booking (Paycut)</span>
-                          </label>
-                          <label style={{ display: 'flex', padding: '10px 12px', borderRadius: '10px', border: `1px solid ${bookingModel === 'redirect' ? 'var(--primary)' : 'var(--input-border)'}`, background: bookingModel === 'redirect' ? 'var(--primary-glow)' : 'var(--input-bg)', cursor: 'pointer', gap: '10px', alignItems: 'center' }}>
-                            <input type="radio" name="bookingModel" checked={bookingModel === 'redirect'} onChange={() => setBookingModel('redirect')} style={{ accentColor: 'var(--primary)' }} />
-                            <span style={{ fontSize: '12px', fontWeight: 600 }}>🔗 External Redirection</span>
-                          </label>
-                        </div>
-                      </div>
                     </div>
                   )}
 
@@ -629,7 +738,12 @@ export default function Home() {
                   <button
                     type="button"
                     className="btn-outline"
-                    onClick={() => { setFormMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                    onClick={() => { 
+                      setFormMode('login'); 
+                      setErrorMsg(''); 
+                      setSuccessMsg(''); 
+                      setPassword(''); // Clear shared password state
+                    }}
                   >
                     I already have an account
                   </button>
@@ -659,6 +773,63 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* --- FORGOT PASSWORD MODAL --- */}
+      {showForgotModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', padding: '32px', borderRadius: '16px', width: '90%', maxWidth: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>Reset Password</h3>
+              <button onClick={() => setShowForgotModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+
+            {forgotError && <div className="status-msg error">{forgotError}</div>}
+            {forgotSuccess && <div className="status-msg success">{forgotSuccess}</div>}
+
+            {forgotStep === 1 && (
+              <form onSubmit={handleForgotStep1}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Enter your email or phone number and we'll send you a link to get back into your account.</p>
+                <div className="form-group">
+                  <input type="text" className="form-input" placeholder="Email or Phone Number" value={forgotIdentifier} onChange={(e) => setForgotIdentifier(e.target.value)} required />
+                </div>
+                <button type="submit" className="btn-primary" disabled={forgotLoading}>
+                  {forgotLoading ? 'Sending...' : 'Send OTP'}
+                </button>
+              </form>
+            )}
+
+            {forgotStep === 2 && (
+              <form onSubmit={handleForgotStep2}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Enter the 6-digit OTP sent to your device.</p>
+                <div className="form-group">
+                  <input type="text" className="form-input" placeholder="Enter OTP" value={forgotOtp} onChange={(e) => setForgotOtp(e.target.value)} required maxLength={6} style={{ letterSpacing: '4px', textAlign: 'center', fontSize: '20px', fontWeight: 600 }} />
+                </div>
+                <button type="submit" className="btn-primary" disabled={forgotLoading}>
+                  {forgotLoading ? 'Verifying...' : 'Verify OTP'}
+                </button>
+              </form>
+            )}
+
+            {forgotStep === 3 && (
+              <form onSubmit={handleForgotStep3}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Enter your new password.</p>
+                <div className="form-group">
+                  <input type="password" className="form-input" placeholder="New Password" value={forgotNewPassword} onChange={(e) => setForgotNewPassword(e.target.value)} required minLength={8} />
+                  <PasswordChecklist pwd={forgotNewPassword} />
+                </div>
+                <div className="form-group">
+                  <input type="password" className="form-input" placeholder="Confirm Password" value={forgotConfirmPassword} onChange={(e) => setForgotConfirmPassword(e.target.value)} required minLength={8} />
+                </div>
+                <button type="submit" className="btn-primary" disabled={forgotLoading}>
+                  {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  username        String           @unique
+  email           String?          @unique
+  passwordHash    String           @map("password_hash")
+  fullName        String           @map("full_name")
+  phone           String?          @unique
+  avatarUrl       String?          @map("avatar_url")
+  role            String           // "traveller" or "business"
+  travellerType   String?          @default("normal") @map("traveller_type") // "normal" or "vlogger"
+  resetOtp        String?          @map("reset_otp")
+  resetOtpExpiry  DateTime?        @map("reset_otp_expiry")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  businessProfile BusinessProfile?
+
+  @@map("users")
+}
+
+model BusinessProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique @map("user_id")
+  businessType       String   @map("business_type") // "agency" or "hotel"
+  businessName       String   @map("business_name")
+  registrationNumber String   @map("registration_number")
+  phone              String
+  address            String
+  websiteUrl         String?  @map("website_url")
+  bookingModel       String   @map("booking_model") // "direct" or "redirect"
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("business_profiles")
+}
