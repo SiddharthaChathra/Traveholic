@@ -38,6 +38,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function handleResponse(response: Response, fallbackError: string) {
+  try {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+  } catch (e) {
+    // Ignore JSON parsing errors
+  }
+  
+  if (response.status >= 500) {
+    return {
+      success: false,
+      error: 'Could not connect to the backend service. Please check if your backend server is running on port 5000.'
+    };
+  }
+
+  return { success: false, error: `${fallbackError} (Status: ${response.status})` };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         });
         if (response.ok) {
-          const data = await response.json();
+          const data = await handleResponse(response, 'Session check failed');
           if (data.success) {
             setUser(data.user);
           }
@@ -79,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ identifier, password }),
       });
 
-      const data = await response.json();
+      const data = await handleResponse(response, 'Login failed');
       if (response.ok && data.success) {
         localStorage.setItem('travora_token', data.token);
         setUser(data.user);
@@ -88,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred during login' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
@@ -100,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(signupData),
       });
 
-      const data = await response.json();
+      const data = await handleResponse(response, 'Signup failed');
       if (response.ok && data.success) {
         localStorage.setItem('travora_token', data.token);
         setUser(data.user);
@@ -109,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error || 'Signup failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred during signup' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
@@ -136,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ travellerType: type }),
       });
 
-      const data = await response.json();
+      const data = await handleResponse(response, 'Profile update failed');
       if (response.ok && data.success) {
         if (user) {
           setUser({ ...user, travellerType: type });
@@ -146,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: data.error || 'Profile update failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred during update' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
@@ -157,14 +177,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier }),
       });
-      const data = await response.json();
+      const data = await handleResponse(response, 'Request failed');
       if (response.ok && data.success) {
         return { success: true, simulatedOtp: data.simulatedOtp };
       } else {
         return { success: false, error: data.error || 'Request failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
@@ -175,14 +195,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, otp }),
       });
-      const data = await response.json();
+      const data = await handleResponse(response, 'Verification failed');
       if (response.ok && data.success) {
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Verification failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
@@ -193,14 +213,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, otp, newPassword }),
       });
-      const data = await response.json();
+      const data = await handleResponse(response, 'Reset failed');
       if (response.ok && data.success) {
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Reset failed' };
       }
     } catch (error: any) {
-      return { success: false, error: error.message || 'An error occurred' };
+      return { success: false, error: 'Network error. Please check if your backend server is running on port 5000.' };
     }
   };
 
