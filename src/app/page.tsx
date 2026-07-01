@@ -104,12 +104,17 @@ export default function Home() {
   // ==========================================
   const [activeTab, setActiveTab] = useState<'home' | 'reels' | 'search' | 'create' | 'messages' | 'profile'>('home');
   const [isMiniInboxOpen, setIsMiniInboxOpen] = useState(false);
+  const [isExpandingFullscreen, setIsExpandingFullscreen] = useState(false);
+  const [miniSlideActive, setMiniSlideActive] = useState(false);
   const [miniActiveChatBuddy, setMiniActiveChatBuddy] = useState<string | null>(null);
   const [miniChatInput, setMiniChatInput] = useState('');
   const [miniSearchQuery, setMiniSearchQuery] = useState('');
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [savedPosts, setSavedPosts] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeExploreCategory, setActiveExploreCategory] = useState('All');
+  const [isSwitchingCategory, setIsSwitchingCategory] = useState(false);
+  const [hasEverSwitchedCategory, setHasEverSwitchedCategory] = useState(false);
   const [showSearchDrawer, setShowSearchDrawer] = useState(false);
   const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<'all' | 'following' | 'comments' | 'follows'>('all');
@@ -262,6 +267,95 @@ export default function Home() {
 
   // Direct Inbox Messages States
   const [activeChatBuddy, setActiveChatBuddy] = useState('backpacker_sam');
+  const [isSwitchingChat, setIsSwitchingChat] = useState(false);
+
+  const handleSwitchActiveChat = (buddy: string) => {
+    if (buddy === activeChatBuddy) return;
+    setIsSwitchingChat(true);
+    setTimeout(() => {
+      setActiveChatBuddy(buddy);
+      setIsSwitchingChat(false);
+    }, 220);
+  };
+
+  const handleSwitchExploreCategory = (cat: string) => {
+    if (cat === activeExploreCategory) return;
+    setHasEverSwitchedCategory(true);
+    setIsSwitchingCategory(true);
+    setTimeout(() => {
+      setActiveExploreCategory(cat);
+      setIsSwitchingCategory(false);
+    }, 220);
+  };
+
+  const renderCategoryIcon = (catName: string) => {
+    switch (catName) {
+      case 'All':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
+        );
+      case 'Mountains':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+          </svg>
+        );
+      case 'Beaches':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 10c3 0 3 3 6 3s3-3 6-3 3 3 6 3 3-3 6-3" />
+            <path d="M2 14c3 0 3 3 6 3s3-3 6-3 3 3 6 3 3-3 6-3" />
+          </svg>
+        );
+      case 'Tropical':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {/* Palm tree trunk */}
+            <path d="M12 22V12" />
+            {/* Left frond */}
+            <path d="M12 12C12 12 6 10 4 5c2 1 5 2 8 7z" />
+            {/* Right frond */}
+            <path d="M12 12C12 12 18 10 20 5c-2 1-5 2-8 7z" />
+            {/* Top frond */}
+            <path d="M12 12C12 12 10 6 12 2c1 2 2 5 0 10z" />
+            {/* Trunk curve */}
+            <path d="M12 22c-1-4 2-7 3-10" />
+          </svg>
+        );
+      case 'Cities':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 22h20M4 22V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v16M12 22V10a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12" />
+          </svg>
+        );
+      case 'Winter':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="2" x2="12" y2="22" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="m20 16-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4" />
+          </svg>
+        );
+      case 'Cultural':
+        return (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {/* Temple / Pagoda icon */}
+            <path d="M3 21h18" />
+            <path d="M5 21V10l7-7 7 7v11" />
+            <path d="M9 21v-6h6v6" />
+            <path d="M2 10h20" />
+            <path d="M6 10V7" />
+            <path d="M18 10V7" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
   const [chatInput, setChatInput] = useState('');
   const [conversations, setConversations] = useState<Record<string, { sender: 'them' | 'me'; text: string; time: string }[]>>({
     'backpacker_sam': [
@@ -316,12 +410,12 @@ export default function Home() {
 
   // Search places mock dataset
   const travelDestinations = [
-    { name: 'Manali, Himachal Pradesh 🏔️', count: '4.8k posts', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=300&auto=format&fit=crop&q=80' },
-    { name: 'Ubud, Bali 🌴', count: '12.5k posts', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&auto=format&fit=crop&q=80' },
-    { name: 'Seminyak, Goa 🌊', count: '9.2k posts', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80' },
-    { name: 'Paris, France 🗼', count: '24.1k posts', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&auto=format&fit=crop&q=80' },
-    { name: 'Reykjavik, Iceland ❄️', count: '3.5k posts', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=300&auto=format&fit=crop&q=80' },
-    { name: 'Amalfi Coast, Italy 🍋', count: '18.7k posts', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=300&auto=format&fit=crop&q=80' }
+    { name: 'Manali, Himachal Pradesh 🏔️', count: '4.8k posts', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=300&auto=format&fit=crop&q=80', category: 'Mountains' },
+    { name: 'Ubud, Bali 🌴', count: '12.5k posts', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&auto=format&fit=crop&q=80', category: 'Tropical' },
+    { name: 'Seminyak, Goa 🌊', count: '9.2k posts', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80', category: 'Beaches' },
+    { name: 'Paris, France 🗼', count: '24.1k posts', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&auto=format&fit=crop&q=80', category: 'Cities' },
+    { name: 'Reykjavik, Iceland ❄️', count: '3.5k posts', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=300&auto=format&fit=crop&q=80', category: 'Winter' },
+    { name: 'Amalfi Coast, Italy 🍋', count: '18.7k posts', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=300&auto=format&fit=crop&q=80', category: 'Cultural' }
   ];
 
   // Creator state
@@ -1543,7 +1637,7 @@ export default function Home() {
                       <div 
                         key={buddy}
                         className={`inbox-user-item ${activeChatBuddy === buddy ? 'active' : ''}`}
-                        onClick={() => setActiveChatBuddy(buddy)}
+                        onClick={() => handleSwitchActiveChat(buddy)}
                       >
                         {renderAvatar(buddy, 40)}
                         <div className="inbox-user-info-row">
@@ -1560,7 +1654,7 @@ export default function Home() {
                 </div>
 
                 {/* 2. Main Chat dialog area */}
-                <div className="messages-chat-pane">
+                <div className={`messages-chat-pane ${isSwitchingChat ? 'glass-switching' : ''}`}>
                   
                   {/* Chat header */}
                   <div className="chat-window-header">
@@ -1607,7 +1701,7 @@ export default function Home() {
 
                   {/* Chat inputs footer */}
                   <div className="inbox-chat-footer">
-                    <form className="inbox-chat-input-bar" onSubmit={handleSendMessage}>
+                    <form className={`inbox-chat-input-bar ${isSwitchingChat ? 'glass-switching' : ''}`} onSubmit={handleSendMessage}>
                       <button type="button" className="inbox-input-action-btn" onClick={() => alert('Opening emoji picker...')} title="Emoji">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10"></circle>
@@ -1642,7 +1736,7 @@ export default function Home() {
                 </div>
 
                 {/* 3. Right Details Column */}
-                <aside className="messages-details-pane">
+                <aside className={`messages-details-pane ${isSwitchingChat ? 'glass-switching' : ''}`}>
                   {renderAvatar(activeChatBuddy, 72)}
                   <h4 style={{ fontSize: '16px', fontWeight: 700, marginTop: '16px', fontFamily: 'var(--font-title)' }}>@{activeChatBuddy}</h4>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '24px' }}>Travel Buddy</span>
@@ -1667,50 +1761,197 @@ export default function Home() {
             {activeTab === 'search' && (
               <div className="instagram-explore-container">
                 
-                {/* Discovery Search Input */}
-                <div className="instagram-explore-search-bar">
-                  <div className="search-input-wrapper">
-                    <span style={{ marginRight: '8px', color: 'var(--text-muted)' }}>🔍</span>
-                    <input 
-                      type="text" 
-                      className="comment-input"
-                      placeholder="Search explore destinations..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px' }}
-                    />
+                {/* Explore Search Header Row with Action Buttons */}
+                <div className="explore-search-header-row">
+                  <div className="instagram-explore-search-bar">
+                    <div className="search-input-wrapper explore-search-input-wrapper">
+                      {/* App Logo */}
+                      <div className="explore-search-logo-container" title="Travora">
+                        <Logo theme={theme} width={22} showText={false} />
+                      </div>
+                      {/* SVG Search Icon */}
+                      <svg 
+                        width="15" 
+                        height="15" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="explore-search-svg-icon"
+                      >
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input 
+                        type="text" 
+                        className="comment-input explore-search-field"
+                        placeholder="Search explore destinations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', marginLeft: '10px' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Quick Action controls to the right of the Search Bar */}
+                  <div className="explore-search-actions">
+                    <button className="explore-action-btn" onClick={() => alert('Opening advanced travel filters...')} title="Advanced Filters">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14" />
+                        <line x1="4" y1="10" x2="4" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="3" />
+                        <line x1="20" y1="21" x2="20" y2="16" />
+                        <line x1="20" y1="12" x2="20" y2="3" />
+                        <line x1="1" y1="14" x2="7" y2="14" />
+                        <line x1="9" y1="8" x2="15" y2="8" />
+                        <line x1="17" y1="16" x2="23" y2="16" />
+                      </svg>
+                      <span>Filters</span>
+                    </button>
+                    <button className="explore-action-btn active" onClick={() => alert('Travora interactive Map coming soon!')} title="Map View">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                        <line x1="9" y1="3" x2="9" y2="18" />
+                        <line x1="15" y1="6" x2="15" y2="21" />
+                      </svg>
+                      <span>Map View</span>
+                    </button>
                   </div>
                 </div>
 
-                <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '16px', fontFamily: 'var(--font-title)' }}>Explore Destinations</h3>
+                {/* Category Filter Horizontal Scrollbar */}
+                <div className="explore-categories-scroll-wrapper">
+                  <div className="explore-categories-container">
+                    {[
+                      'All',
+                      'Mountains',
+                      'Beaches',
+                      'Tropical',
+                      'Cities',
+                      'Winter',
+                      'Cultural'
+                    ].map((catName) => (
+                      <button
+                        key={catName}
+                        className={`explore-category-btn ${activeExploreCategory === catName ? 'active' : ''}`}
+                        onClick={() => handleSwitchExploreCategory(catName)}
+                      >
+                        <span className="explore-category-icon-svg">
+                          {renderCategoryIcon(catName)}
+                        </span>
+                        <span className="explore-category-name">{catName}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hero Popular Destination Banner (Above grid) */}
+                <div className="explore-popular-hero-card" onClick={() => setSearchQuery('Ubud')}>
+                  <div className="explore-popular-hero-bg-wrapper">
+                    <img 
+                      src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80" 
+                      alt="Popular Bali today" 
+                      className="explore-popular-hero-bg"
+                    />
+                    <div className="explore-popular-hero-gradient-overlay" />
+                  </div>
+                  
+                  <div className="explore-popular-hero-badge">
+                    <span className="explore-badge-pulse" />
+                    🔥 POPULAR DESTINATION OF TODAY
+                  </div>
+                  
+                  <div className="explore-popular-hero-content-glass">
+                    <div className="explore-popular-hero-text">
+                      <h4 className="explore-popular-hero-title">Ubud, Bali 🌴</h4>
+                      <p className="explore-popular-hero-desc">Experience the calming spiritual energy, lush green rice terraces, and beautiful waterfalls of Bali's cultural heart.</p>
+                    </div>
+                    <div className="explore-popular-hero-stats">
+                      <div className="explore-hero-stat-item">
+                        <span className="explore-hero-stat-label">DAILY VISITORS</span>
+                        <span className="explore-hero-stat-value">12.5k posts</span>
+                      </div>
+                      <div className="explore-hero-stat-divider" />
+                      <div className="explore-hero-stat-item">
+                        <span className="explore-hero-stat-label">RATING</span>
+                        <span className="explore-hero-stat-value">4.9 ★★★★★</span>
+                      </div>
+                      <button className="explore-hero-cta-btn">
+                        Explore
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '24px 0 16px', fontFamily: 'var(--font-title)' }}>Trending Destinations</h3>
                 
-                {/* GGF Explore Grid columns layout */}
-                <div className="instagram-explore-grid">
+                {/* Premium Explore Grid */}
+                <div className={`instagram-explore-grid ${isSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedCategory ? 'no-animate' : ''}`}>
                   {travelDestinations
-                    .filter(dest => dest.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .filter(dest => {
+                      const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
+                      const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
+                      return matchesSearch && matchesCategory;
+                    })
                     .map((dest, idx) => (
                       <div 
                         key={idx} 
-                        className="instagram-explore-item"
+                        className="instagram-explore-item-card"
                         onClick={() => {
                           setSearchQuery(dest.name.split(',')[0]);
                         }}
                       >
-                        <img src={dest.img} alt={dest.name} />
+                        <div className="explore-item-image-wrapper">
+                          <img src={dest.img} alt={dest.name} className="explore-item-image" />
+                          <div className="explore-item-gradient-overlay" />
+                        </div>
                         
-                        {/* Hover Overlay Stats */}
-                        <div className="instagram-explore-overlay">
-                          <div className="instagram-explore-stat">
-                            <span>❤️</span> 120
+                        {/* Top Floating Badges */}
+                        <div className="explore-item-floating-header">
+                          <span className="explore-item-category-badge">{dest.category}</span>
+                        </div>
+                        
+                        {/* Floating Info card at bottom */}
+                        <div className="explore-item-footer-glass">
+                          <div className="explore-item-info">
+                            <span className="explore-item-name">{dest.name}</span>
+                            <span className="explore-item-count">{dest.count}</span>
                           </div>
-                          <div className="instagram-explore-stat">
-                            <span>💬</span> {3 + (idx * 2)}
+                          <div className="explore-item-stats">
+                            <div className="explore-item-stat-pill" title="Likes">
+                              <span>❤️</span> 120
+                            </div>
+                            <div className="explore-item-stat-pill" title="Comments">
+                              <span>💬</span> {3 + (idx * 2)}
+                            </div>
                           </div>
                         </div>
-
                       </div>
                     ))
                   }
+                  
+                  {travelDestinations.filter(dest => {
+                    const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
+                    return matchesSearch && matchesCategory;
+                  }).length === 0 && (
+                    <div className="explore-empty-state-glass">
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                      </svg>
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>No destinations found</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Try searching for a different keyword or category.</div>
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -1878,13 +2119,28 @@ export default function Home() {
         </footer>
 
         {/* --- PERSISTENT FLOATING AI CHATBOT BUBBLE --- */}
-        <div className="ai-chatbot-floating-bubble" style={{ zIndex: 101 }} onClick={() => setAiChatOpen(!aiChatOpen)}>
+        <div 
+          className="ai-chatbot-floating-bubble" 
+          style={{ 
+            zIndex: 101,
+            bottom: isMiniInboxOpen ? '500px' : '80px',
+            transition: 'bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }} 
+          onClick={() => setAiChatOpen(!aiChatOpen)}
+        >
           <img src="/ai-guide.png" alt="AI" style={{ width: '28px', height: '28px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
         </div>
 
         {/* AI Chat drawer pane */}
         {aiChatOpen && (
-          <div className="ai-chatbot-panel" style={{ zIndex: 102 }}>
+          <div 
+            className="ai-chatbot-panel" 
+            style={{ 
+              zIndex: 102,
+              bottom: isMiniInboxOpen ? '570px' : '150px',
+              transition: 'bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+          >
             <div className="ai-chatbot-header">
               <span className="ai-chatbot-title">
                 <img src="/ai-guide.png" alt="AI Guide" style={{ width: '20px', height: '20px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
@@ -1928,17 +2184,20 @@ export default function Home() {
           </div>
         )}
 
-        {/* --- FLOATING MESSAGES TRAY (EXPLORE PAGE) --- */}
-        {activeTab === 'search' && (
+        {/* --- FLOATING MESSAGES TRAY --- */}
+        {user && (
           <div className="floating-messages-tray-container">
             {!isMiniInboxOpen ? (
               <div className="floating-messages-pill" onClick={() => setIsMiniInboxOpen(true)}>
                 <div className="floating-messages-pill-left">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                  <span>Messages</span>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-15deg)' }}>
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                    <span className="messages-pill-badge">2</span>
+                  </div>
+                  <span style={{ fontWeight: 600, fontSize: '14px', marginLeft: '8px' }}>Messages</span>
                 </div>
                 <div className="floating-messages-pill-avatars">
                   <div className="floating-messages-pill-avatar-item">
@@ -1947,92 +2206,158 @@ export default function Home() {
                   <div className="floating-messages-pill-avatar-item">
                     {renderAvatar('wanderlust_jenny', 24)}
                   </div>
-                  <div className="floating-messages-pill-avatar-item">
-                    {renderAvatar('nomad_alex', 24)}
-                  </div>
                 </div>
               </div>
             ) : (
-              <div className="floating-messages-drawer">
+              <div className={`floating-messages-drawer ${isExpandingFullscreen ? 'expanding-fullscreen' : ''}`}>
                 {/* Header */}
                 <div className="floating-messages-drawer-header">
                   <div className="drawer-header-left">
-                    {miniActiveChatBuddy && (
-                      <button className="drawer-header-back-btn" onClick={() => setMiniActiveChatBuddy(null)} aria-label="Back to chats">
+                    {miniSlideActive && (
+                      <button 
+                        className="drawer-header-back-btn" 
+                        onClick={() => {
+                          setMiniSlideActive(false);
+                          setTimeout(() => {
+                            setMiniActiveChatBuddy(null);
+                          }, 350);
+                        }} 
+                        aria-label="Back to chats"
+                      >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="15 18 9 12 15 6" />
                         </svg>
                       </button>
                     )}
-                    <span className="drawer-chat-username" style={{ fontSize: '14px', fontWeight: 700 }}>
-                      {miniActiveChatBuddy ? `@${miniActiveChatBuddy}` : 'Messages'}
+                    <span className="drawer-chat-username" style={{ fontSize: '15px', fontWeight: 800 }}>
+                      {miniSlideActive && miniActiveChatBuddy ? `@${miniActiveChatBuddy}` : 'Messages'}
                     </span>
                   </div>
-                  <button className="drawer-header-close-btn" onClick={() => { setIsMiniInboxOpen(false); setMiniActiveChatBuddy(null); }} aria-label="Minimize messages">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {!miniSlideActive && (
+                      <button 
+                        className="drawer-header-btn" 
+                        onClick={() => {
+                          setIsExpandingFullscreen(true);
+                          setTimeout(() => {
+                            setActiveTab('messages');
+                            setIsMiniInboxOpen(false);
+                            setIsExpandingFullscreen(false);
+                          }, 450);
+                        }}
+                        title="Open full page"
+                        aria-label="Expand to full screen"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 3 21 3 21 9" />
+                          <polyline points="9 21 3 21 3 15" />
+                          <line x1="21" y1="3" x2="14" y2="10" />
+                          <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                      </button>
+                    )}
+                    <button 
+                      className="drawer-header-btn" 
+                      onClick={() => { 
+                        setIsMiniInboxOpen(false); 
+                        setMiniSlideActive(false);
+                        setMiniActiveChatBuddy(null); 
+                      }} 
+                      title="Minimize messages"
+                      aria-label="Minimize messages"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Main Body */}
-                {!miniActiveChatBuddy ? (
-                  <>
-                    {/* Search inside tray */}
-                    <div className="drawer-search-wrapper">
-                      <input 
-                        type="text" 
-                        placeholder="Search chats..." 
-                        className="drawer-search-input"
-                        value={miniSearchQuery}
-                        onChange={(e) => setMiniSearchQuery(e.target.value)}
-                      />
-                    </div>
-                    {/* Chat Buddies List */}
-                    <div className="drawer-chats-list">
-                      {Object.keys(conversations)
-                        .filter(buddy => buddy.toLowerCase().includes(miniSearchQuery.toLowerCase()))
-                        .map((buddy) => {
-                          const chatMsgs = conversations[buddy] || [];
-                          const lastMsg = chatMsgs[chatMsgs.length - 1];
-                          const lastMsgText = lastMsg ? (lastMsg.sender === 'me' ? `You: ${lastMsg.text}` : lastMsg.text) : 'No messages yet';
-                          return (
-                            <div key={buddy} className="drawer-chat-item" onClick={() => setMiniActiveChatBuddy(buddy)}>
-                              {renderAvatar(buddy, 36)}
-                              <div className="drawer-chat-info">
-                                <span className="drawer-chat-username" style={{ fontWeight: 600, fontSize: '13px' }}>{buddy}</span>
-                                <span className="drawer-chat-lastmsg">{lastMsgText}</span>
+                {/* Main Body with Sliding Track */}
+                <div className="drawer-sliding-track-wrapper">
+                  <div 
+                    className="drawer-sliding-track"
+                    style={{ 
+                      transform: miniSlideActive ? 'translateX(-50%)' : 'translateX(0%)' 
+                    }}
+                  >
+                    {/* PANEL 1: Chat List */}
+                    <div className="drawer-sliding-panel panel-list">
+                      {/* Search inside tray */}
+                      <div className="drawer-search-wrapper">
+                        <input 
+                          type="text" 
+                          placeholder="Search chats..." 
+                          className="drawer-search-input"
+                          value={miniSearchQuery}
+                          onChange={(e) => setMiniSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      {/* Chat Buddies List */}
+                      <div className="drawer-chats-list">
+                        {Object.keys(conversations)
+                          .filter(buddy => buddy.toLowerCase().includes(miniSearchQuery.toLowerCase()))
+                          .map((buddy) => {
+                            const chatMsgs = conversations[buddy] || [];
+                            const lastMsg = chatMsgs[chatMsgs.length - 1];
+                            const lastMsgText = lastMsg ? (lastMsg.sender === 'me' ? `You: ${lastMsg.text}` : lastMsg.text) : 'No messages yet';
+                            return (
+                              <div 
+                                key={buddy} 
+                                className="drawer-chat-item" 
+                                onClick={() => {
+                                  setMiniActiveChatBuddy(buddy);
+                                  setMiniSlideActive(true);
+                                }}
+                              >
+                                {renderAvatar(buddy, 36)}
+                                <div className="drawer-chat-info">
+                                  <span className="drawer-chat-username" style={{ fontWeight: 600, fontSize: '13px' }}>{buddy}</span>
+                                  <span className="drawer-chat-lastmsg">{lastMsgText}</span>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                      </div>
                     </div>
-                  </>
-                ) : (
-                  <div className="drawer-active-chat-container">
-                    {/* Message Bubble List */}
-                    <div className="drawer-chat-messages" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
-                      {(conversations[miniActiveChatBuddy] || []).map((msg, mIdx) => (
-                        <div key={mIdx} className={`drawer-msg-bubble ${msg.sender === 'me' ? 'me' : 'them'}`}>
-                          {msg.text}
+
+                    {/* PANEL 2: Active Chat Conversation */}
+                    <div className="drawer-sliding-panel panel-chat">
+                      {miniActiveChatBuddy ? (
+                        <>
+                          {/* Message Bubble List */}
+                          <div className="drawer-chat-messages" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
+                            {(conversations[miniActiveChatBuddy] || []).map((msg, mIdx) => (
+                              <div key={mIdx} className={`drawer-msg-bubble ${msg.sender === 'me' ? 'me' : 'them'}`}>
+                                {msg.text}
+                              </div>
+                            ))}
+                          </div>
+                          {/* Input Area */}
+                          <form className="drawer-chat-input-area" onSubmit={handleSendMiniMessage}>
+                            <input 
+                              type="text" 
+                              placeholder="Message..." 
+                              className="drawer-chat-input-field"
+                              value={miniChatInput}
+                              onChange={(e) => setMiniChatInput(e.target.value)}
+                            />
+                            <button type="submit" className="drawer-chat-send-btn" disabled={!miniChatInput.trim()}>
+                              Send
+                            </button>
+                          </form>
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '13px' }}>
+                          Select a conversation
                         </div>
-                      ))}
+                      )}
                     </div>
-                    {/* Input Area */}
-                    <form className="drawer-chat-input-area" onSubmit={handleSendMiniMessage}>
-                      <input 
-                        type="text" 
-                        placeholder="Message..." 
-                        className="drawer-chat-input-field"
-                        value={miniChatInput}
-                        onChange={(e) => setMiniChatInput(e.target.value)}
-                      />
-                      <button type="submit" className="drawer-chat-send-btn" disabled={!miniChatInput.trim()}>
-                        Send
-                      </button>
-                    </form>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
