@@ -60,6 +60,61 @@ export default function Home() {
     );
   };
 
+  const renderMilestoneIcon = (id: string, size = 22) => {
+    switch (id) {
+      case 'ms-1':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+          </svg>
+        );
+      case 'ms-2':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 20L12 4L22 20H2Z" />
+            <path d="M12 4L15 10H9L12 4Z" fill="currentColor" opacity="0.4" />
+          </svg>
+        );
+      case 'ms-3':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" />
+          </svg>
+        );
+      case 'ms-4':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        );
+      case 'ms-5':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 7l-7 5 7 5V7z" />
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+          </svg>
+        );
+      case 'ms-6':
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
+          </svg>
+        );
+      default:
+        return (
+          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
+    }
+  };
+
+
   // Splash Screen States
   const [showSplash, setShowSplash] = useState(true);
   const [fadeClass, setFadeClass] = useState('');
@@ -373,7 +428,7 @@ export default function Home() {
     ]
   });
 
-  // Reels list data
+  // Reels list data & interactions
   const [reels, setReels] = useState([
     {
       id: 'reel-1',
@@ -407,6 +462,149 @@ export default function Home() {
     }
   ]);
   const [activeReelIndex, setActiveReelIndex] = useState(0);
+
+  // Advanced Interactive states for Reels
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showRefreshToast, setShowRefreshToast] = useState(false);
+  const [followedUsers, setFollowedUsers] = useState<Set<string>>(new Set(['nomad_vlogs']));
+  const [likedReels, setLikedReels] = useState<Set<string>>(new Set());
+  const [savedReels, setSavedReels] = useState<Set<string>>(new Set());
+  const [refreshPoolIndex, setRefreshPoolIndex] = useState(0);
+
+  // Pool of new reels to load on scroll-up refresh
+  const refreshPool = [
+    {
+      id: 'reel-ref-1',
+      username: 'travel_guru',
+      avatar: '🌸',
+      caption: 'Lost in the streets of Kyoto 🇯🇵. The cherry blossoms are breathtaking! #japan #kyoto #sakura',
+      soundtrack: 'Travel Guru - Kyoto Lofi Beat',
+      likes: 4521,
+      comments: 230,
+      imageGradient: 'linear-gradient(to bottom, #fbcfe8, #f472b6, #db2777)'
+    },
+    {
+      id: 'reel-ref-2',
+      username: 'surf_safari',
+      avatar: '🏄‍♂️',
+      caption: 'Catching waves at dawn in Costa Rica! 🌊☀️ Pure life vibes. #puravida #surfing #travelgoals',
+      soundtrack: 'Surf Safari - Surf Rock Anthems',
+      likes: 3120,
+      comments: 115,
+      imageGradient: 'linear-gradient(to bottom, #06b6d4, #0891b2, #0369a1)'
+    },
+    {
+      id: 'reel-ref-3',
+      username: 'aurora_hunter',
+      avatar: '🌌',
+      caption: 'The northern lights dancing in Norway! 🌌✨ Unbelievable night. #aurora #norway #travel #nightsky',
+      soundtrack: 'Aurora Hunter - Cosmic Ambient',
+      likes: 7840,
+      comments: 429,
+      imageGradient: 'linear-gradient(to bottom, #022c22, #064e3b, #0f766e)'
+    }
+  ];
+
+  // Toggle user follow status
+  const toggleFollowUser = (username: string) => {
+    setFollowedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(username)) {
+        next.delete(username);
+      } else {
+        next.add(username);
+      }
+      return next;
+    });
+  };
+
+  // Toggle like status for a reel
+  const toggleLikeReel = (reelId: string) => {
+    setLikedReels(prev => {
+      const next = new Set(prev);
+      if (next.has(reelId)) {
+        next.delete(reelId);
+        setReels(curr => curr.map(r => r.id === reelId ? { ...r, likes: r.likes - 1 } : r));
+      } else {
+        next.add(reelId);
+        setReels(curr => curr.map(r => r.id === reelId ? { ...r, likes: r.likes + 1 } : r));
+      }
+      return next;
+    });
+  };
+
+  // Toggle save status for a reel
+  const toggleSaveReel = (reelId: string) => {
+    setSavedReels(prev => {
+      const next = new Set(prev);
+      if (next.has(reelId)) {
+        next.delete(reelId);
+      } else {
+        next.add(reelId);
+      }
+      return next;
+    });
+  };
+
+  // Pull-to-refresh logic
+  const triggerRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    
+    setTimeout(() => {
+      const nextReel = refreshPool[refreshPoolIndex % refreshPool.length];
+      setRefreshPoolIndex(prev => prev + 1);
+      
+      const uniqueId = `${nextReel.id}-${Date.now()}`;
+      const newReel = { ...nextReel, id: uniqueId };
+      
+      setReels(prev => [newReel, ...prev]);
+      setActiveReelIndex(0);
+      setIsRefreshing(false);
+      setShowRefreshToast(true);
+      setTimeout(() => setShowRefreshToast(false), 2000);
+    }, 1500);
+  };
+
+  // Scroll gesture tracking state to throttle rapid wheel scrolls
+  const [lastScrollTime, setLastScrollTime] = useState(0);
+
+  // Debounced mouse wheel scrolling handler
+  const handleReelsWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (isRefreshing) return;
+    const now = Date.now();
+    if (now - lastScrollTime < 850) return; // 850ms throttle
+    
+    if (e.deltaY > 25) {
+      // Scroll Down -> Next Reel
+      setActiveReelIndex(prev => (prev + 1) % reels.length);
+      setLastScrollTime(now);
+    } else if (e.deltaY < -25) {
+      // Scroll Up -> Previous Reel OR Refresh
+      if (activeReelIndex === 0) {
+        triggerRefresh();
+      } else {
+        setActiveReelIndex(prev => (prev - 1 + reels.length) % reels.length);
+      }
+      setLastScrollTime(now);
+    }
+  };
+
+  // Click handler for Prev Arrow (triggers refresh on first reel)
+  const handlePrevReel = () => {
+    if (isRefreshing) return;
+    if (activeReelIndex === 0) {
+      triggerRefresh();
+    } else {
+      setActiveReelIndex(prev => (prev - 1 + reels.length) % reels.length);
+    }
+  };
+
+  // Click handler for Next Arrow
+  const handleNextReel = () => {
+    if (isRefreshing) return;
+    setActiveReelIndex(prev => (prev + 1) % reels.length);
+  };
 
   // Search places mock dataset
   const travelDestinations = [
@@ -675,6 +873,135 @@ export default function Home() {
     setNewPostLocation('');
     setActiveTab('home');
   };
+
+  // --- PROFILE DASHBOARD REDESIGN STATES ---
+  const [profileTab, setProfileTab] = useState<'posts' | 'saved' | 'milestones' | 'settings'>('posts');
+  const [selectedHighlight, setSelectedHighlight] = useState<string | null>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editBio, setEditBio] = useState('Exploring the globe one country at a time | Mountain climber & Coffee lover | Vlogging my journeys.');
+  const [editWebsite, setEditWebsite] = useState('travora.com/shashank');
+
+  // Sync user details to edit inputs when user is loaded
+  useEffect(() => {
+    if (user) {
+      setEditFullName(user.fullName || '');
+      setEditUsername(user.username || '');
+      setEditEmail(user.email || '');
+    }
+  }, [user]);
+
+  // Mock User Posts dataset (Polaroid travel postcards)
+  const [userPosts, setUserPosts] = useState([
+    {
+      id: 'up-1',
+      title: 'Sunrise over Ubud rice terraces',
+      location: 'Ubud, Bali',
+      img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
+      likes: 412,
+      comments: 32,
+      category: 'Tropical'
+    },
+    {
+      id: 'up-2',
+      title: 'Solo bike ride through the mountain pass',
+      location: 'Khardung La, Ladakh',
+      img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80',
+      likes: 624,
+      comments: 48,
+      category: 'Mountains'
+    },
+    {
+      id: 'up-3',
+      title: 'Golden sunset at Fushimi Inari',
+      location: 'Kyoto, Japan',
+      img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=80',
+      likes: 589,
+      comments: 41,
+      category: 'Cultural'
+    },
+    {
+      id: 'up-4',
+      title: 'Eiffel Tower from the streets of Paris',
+      location: 'Paris, France',
+      img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=600&auto=format&fit=crop&q=80',
+      likes: 832,
+      comments: 72,
+      category: 'Cities'
+    },
+    {
+      id: 'up-5',
+      title: 'Camping under a blanket of stars',
+      location: 'Nubra Valley, India',
+      img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80',
+      likes: 914,
+      comments: 89,
+      category: 'Mountains'
+    },
+    {
+      id: 'up-6',
+      title: 'Hidden cave pool swimming',
+      location: 'Seminyak, Goa',
+      img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+      likes: 351,
+      comments: 18,
+      category: 'Beaches'
+    }
+  ]);
+
+  // Mock Highlights / Stories data (no emojis)
+  const highlights = [
+    {
+      id: 'hl-1',
+      title: 'Bali',
+      cover: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=150&auto=format&fit=crop&q=80',
+      stories: [
+        { img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80', caption: 'Rice fields in Ubud' },
+        { img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80', caption: 'Sunset surfing in Uluwatu' }
+      ]
+    },
+    {
+      id: 'hl-2',
+      title: 'Leh',
+      cover: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=150&auto=format&fit=crop&q=80',
+      stories: [
+        { img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&q=80', caption: 'Breathtaking Ladakh mountains' },
+        { img: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80', caption: 'Stargazing at Nubra Valley' }
+      ]
+    },
+    {
+      id: 'hl-3',
+      title: 'Kyoto',
+      cover: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=150&auto=format&fit=crop&q=80',
+      stories: [
+        { img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80', caption: 'Kyoto bamboo trees' },
+        { img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=800&q=80', caption: 'Cherry blossoms peak season' }
+      ]
+    },
+    {
+      id: 'hl-4',
+      title: 'Paris',
+      cover: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=150&auto=format&fit=crop&q=80',
+      stories: [
+        { img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=800&q=80', caption: 'Morning walks in Montmartre' }
+      ]
+    }
+  ];
+
+  // Mock Travel Milestones (no emojis)
+  const [milestones, setMilestones] = useState([
+    { id: 'ms-1', title: 'First Flight', desc: 'Booked and took first flight to a new destination.', unlocked: true, date: 'March 14, 2025', points: 100, badgeColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+    { id: 'ms-2', title: 'Mountain Conqueror', desc: 'Ascended above 4,000m altitude in Leh pass.', unlocked: true, date: 'May 20, 2025', points: 250, badgeColor: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' },
+    { id: 'ms-3', title: 'Tropical Nomad', desc: 'Vlogged live in Ubud cafes and beach settings.', unlocked: true, date: 'June 02, 2025', points: 200, badgeColor: 'linear-gradient(135deg, #10b981 0%, #047857 100%)' },
+    { id: 'ms-4', title: 'Globetrotter Pro', desc: 'Visit 5 or more countries around the world.', unlocked: false, progress: '3/5', points: 500, badgeColor: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)' },
+    { id: 'ms-5', title: 'Storyteller Master', desc: 'Uploaded 5 or more vlogs or posts to Travora.', unlocked: true, date: 'June 28, 2026', points: 300, badgeColor: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)' },
+    { id: 'ms-6', title: 'SQLite Maestro', desc: 'Verified database connections and synchronized schema.', unlocked: true, date: 'July 01, 2026', points: 400, badgeColor: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }
+  ]);
+
+  // Current slide index for highlight stories popup viewer
+  const [activeStoryIdx, setActiveStoryIdx] = useState(0);
 
   // Forgot Password Modal States
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -1501,81 +1828,244 @@ export default function Home() {
 
             {/* VIEW 2: REELS (DESKTOP ALIGNED) */}
             {activeTab === 'reels' && (
-              <div className="reels-desktop-layout">
-                {reels.map((reel, rIdx) => {
-                  if (rIdx !== activeReelIndex) return null;
-                  return (
-                    <React.Fragment key={reel.id}>
-                      
-                      {/* Immersive Vertical Card */}
-                      <div className="reels-desktop-card" style={{ background: reel.imageGradient }}>
-                        <div className="reel-gradient-overlay" />
-                        
-                        {/* Play Indicator */}
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid rgba(255,255,255,0.3)', pointerEvents: 'none' }}>
-                          <svg width="20" height="20" fill="white" viewBox="0 0 24 24" style={{ marginLeft: '2px' }}>
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
+              <div className="reels-desktop-layout" onWheel={handleReelsWheel}>
+                {/* Refresh Overlay / Spinner */}
+                {isRefreshing && (
+                  <div className="reels-refresh-spinner-popup">
+                    <svg className="reels-refresh-spinner" viewBox="0 0 50 50">
+                      <circle className="path" cx="25" cy="25" r="20" fill="none" strokeWidth="5" stroke="currentColor"></circle>
+                    </svg>
+                    <span>Refreshing feed...</span>
+                  </div>
+                )}
 
-                        {/* Title Overlays */}
-                        <div className="reel-bottom-details">
-                          <div className="reel-user-row">
-                            <div className="reel-user-avatar">{reel.avatar}</div>
-                            <span className="reel-username">@{reel.username}</span>
-                            <span style={{ background: '#ef4444', color: 'white', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '3px', textTransform: 'uppercase' }}>VLOG</span>
+                {/* Refresh Toast Confirmation */}
+                {showRefreshToast && (
+                  <div className="reels-refresh-toast">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', color: '#10b981' }}>
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Feed refreshed!</span>
+                  </div>
+                )}
+
+                {/* Slidable track container for smooth vertical animation */}
+                <div 
+                  className="reels-track" 
+                  style={{ 
+                    transform: `translateY(-${activeReelIndex * 100}%)`
+                  }}
+                >
+                  {reels.map((reel, rIdx) => {
+                    const isLiked = likedReels.has(reel.id);
+                    const isSaved = savedReels.has(reel.id);
+                    const isFollowing = followedUsers.has(reel.username);
+
+                    return (
+                      <div 
+                        className="reels-center-wrapper" 
+                        key={reel.id}
+                        style={{
+                          opacity: rIdx === activeReelIndex ? 1 : 0.3,
+                          transform: `scale(${rIdx === activeReelIndex ? 1 : 0.95})`,
+                          transition: 'opacity 0.5s ease, transform 0.5s ease',
+                          pointerEvents: rIdx === activeReelIndex ? 'auto' : 'none'
+                        }}
+                      >
+                        
+                        {/* Inner Centered Container to anchor left details and right actions */}
+                        <div className="reels-inner-container">
+
+                          {/* Left Column: Creator details & Caption (Desktop-only, hidden on mobile via CSS) */}
+                          <div className="reels-details-left-side">
+                            <div className="reels-details-left-container">
+                              
+                              <div className="reel-user-row-new">
+                                <div className="reel-user-avatar-new" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+                                  {renderAvatar(reel.username, 36)}
+                                </div>
+                                <div className="reel-user-name-info">
+                                  <span className="reel-username-new" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+                                    {reel.username}
+                                  </span>
+                                  <span className="reel-bullet-separator">•</span>
+                                  <button 
+                                    className={`reel-follow-btn-new ${isFollowing ? 'following' : ''}`}
+                                    onClick={() => toggleFollowUser(reel.username)}
+                                  >
+                                    {isFollowing ? 'Following' : 'Follow'}
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="reel-caption-container-new">
+                                <p className="reel-caption-new">
+                                  {reel.caption}
+                                </p>
+                              </div>
+
+                              <div className="reel-soundtrack-new">
+                                <svg className="music-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M9 18V5l12-2v13"></path>
+                                  <circle cx="6" cy="18" r="3"></circle>
+                                  <circle cx="18" cy="16" r="3"></circle>
+                                </svg>
+                                <div className="music-text-scroll-container">
+                                  <span className="music-text-scroll">{reel.soundtrack}</span>
+                                </div>
+                              </div>
+
+                            </div>
                           </div>
-                          <p className="reel-caption">{reel.caption}</p>
-                          <div className="reel-soundtrack">
-                            <span>🎵</span>
-                            <span>{reel.soundtrack}</span>
+
+                          {/* Middle Column: Immersive Video Card */}
+                          <div className="reels-desktop-card" style={{ background: reel.imageGradient }}>
+                            <div className="reel-gradient-overlay" />
+                            
+                            {/* Play/Pause overlay button indicator */}
+                            <div className="reel-play-indicator-overlay">
+                              <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                            
+                            {/* Mobile overlay details (Visible only on mobile/tablet via CSS) */}
+                            <div className="reel-mobile-overlay-details">
+                              <div className="reel-user-row-new">
+                                {renderAvatar(reel.username, 32)}
+                                <span className="reel-username-new">{reel.username}</span>
+                                <span className="reel-bullet-separator">•</span>
+                                <button 
+                                  className={`reel-follow-btn-new ${isFollowing ? 'following' : ''}`}
+                                  onClick={() => toggleFollowUser(reel.username)}
+                                >
+                                  {isFollowing ? 'Following' : 'Follow'}
+                                </button>
+                              </div>
+                              <p className="reel-caption-new">{reel.caption}</p>
+                              <div className="reel-soundtrack-new">
+                                <svg className="music-icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M9 18V5l12-2v13"></path>
+                                  <circle cx="6" cy="18" r="3"></circle>
+                                  <circle cx="18" cy="16" r="3"></circle>
+                                </svg>
+                                <span>{reel.soundtrack}</span>
+                              </div>
+                            </div>
                           </div>
+
+                          {/* Right Column: Interaction Action Buttons */}
+                          <div className="reels-desktop-actions-column-new">
+                            
+                            {/* Like Button */}
+                            <div className="reel-action-item">
+                              <button 
+                                className={`reels-action-circle-btn-new ${isLiked ? 'liked' : ''}`} 
+                                onClick={() => toggleLikeReel(reel.id)} 
+                                title={isLiked ? "Unlike" : "Like"}
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                              </button>
+                              <span className="reel-action-count">{formatCount(reel.likes)}</span>
+                            </div>
+
+                            {/* Comment Button */}
+                            <div className="reel-action-item">
+                              <button 
+                                className="reels-action-circle-btn-new" 
+                                onClick={() => alert('Comments drawer open')} 
+                                title="Comment"
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                                </svg>
+                              </button>
+                              <span className="reel-action-count">{formatCount(reel.comments)}</span>
+                            </div>
+
+                            {/* Share Button */}
+                            <div className="reel-action-item">
+                              <button 
+                                className="reels-action-circle-btn-new" 
+                                onClick={() => alert('Copied Reel link!')} 
+                                title="Share"
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-20deg) translate(0px, 1px)', transformOrigin: 'center' }}>
+                                  <line x1="22" y1="2" x2="11" y2="13" />
+                                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                </svg>
+                              </button>
+                              <span className="reel-action-count" style={{ display: 'none' }}>Share</span>
+                            </div>
+
+                            {/* Save / Bookmark Button */}
+                            <div className="reel-action-item">
+                              <button 
+                                className={`reels-action-circle-btn-new ${isSaved ? 'saved' : ''}`} 
+                                onClick={() => toggleSaveReel(reel.id)} 
+                                title={isSaved ? "Unsave" : "Save"}
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                                </svg>
+                              </button>
+                              <span className="reel-action-count" style={{ display: 'none' }}>Save</span>
+                            </div>
+
+                            {/* More Options Button */}
+                            <div className="reel-action-item">
+                              <button 
+                                className="reels-action-circle-btn-new" 
+                                onClick={() => alert('Options drawer open')} 
+                                title="More options"
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                                  <circle cx="6" cy="12" r="1.5" fill="currentColor" />
+                                  <circle cx="18" cy="12" r="1.5" fill="currentColor" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Rotating Audio Icon */}
+                            <div className="reel-audio-vinyl-wrapper" title="Audio track">
+                              <div className="reel-audio-avatar-square">
+                                {renderAvatar(reel.username, 24)}
+                              </div>
+                            </div>
+
+                          </div>
+
                         </div>
 
                       </div>
+                    );
+                  })}
+                </div>
 
-                      {/* Actions Column (Floating right of card) */}
-                      <div className="reels-desktop-actions-column">
-                        
-                        <button className="reels-action-circle-btn" onClick={() => alert('Liked Reel!')} title="Like">
-                          ❤️
-                        </button>
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{reel.likes}</span>
-
-                        <button className="reels-action-circle-btn" onClick={() => alert('Comments drawer open')} title="Comment">
-                          💬
-                        </button>
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>{reel.comments}</span>
-
-                        <button className="reels-action-circle-btn" onClick={() => alert('Copied Reel link!')} title="Share">
-                          🚀
-                        </button>
-                        
-                        {/* Vinyl rotating icon */}
-                        <div className="vinyl-disc-rotating" style={{ marginTop: '16px' }} />
-
-                        {/* Up/Down Reel shift indicators */}
-                        <button 
-                          className="reels-nav-arrow" 
-                          style={{ marginTop: '24px' }}
-                          onClick={() => setActiveReelIndex(prev => (prev - 1 + reels.length) % reels.length)}
-                          title="Previous Reel"
-                        >
-                          ▲
-                        </button>
-                        <button 
-                          className="reels-nav-arrow" 
-                          onClick={() => setActiveReelIndex(prev => (prev + 1) % reels.length)}
-                          title="Next Reel"
-                        >
-                          ▼
-                        </button>
-
-                      </div>
-
-                    </React.Fragment>
-                  );
-                })}
+                {/* Fixed Navigation Column at right middle edge of screen */}
+                <div className="reels-navigation-column">
+                  <button 
+                    className="reels-nav-arrow-new" 
+                    onClick={handlePrevReel}
+                    title="Previous Reel (Scroll up / Pull to refresh)"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                  </button>
+                  <button 
+                    className="reels-nav-arrow-new" 
+                    onClick={handleNextReel}
+                    title="Next Reel (Scroll down)"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2016,70 +2506,553 @@ export default function Home() {
               </div>
             )}
 
-            {/* VIEW 6: INTEGRATED PROFILE PAGE */}
+            {/* VIEW 6: REDESIGNED PREMIUM TRAVEL PROFILE PAGE */}
             {activeTab === 'profile' && (
-              <div style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 24px' }}>
-                <h2 className="form-title" style={{ textAlign: 'left', fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-title)' }}>My Profile & Settings</h2>
-                <p className="form-subtitle" style={{ textAlign: 'left', marginBottom: '24px' }}>Manage your account settings and preferences.</p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  {/* Profile Header */}
-                  <div style={{ textAlign: 'center', margin: '20px 0' }}>
-                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: 800, margin: '0 auto 12px auto' }}>
-                      {user.fullName.charAt(0)}
-                    </div>
-                    <h3 style={{ fontSize: '20px', fontWeight: 800 }}>{user.fullName}</h3>
-                    <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>@{user.username}</span>
-                  </div>
-
-                  <div style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '12px', padding: '14px 16px' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', fontWeight: 600, textTransform: 'uppercase' }}>Email Address</span>
-                    <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.email}</span>
-                  </div>
-
-                  <div style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '12px', padding: '14px 16px' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', fontWeight: 600, textTransform: 'uppercase' }}>Account Role</span>
-                    <span style={{ fontSize: '14px', fontWeight: 600, textTransform: 'capitalize' }}>{user.role}</span>
-                  </div>
-
-                  {user.role === 'traveller' ? (
-                    <div className="toggle-group" style={{ margin: '0' }}>
-                      <div>
-                        <span className="toggle-title">Vlogger Status</span>
-                        <span className="toggle-desc" style={{ display: 'block' }}>Share journeys as a travel vlogger.</span>
+              <div className="profile-page-wrapper">
+                
+                {/* 1. Curved Header Profile Container Wrapper */}
+                <div className="profile-header-card-wrapper">
+                  <div className="profile-header-container">
+                    
+                    {/* Left: Avatar with dynamic gradient ring */}
+                    <div className="profile-avatar-column">
+                      <div className="profile-avatar-gradient-ring">
+                        <div className="profile-avatar-circle-large">
+                          {user.avatarUrl ? (
+                            <img src={user.avatarUrl} alt={user.fullName} className="profile-avatar-img" />
+                          ) : (
+                            user.fullName.charAt(0).toUpperCase()
+                          )}
+                        </div>
                       </div>
-                      <label className="switch">
-                        <input 
-                          type="checkbox" 
-                          checked={user.travellerType === 'vlogger'} 
-                          onChange={async (e) => {
-                            const result = await updateTravellerType(e.target.checked ? 'vlogger' : 'normal');
-                            if (!result.success) alert('Failed to switch mode.');
-                          }} 
-                        />
-                        <span className="slider"></span>
-                      </label>
                     </div>
-                  ) : (
-                    <div style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', fontWeight: 600, textTransform: 'uppercase' }}>Venture Name</span>
-                      <span style={{ fontSize: '14px', fontWeight: 600 }}>{user.businessProfile?.businessName || 'Business Stay'}</span>
+
+                    {/* Right: Username, Action Buttons, Stats, and Biography */}
+                    <div className="profile-info-column">
+                      
+                      {/* User Action Row */}
+                      <div className="profile-action-row">
+                        <h2 className="profile-username-header">@{editUsername || user.username}</h2>
+                        <div className="profile-action-buttons-group">
+                          <button 
+                            className="profile-primary-action-btn"
+                            onClick={() => setProfileTab('settings')}
+                          >
+                            Edit Profile
+                          </button>
+                          <button 
+                            className="profile-icon-action-btn"
+                            onClick={() => setProfileTab('settings')}
+                            title="Settings"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="3" />
+                              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                            </svg>
+                          </button>
+                          <button 
+                            className="profile-icon-action-btn logout-btn-red"
+                            onClick={logout}
+                            title="Log Out"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Stats Summary Row */}
+                      <div className="profile-stats-row-new">
+                        <div className="profile-stat-item-new">
+                          <span className="profile-stat-number">{userPosts.length}</span>
+                          <span className="profile-stat-label">posts</span>
+                        </div>
+                        <div className="profile-stat-item-new">
+                          <span className="profile-stat-number">12.5K</span>
+                          <span className="profile-stat-label">followers</span>
+                        </div>
+                        <div className="profile-stat-item-new">
+                          <span className="profile-stat-number">595</span>
+                          <span className="profile-stat-label">following</span>
+                        </div>
+                        <div className="profile-stat-item-new">
+                          <span className="profile-stat-number">6</span>
+                          <span className="profile-stat-label">countries</span>
+                        </div>
+                        <div className="profile-stat-item-new" onClick={() => setProfileTab('milestones')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" style={{ display: 'inline-block' }}>
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                            <path d="M4 22h16" />
+                            <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                            <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
+                          </svg>
+                          <span className="profile-stat-number" style={{ color: '#f59e0b', marginLeft: '2px' }}>5</span>
+                          <span className="profile-stat-label">badges</span>
+                        </div>
+                      </div>
+
+                      {/* Biography details */}
+                      <div className="profile-bio-details-new">
+                        <h3 className="profile-display-name-new">{editFullName || user.fullName}</h3>
+                        <span className="profile-tag-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+                          </svg>
+                          Professional Nomad
+                        </span>
+                        <p className="profile-bio-paragraph">{editBio}</p>
+                        {editWebsite && (
+                          <a 
+                            href={`https://${editWebsite}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="profile-bio-website-link"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '4px' }}>
+                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            {editWebsite}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 2. Highlights Stories Circular Row */}
+                <div className="profile-highlights-row-container">
+                  {highlights.map((hl, idx) => (
+                    <div 
+                      key={hl.id} 
+                      className="highlight-story-item"
+                      onClick={() => {
+                        setSelectedHighlight(hl.id);
+                        setActiveStoryIdx(0);
+                      }}
+                    >
+                      <div className="highlight-story-circle-wrapper">
+                        <div className="highlight-story-circle-inner">
+                          <img src={hl.cover} alt={hl.title} className="highlight-story-img" />
+                        </div>
+                      </div>
+                      <span className="highlight-story-label">{hl.title}</span>
+                    </div>
+                  ))}
+                  
+                  {/* Mock Add highlight */}
+                  <div className="highlight-story-item opacity-60" onClick={() => alert('Add highlight story cover feature coming soon!')}>
+                    <div className="highlight-story-circle-wrapper border-dashed-add">
+                      <div className="highlight-story-circle-inner flex-add-plus">
+                        <span>+</span>
+                      </div>
+                    </div>
+                    <span className="highlight-story-label">New</span>
+                  </div>
+                </div>
+
+                {/* 3. Dynamic Tabs Navigation Menu */}
+                <div className="profile-tabs-nav">
+                  <button 
+                    className={`profile-tab-btn ${profileTab === 'posts' ? 'active' : ''}`}
+                    onClick={() => setProfileTab('posts')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="7" height="7" />
+                      <rect x="14" y="3" width="7" height="7" />
+                      <rect x="14" y="14" width="7" height="7" />
+                      <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    <span>POSTS</span>
+                  </button>
+                  
+                  <button 
+                    className={`profile-tab-btn ${profileTab === 'saved' ? 'active' : ''}`}
+                    onClick={() => setProfileTab('saved')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>SAVED</span>
+                  </button>
+                  
+                  <button 
+                    className={`profile-tab-btn ${profileTab === 'milestones' ? 'active' : ''}`}
+                    onClick={() => setProfileTab('milestones')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                    <span>MILESTONES</span>
+                  </button>
+                  
+                  <button 
+                    className={`profile-tab-btn ${profileTab === 'settings' ? 'active' : ''}`}
+                    onClick={() => setProfileTab('settings')}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    <span>SETTINGS</span>
+                  </button>
+                </div>
+
+                {/* 4. Tab Contents Grid */}
+                <div className="profile-tab-content-area">
+                  
+                  {/* TAB A: POSTS DYNAMIC POSTCARDS GRID */}
+                  {profileTab === 'posts' && (
+                    <div className="profile-media-grid">
+                      {userPosts.map((post) => (
+                        <div 
+                          key={post.id} 
+                          className="profile-postcard-card"
+                          onClick={() => alert(`Opening post card details: "${post.title}"`)}
+                        >
+                          {/* Postal Stamp element */}
+                          <div className="profile-postcard-stamp">
+                            <div className="profile-postcard-stamp-inner">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M22 2L11 13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                              </svg>
+                            </div>
+                          </div>
+                          {/* Polaroid Photo Frame */}
+                          <div className="profile-postcard-photo-wrapper">
+                            <img src={post.img} alt={post.title} className="profile-postcard-img" />
+                            
+                            <div className="profile-media-hover-overlay">
+                              <div className="profile-media-hover-metrics">
+                                <span>❤️ {post.likes}</span>
+                                <span>💬 {post.comments}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Postcard handwritten info text */}
+                          <div className="profile-postcard-info">
+                            <h4 className="profile-postcard-title">{post.title}</h4>
+                            <span className="profile-postcard-location">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '3px' }}>
+                                <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              {post.location}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  <button 
-                    onClick={logout} 
-                    className="btn-primary" 
-                    style={{ background: 'var(--accent-red)', boxShadow: 'none', marginTop: '24px' }}
-                  >
-                    Sign Out Account
-                  </button>
+                  {/* TAB B: SAVED ITEMS GRID (Mocks Saved Reels) */}
+                  {profileTab === 'saved' && (
+                    <div className="profile-media-grid">
+                      {/* Show first 3 vlogs from global vlogs to act as saved items */}
+                      {vlogs.slice(0, 3).map((vlog) => (
+                        <div 
+                          key={vlog.id} 
+                          className="profile-media-grid-item"
+                          onClick={() => {
+                            setActiveTab('reels');
+                            const rIdx = reels.findIndex(r => r.username === vlog.username);
+                            if (rIdx !== -1) setActiveReelIndex(rIdx);
+                          }}
+                        >
+                          <img src={vlog.thumbnail} alt={vlog.title} className="profile-media-thumbnail" />
+                          <div className="profile-media-hover-overlay">
+                            <div className="profile-media-hover-metrics">
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                  <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                Play
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {/* Plus save placeholders */}
+                      <div className="profile-saved-empty-placeholder">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <h4>Save Travel Guides</h4>
+                        <p>Toggle bookmark save on reels to catalog guides here.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB C: MILESTONES ACHIEVEMENT timeline/grid */}
+                  {profileTab === 'milestones' && (
+                    <div className="profile-milestones-grid">
+                      {milestones.map((ms) => (
+                        <div 
+                          key={ms.id} 
+                          className={`milestone-badge-card ${ms.unlocked ? 'unlocked' : 'locked'}`}
+                          onClick={() => setSelectedMilestone(ms)}
+                        >
+                          {/* Locked Badge Overlay */}
+                          {!ms.unlocked && (
+                            <div className="milestone-locked-badge" title="Locked milestone">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
+                            </div>
+                          )}
+
+                          <div 
+                            className="milestone-badge-icon-sphere"
+                            style={{ background: ms.badgeColor }}
+                          >
+                            {renderMilestoneIcon(ms.id)}
+                          </div>
+                          
+                          <div className="milestone-text-details">
+                            <h4 className="milestone-title">{ms.title}</h4>
+                            <p className="milestone-desc">{ms.desc}</p>
+                            
+                            {ms.unlocked ? (
+                              <div className="milestone-unlock-date-badge">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginRight: '4px', color: '#10b981' }}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                {ms.date}
+                              </div>
+                            ) : (
+                              <div className="milestone-progress-bar-wrapper">
+                                <div className="milestone-progress-bar-fill" style={{ width: '60%' }} />
+                                <span className="milestone-progress-bar-text">{ms.progress}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* TAB D: EDIT PROFILE SETTINGS AND ROLE MANAGMENT */}
+                  {profileTab === 'settings' && (
+                    <div className="profile-settings-panel">
+                      <form onSubmit={(e) => { e.preventDefault(); alert('Profile settings updated successfully!'); setProfileTab('posts'); }}>
+                        
+                        <div className="profile-settings-form-row">
+                          <div className="form-group">
+                            <label className="form-label-new">Full Name</label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              value={editFullName} 
+                              onChange={(e) => setEditFullName(e.target.value)} 
+                              required 
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label-new">Username</label>
+                            <input 
+                              type="text" 
+                              className="form-input" 
+                              value={editUsername} 
+                              onChange={(e) => setEditUsername(e.target.value)} 
+                              required 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label-new">Email Address</label>
+                          <input 
+                            type="email" 
+                            className="form-input" 
+                            value={editEmail} 
+                            onChange={(e) => setEditEmail(e.target.value)} 
+                            required 
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label-new">Biography</label>
+                          <textarea 
+                            className="form-input-textarea" 
+                            rows={3}
+                            value={editBio} 
+                            onChange={(e) => setEditBio(e.target.value)} 
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label-new">Website Link</label>
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            placeholder="website.com"
+                            value={editWebsite} 
+                            onChange={(e) => setEditWebsite(e.target.value)} 
+                          />
+                        </div>
+
+                        {user.role === 'traveller' && (
+                          <div className="profile-vlogger-settings-toggle">
+                            <div className="toggle-text-column">
+                              <span className="toggle-header-label">Switch Creator Mode</span>
+                              <span className="toggle-sub-label">Publish vlogs and travel maps as a verified vlogger.</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={user.travellerType === 'vlogger'} 
+                                onChange={async (e) => {
+                                  const result = await updateTravellerType(e.target.checked ? 'vlogger' : 'normal');
+                                  if (!result.success) alert('Failed to switch mode.');
+                                }} 
+                              />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                        )}
+
+                        <div className="profile-settings-footer-actions">
+                          <button type="submit" className="btn-primary">
+                            Save Changes
+                          </button>
+                        </div>
+
+                      </form>
+                    </div>
+                  )}
 
                 </div>
+
+                {/* --- MODAL 1: TRAVEL STORIES STORY HIGHLIGHT VIEWER CAROUSEL --- */}
+                {selectedHighlight && (() => {
+                  const hl = highlights.find(h => h.id === selectedHighlight);
+                  if (!hl) return null;
+                  const currentStory = hl.stories[activeStoryIdx % hl.stories.length];
+                  
+                  return (
+                    <div className="highlight-stories-modal-overlay">
+                      <div className="highlight-stories-modal-container">
+                        
+                        <div className="story-progress-segments-bar">
+                          {hl.stories.map((s, idx) => (
+                            <div key={idx} className="story-progress-bar-track">
+                              <div 
+                                className={`story-progress-bar-fill-indicator ${idx < activeStoryIdx ? 'completed' : idx === activeStoryIdx ? 'active-loading' : ''}`} 
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="story-viewer-top-row">
+                          <div className="story-creator-avatar">
+                            {renderAvatar(user.username, 30)}
+                          </div>
+                          <span className="story-creator-username">{user.username}</span>
+                          <span className="story-topic-badge">{hl.title}</span>
+                          <button 
+                            className="story-viewer-close-btn"
+                            onClick={() => setSelectedHighlight(null)}
+                          >
+                            &times;
+                          </button>
+                        </div>
+
+                        <div className="story-viewer-image-pane">
+                          <img src={currentStory.img} alt={currentStory.caption} className="story-viewer-img" />
+                          <div className="story-viewer-caption-badge">
+                            {currentStory.caption}
+                          </div>
+                        </div>
+
+                        {hl.stories.length > 1 && (
+                          <>
+                            <button 
+                              className="story-nav-btn prev"
+                              onClick={() => setActiveStoryIdx(prev => (prev - 1 + hl.stories.length) % hl.stories.length)}
+                            >
+                              &#10094;
+                            </button>
+                            <button 
+                              className="story-nav-btn next"
+                              onClick={() => setActiveStoryIdx(prev => (prev + 1) % hl.stories.length)}
+                            >
+                              &#10095;
+                            </button>
+                          </>
+                        )}
+
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* --- MODAL 2: DETAIL ACHIEVEMENT MILESTONE SUCCESS BADGE CARD --- */}
+                {selectedMilestone && (
+                  <div className="milestone-badge-modal-overlay" onClick={() => setSelectedMilestone(null)}>
+                    <div 
+                      className="milestone-badge-modal-card"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button className="milestone-modal-close-x" onClick={() => setSelectedMilestone(null)}>
+                        &times;
+                      </button>
+
+                      <div 
+                        className={`milestone-modal-badge-sphere ${selectedMilestone.unlocked ? 'glow' : 'locked'}`}
+                        style={{ background: selectedMilestone.badgeColor }}
+                      >
+                        {renderMilestoneIcon(selectedMilestone.id, 34)}
+                      </div>
+
+                      <div className="milestone-modal-card-details">
+                        <span className="milestone-modal-badge-status">
+                          {selectedMilestone.unlocked ? 'ACHIEVEMENT UNLOCKED' : 'ACHIEVEMENT LOCKED'}
+                        </span>
+                        <h3 className="milestone-modal-card-title">{selectedMilestone.title}</h3>
+                        <p className="milestone-modal-card-desc">{selectedMilestone.desc}</p>
+                        
+                        {selectedMilestone.unlocked ? (
+                          <div className="milestone-modal-status-badge success">
+                            <span style={{ fontSize: '13px', fontWeight: 700 }}>Unearned: +{selectedMilestone.points} EXP</span>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Completed on {selectedMilestone.date}</span>
+                          </div>
+                        ) : (
+                          <div className="milestone-modal-status-badge locked">
+                            <span style={{ fontSize: '13px', fontWeight: 700 }}>EXP Reward: {selectedMilestone.points} EXP</span>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Progress: {selectedMilestone.progress || '0%'} Completed</span>
+                          </div>
+                        )}
+
+                        <div className="milestone-modal-actions-row">
+                          <button 
+                            className="milestone-modal-action-btn-main"
+                            onClick={() => {
+                              if (selectedMilestone.unlocked) {
+                                alert(`Shared achievement: Unlocked ${selectedMilestone.title}!`);
+                              } else {
+                                alert(`Start travelling to unlock this badge!`);
+                              }
+                            }}
+                          >
+                            {selectedMilestone.unlocked ? 'Share Achievement' : 'Conquer Milestone'}
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                )}
+
               </div>
             )}
-
           </div>
 
         </div>
