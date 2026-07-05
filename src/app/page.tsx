@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -173,6 +173,174 @@ export default function Home() {
   const [showSearchDrawer, setShowSearchDrawer] = useState(false);
   const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<'all' | 'following' | 'comments' | 'follows'>('all');
+
+  // Dynamic system time for mobile device status bar
+  const [systemTime, setSystemTime] = useState('9:41');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const formattedHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      setSystemTime(`${formattedHours}:${minutes}`);
+    };
+    updateTime();
+
+    const now = new Date();
+    const delay = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+
+    let intervalId: NodeJS.Timeout;
+    const timeoutId = setTimeout(() => {
+      updateTime();
+      intervalId = setInterval(updateTime, 60000);
+    }, delay);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
+
+  // Liquid Indicator Refs and Position States
+  const filterBarRef = useRef<HTMLDivElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+    transform: 'scale(1)',
+  });
+
+  useEffect(() => {
+    if (!showNotificationsDrawer || !filterBarRef.current) return;
+    
+    const timer = setTimeout(() => {
+      const container = filterBarRef.current;
+      if (!container) return;
+      
+      const activeBtn = container.querySelector('.notification-filter-btn.active') as HTMLButtonElement;
+      if (!activeBtn) return;
+      
+      const prevLeft = parseFloat(container.dataset.indicatorLeft || '0');
+      const prevWidth = parseFloat(container.dataset.indicatorWidth || '0');
+      
+      const currentLeft = activeBtn.offsetLeft;
+      const currentWidth = activeBtn.offsetWidth;
+      
+      if (prevWidth > 0 && Math.abs(currentLeft - prevLeft) > 5) {
+        // Organic liquid stretching bounding box
+        const combinedLeft = Math.min(prevLeft, currentLeft);
+        const combinedRight = Math.max(prevLeft + prevWidth, currentLeft + currentWidth);
+        const combinedWidth = combinedRight - combinedLeft;
+        
+        // Slightly squish vertically and stretch horizontally for liquid distortion
+        setIndicatorStyle({
+          left: combinedLeft,
+          width: combinedWidth,
+          opacity: 1,
+          transform: 'scaleY(0.92) scaleX(1.02)',
+        });
+        
+        const snapTimer = setTimeout(() => {
+          setIndicatorStyle({
+            left: currentLeft,
+            width: currentWidth,
+            opacity: 1,
+            transform: 'scale(1)',
+          });
+          container.dataset.indicatorLeft = String(currentLeft);
+          container.dataset.indicatorWidth = String(currentWidth);
+        }, 120);
+        
+        return () => clearTimeout(snapTimer);
+      } else {
+        setIndicatorStyle({
+          left: currentLeft,
+          width: currentWidth,
+          opacity: 1,
+          transform: 'scale(1)',
+        });
+        container.dataset.indicatorLeft = String(currentLeft);
+        container.dataset.indicatorWidth = String(currentWidth);
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [notificationFilter, showNotificationsDrawer]);
+
+  // Explore Category Liquid Indicator Refs and Position States
+  const categoriesContainerRef = useRef<HTMLDivElement>(null);
+  const [activeCategoryStyle, setActiveCategoryStyle] = useState<React.CSSProperties>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+    transform: 'scale(1)',
+  });
+  const [scalingActiveBtn, setScalingActiveBtn] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!categoriesContainerRef.current) return;
+    
+    const container = categoriesContainerRef.current;
+    
+    const timer = setTimeout(() => {
+      const activeBtn = container.querySelector('.explore-category-btn.active') as HTMLButtonElement;
+      if (!activeBtn) return;
+      
+      const prevLeft = parseFloat(container.dataset.indicatorLeft || '0');
+      const prevWidth = parseFloat(container.dataset.indicatorWidth || '0');
+      
+      const currentLeft = activeBtn.offsetLeft;
+      const currentWidth = activeBtn.offsetWidth;
+      
+      setScalingActiveBtn(activeExploreCategory);
+      const bumpTimer = setTimeout(() => {
+        setScalingActiveBtn(null);
+      }, 300);
+      
+      if (prevWidth > 0 && Math.abs(currentLeft - prevLeft) > 5) {
+        // Stretch indicator to cover start to end bounds
+        const combinedLeft = Math.min(prevLeft, currentLeft);
+        const combinedRight = Math.max(prevLeft + prevWidth, currentLeft + currentWidth);
+        const combinedWidth = combinedRight - combinedLeft;
+        
+        setActiveCategoryStyle({
+          left: combinedLeft,
+          width: combinedWidth,
+          opacity: 1,
+          transform: 'scaleY(0.94) scaleX(1.025)',
+        });
+        
+        const snapTimer = setTimeout(() => {
+          setActiveCategoryStyle({
+            left: currentLeft,
+            width: currentWidth,
+            opacity: 1,
+            transform: 'scale(1)',
+          });
+          container.dataset.indicatorLeft = String(currentLeft);
+          container.dataset.indicatorWidth = String(currentWidth);
+        }, 110);
+        
+        return () => {
+          clearTimeout(bumpTimer);
+          clearTimeout(snapTimer);
+        };
+      } else {
+        setActiveCategoryStyle({
+          left: currentLeft,
+          width: currentWidth,
+          opacity: 1,
+          transform: 'scale(1)',
+        });
+        container.dataset.indicatorLeft = String(currentLeft);
+        container.dataset.indicatorWidth = String(currentWidth);
+        return () => clearTimeout(bumpTimer);
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [activeExploreCategory, activeTab]);
   
   // Dedicated Vlogs Feed state
   const [vlogs, setVlogs] = useState([
@@ -1890,7 +2058,11 @@ export default function Home() {
             <div className="instagram-drawer-header">
               <h2 className="instagram-drawer-title">Notifications</h2>
               
-              <div className="notification-filters">
+              <div className="notification-filters" ref={filterBarRef}>
+                <div className="liquid-glass-indicator" style={indicatorStyle}>
+                  <div className="liquid-glass-indicator-glow" />
+                  <div className="liquid-glass-indicator-highlight" />
+                </div>
                 <button 
                   className={`notification-filter-btn ${notificationFilter === 'all' ? 'active' : ''}`}
                   onClick={() => setNotificationFilter('all')}
@@ -1947,7 +2119,13 @@ export default function Home() {
                 .map((n) => (
                   <div key={n.id} className="drawer-notification-item">
                     <div className="drawer-notification-avatar-wrapper">
-                      <span className="drawer-notification-avatar">{n.avatar}</span>
+                      <span className="drawer-notification-avatar">
+                        {n.avatar && (n.avatar.startsWith('http') || n.avatar.startsWith('https')) ? (
+                          <img src={n.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          n.avatar || '👤'
+                        )}
+                      </span>
                     </div>
                     <div className="drawer-notification-content">
                       <p className="drawer-notification-text">
@@ -3073,7 +3251,12 @@ export default function Home() {
 
                 {/* Category Filter Horizontal Scrollbar */}
                 <div className="explore-categories-scroll-wrapper">
-                  <div className="explore-categories-container">
+                  <div className="explore-categories-container" ref={categoriesContainerRef}>
+                    <div className="explore-active-indicator" style={activeCategoryStyle}>
+                      <div className="explore-active-indicator-glow" />
+                      <div className="explore-active-indicator-highlight" />
+                      <div className="explore-active-indicator-reflection" />
+                    </div>
                     {[
                       'All',
                       'Mountains',
@@ -3085,7 +3268,7 @@ export default function Home() {
                     ].map((catName) => (
                       <button
                         key={catName}
-                        className={`explore-category-btn ${activeExploreCategory === catName ? 'active' : ''}`}
+                        className={`explore-category-btn ${activeExploreCategory === catName ? 'active' : ''} ${scalingActiveBtn === catName ? 'scale-bump' : ''}`}
                         onClick={() => handleSwitchExploreCategory(catName)}
                         onMouseEnter={() => playUISound('hover')}
                       >
@@ -3850,7 +4033,7 @@ export default function Home() {
                         <div className="phone-screen-content">
                           {/* Status Bar */}
                           <div className="phone-status-bar">
-                            <span className="status-time">9:41</span>
+                            <span className="status-time">{systemTime}</span>
                             <div className="status-icons">
                               {/* Signal Bars SVG */}
                               <svg width="15" height="10" viewBox="0 0 15 10" fill="currentColor" className="status-icon-svg">
@@ -4930,7 +5113,13 @@ export default function Home() {
 
               <div className="story-viewer-header">
                 <div className="story-viewer-user">
-                  <div className="story-viewer-avatar">{activeImageStories[activeStoryIndex].avatar}</div>
+                  <div className="story-viewer-avatar">
+                    {activeImageStories[activeStoryIndex].avatar && (activeImageStories[activeStoryIndex].avatar.startsWith('http') || activeImageStories[activeStoryIndex].avatar.startsWith('https')) ? (
+                      <img src={activeImageStories[activeStoryIndex].avatar} alt={activeImageStories[activeStoryIndex].username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      activeImageStories[activeStoryIndex].avatar || '👤'
+                    )}
+                  </div>
                   <div>
                     <div className="story-viewer-name">{activeImageStories[activeStoryIndex].username}</div>
                     <span className="story-viewer-time">Travel Buddy</span>
