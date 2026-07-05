@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -60,57 +61,248 @@ export default function Home() {
     );
   };
 
-  const renderMilestoneIcon = (id: string, size = 22) => {
+  const renderMilestoneIcon = (id: string, size = 58) => {
+    // Multi-gradient medallion definitions for embossed/metallic finishes
+    const svgDefs = (
+      <defs>
+        {/* Metal ring gradients */}
+        <linearGradient id="goldRing" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffe082" />
+          <stop offset="30%" stopColor="#ffb300" />
+          <stop offset="70%" stopColor="#ff8f00" />
+          <stop offset="100%" stopColor="#ff6f00" />
+        </linearGradient>
+        <linearGradient id="silverRing" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f1f5f9" />
+          <stop offset="30%" stopColor="#cbd5e1" />
+          <stop offset="70%" stopColor="#94a3b8" />
+          <stop offset="100%" stopColor="#475569" />
+        </linearGradient>
+        <linearGradient id="bronzeRing" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fdba74" />
+          <stop offset="40%" stopColor="#ca8a04" />
+          <stop offset="75%" stopColor="#854d0e" />
+          <stop offset="100%" stopColor="#713f12" />
+        </linearGradient>
+        <linearGradient id="cosmicRing" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ec4899" />
+          <stop offset="50%" stopColor="#a855f7" />
+          <stop offset="100%" stopColor="#6366f1" />
+        </linearGradient>
+        <linearGradient id="tealRing" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#22d3ee" />
+          <stop offset="50%" stopColor="#0d9488" />
+          <stop offset="100%" stopColor="#0f766e" />
+        </linearGradient>
+
+        {/* Medallion face radial backgrounds */}
+        <radialGradient id="goldFace" cx="50%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#1e293b" />
+          <stop offset="100%" stopColor="#0f172a" />
+        </radialGradient>
+
+        {/* Embossed Drop shadow filter */}
+        <filter id="embossShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.5" />
+        </filter>
+      </defs>
+    );
+
+    const renderMedallionWrapper = (gradientId: string, children: React.ReactNode) => (
+      <svg width={size} height={size} viewBox="0 0 80 80" className="medallion-svg">
+        {svgDefs}
+        {/* Embossed outer metal ring */}
+        <circle cx="40" cy="40" r="37" fill="none" stroke={`url(#${gradientId})`} strokeWidth="4.5" filter="url(#embossShadow)" />
+        {/* Medallion core face */}
+        <circle cx="40" cy="40" r="35" fill="url(#goldFace)" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+        {/* Subtle inner radial glow rim */}
+        <circle cx="40" cy="40" r="33.5" fill="none" stroke={`url(#${gradientId})`} strokeWidth="0.75" opacity="0.35" />
+        {children}
+      </svg>
+    );
+
     switch (id) {
-      case 'ms-1':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
-          </svg>
-        );
-      case 'ms-2':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M2 20L12 4L22 20H2Z" />
-            <path d="M12 4L15 10H9L12 4Z" fill="currentColor" opacity="0.4" />
-          </svg>
-        );
-      case 'ms-3':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3" />
-          </svg>
-        );
-      case 'ms-4':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M2 12h20" />
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-        );
-      case 'ms-5':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M23 7l-7 5 7 5V7z" />
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-          </svg>
-        );
-      case 'ms-6':
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3" />
-            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-            <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
-          </svg>
-        );
+      case 'ms-1': // First Flight
+        return renderMedallionWrapper('goldRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#goldRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Speed trails */}
+            <path d="M2 19h4M1 15h6M3 11h3" strokeWidth="1" opacity="0.5" />
+            {/* Embossed airplane outline */}
+            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z" fill="rgba(251, 191, 36, 0.08)" />
+          </g>
+        ));
+
+      case 'ms-2': // Mountain Conqueror
+        return renderMedallionWrapper('silverRing', (
+          <g transform="translate(20, 20) scale(1.65)" stroke="url(#silverRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Peaks */}
+            <path d="M3 20l8-14 8 14H3z" fill="rgba(148, 163, 184, 0.08)" />
+            <path d="M12 20l5-9 4 9H12z" />
+            <path d="M1 20l6-10 5 10H1z" opacity="0.6" />
+            {/* Snow caps */}
+            <path d="M9 10.5l2-3.5 2 3.5-1 1-1-1z" fill="currentColor" />
+            {/* Winding trail */}
+            <path d="M11 20c-1.5-2-1-3 1-5s0.5-3-1-4.5" stroke="#3b82f6" strokeWidth="1.5" />
+          </g>
+        ));
+
+      case 'ms-3': // Tropical Nomad
+        return renderMedallionWrapper('bronzeRing', (
+          <g transform="translate(20, 20) scale(1.65)" stroke="url(#bronzeRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Sunset sphere background */}
+            <circle cx="12" cy="12" r="9" stroke="none" fill="rgba(234, 88, 12, 0.08)" />
+            {/* Compass rose ticks */}
+            <line x1="12" y1="2" x2="12" y2="4" />
+            <line x1="12" y1="20" x2="12" y2="22" />
+            <line x1="2" y1="12" x2="4" y2="12" />
+            <line x1="20" y1="12" x2="22" y2="12" />
+            {/* Palm tree */}
+            <path d="M12 21c-2-3-2-7 1-10" strokeWidth="1.5" />
+            <path d="M13 11c-2-1.5-4-0.5-5 1.5M13 11c-1-2.5-3-2.5-4-1M13 11c0-2.5 2-3 3.5-2.5M13 11c1-1.5 3-1 4.5 0.5" />
+            {/* Ocean waves */}
+            <path d="M6 19h12" stroke="#10b981" strokeWidth="1" />
+            <path d="M8 21h8" stroke="#10b981" strokeWidth="0.8" />
+          </g>
+        ));
+
+      case 'ms-4': // Globetrotter Pro
+        return renderMedallionWrapper('cosmicRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#cosmicRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Globe latitude/longitude */}
+            <circle cx="12" cy="12" r="9" fill="rgba(168, 85, 247, 0.08)" />
+            <path d="M3 12h18" />
+            <path d="M12 3v18" />
+            <path d="M12 3a15.3 15.3 0 0 1 4 9 15.3 15.3 0 0 1-4 9 15.3 15.3 0 0 1-4-9 15.3 15.3 0 0 1 4-9z" />
+            {/* Orbital path lines */}
+            <ellipse cx="12" cy="12" rx="11" ry="3.5" transform="rotate(-30 12 12)" stroke="#ec4899" strokeWidth="0.8" strokeDasharray="3 2" />
+            <ellipse cx="12" cy="12" rx="11" ry="3.5" transform="rotate(40 12 12)" stroke="#6366f1" strokeWidth="0.8" strokeDasharray="3 2" />
+          </g>
+        ));
+
+      case 'ms-5': // Storyteller Master
+        return renderMedallionWrapper('cosmicRing', (
+          <g transform="translate(20, 20) scale(1.65)" stroke="url(#cosmicRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Embossed camera structure */}
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" fill="rgba(244, 63, 94, 0.08)" />
+            {/* Lens aperture ring */}
+            <circle cx="12" cy="13" r="5" />
+            <circle cx="12" cy="13" r="2.5" fill="currentColor" />
+            {/* Flash bulb */}
+            <circle cx="18" cy="9" r="1.2" fill="currentColor" />
+          </g>
+        ));
+
+      case 'ms-6': // Passport Stamped
+        return renderMedallionWrapper('tealRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#tealRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Passport booklet background */}
+            <rect x="4" y="3" width="11" height="15" rx="1.5" fill="rgba(6, 182, 212, 0.08)" />
+            {/* Embossed booklet lines */}
+            <line x1="7" y1="6" x2="12" y2="6" />
+            <line x1="7" y1="10" x2="12" y2="10" />
+            {/* Stamped star silhouette */}
+            <polygon points="17 9 19 12 22 10 20 7" fill="rgba(22, 211, 238, 0.3)" />
+            <circle cx="18.5" cy="9.5" r="3.5" stroke="#0891b2" strokeWidth="1" />
+          </g>
+        ));
+
+      case 'ms-7': // Night Owl Explorer
+        return renderMedallionWrapper('silverRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#silverRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* City skyline at night */}
+            <path d="M2 20h20v-3h-2v-4h-3v4h-2V9h-3v7h-2v-5H5v9z" fill="rgba(148, 163, 184, 0.08)" />
+            {/* Crescent moon outline */}
+            <path d="M12 2A7.5 7.5 0 0 0 19.5 9.5a7.5 7.5 0 0 1-7.5-7.5z" stroke="#cbd5e1" strokeWidth="1.5" fill="#f1f5f9" />
+            {/* Stars */}
+            <circle cx="5" cy="5" r="0.5" fill="#cbd5e1" />
+            <circle cx="9" cy="3" r="0.5" fill="#cbd5e1" />
+          </g>
+        ));
+
+      case 'ms-8': // Local Favorite
+        return renderMedallionWrapper('cosmicRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#cosmicRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Map pin */}
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="rgba(244, 63, 94, 0.08)" />
+            {/* Heart shape center */}
+            <path d="M12 7.6c-0.8-1-2.2-1.3-3.2-0.5s-1.2 2.3-0.2 3.3l3.4 3.4 3.4-3.4c1-1 0.8-2.5-0.2-3.3s-2.4-0.5-3.2 0.5z" fill="#ec4899" />
+            {/* Local concentric ring ticks */}
+            <circle cx="12" cy="10" r="7" strokeDasharray="3 3" opacity="0.6" />
+          </g>
+        ));
+
+      case 'ms-9': // Streak Keeper
+        return renderMedallionWrapper('goldRing', (
+          <g transform="translate(20, 20) scale(1.65)" stroke="url(#goldRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Calendar backing */}
+            <rect x="3" y="5" width="18" height="15" rx="2" fill="rgba(249, 115, 22, 0.08)" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            {/* Calendar grid dots */}
+            <circle cx="7" cy="14" r="1" fill="currentColor" />
+            <circle cx="12" cy="14" r="1" fill="currentColor" />
+            <circle cx="17" cy="14" r="1" fill="currentColor" />
+            {/* Embossed Flame */}
+            <path d="M12 2c3.5 3.5 3.5 7 0 9.5-3-2-3-5.5 0-9.5z" stroke="#f97316" strokeWidth="1.5" fill="#f97316" />
+          </g>
+        ));
+
+      case 'ms-10': // Hidden Gem Hunter
+        return renderMedallionWrapper('tealRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#tealRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Sparkling Diamond */}
+            <polygon points="12 3 17 8 12 16 7 8" fill="rgba(20, 184, 166, 0.2)" stroke="#14b8a6" />
+            <line x1="7" y1="8" x2="17" y2="8" />
+            <line x1="12" y1="3" x2="12" y2="16" />
+            {/* Magnifying glass frame */}
+            <circle cx="14" cy="10" r="7" stroke="#0d9488" strokeWidth="1.5" />
+            <line x1="19" y1="15" x2="23" y2="19" stroke="#0d9488" strokeWidth="2.5" />
+          </g>
+        ));
+
+      case 'ms-11': // Community Builder
+        return renderMedallionWrapper('bronzeRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#bronzeRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Trophy shape from nodes */}
+            <path d="M6 9h12v4a6 6 0 0 1-12 0V9z" fill="rgba(132, 204, 22, 0.08)" />
+            <path d="M12 15v4m-4 2h8" />
+            {/* Network user nodes surrounding trophy */}
+            <circle cx="5" cy="7" r="1.5" fill="currentColor" />
+            <circle cx="19" cy="7" r="1.5" fill="currentColor" />
+            <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+            <line x1="5" y1="7" x2="12" y2="5" />
+            <line x1="19" y1="7" x2="12" y2="5" />
+          </g>
+        ));
+
+      case 'ms-12': // Road Warrior
+        return renderMedallionWrapper('cosmicRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#cosmicRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Shield backer */}
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(99, 102, 241, 0.08)" />
+            {/* Perspective Winding Road */}
+            <path d="M12 4l-4 14h8l-4-14z" />
+            <path d="M12 4v14" stroke="#6366f1" strokeDasharray="2 2" strokeWidth="1.5" />
+          </g>
+        ));
+
+      case 'ms-13': // Culture Seeker
+        return renderMedallionWrapper('cosmicRing', (
+          <g transform="translate(18, 18) scale(1.85)" stroke="url(#cosmicRing)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+            {/* Three land landmarks (Pyramids, Torii, Column) */}
+            {/* Pyramids */}
+            <polygon points="2 18 6 10 11 18" fill="rgba(236, 72, 153, 0.1)" />
+            {/* Torii Gate */}
+            <path d="M14 18v-7h6v7m-8-5h10M12 11h10" strokeWidth="1.5" />
+            {/* Roman column */}
+            <line x1="12" y1="7" x2="12" y2="18" strokeWidth="2.5" />
+            <line x1="10" y1="7" x2="14" y2="7" />
+          </g>
+        ));
+
       default:
-        return (
-          <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-        );
+        return renderMedallionWrapper('silverRing', (
+          <circle cx="40" cy="40" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+        ));
     }
   };
 
@@ -201,6 +393,8 @@ export default function Home() {
       if (intervalId) clearInterval(intervalId);
     };
   }, []);
+
+
 
   // Liquid Indicator Refs and Position States
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -409,8 +603,28 @@ export default function Home() {
     );
   };
 
+  interface Post {
+    id: string;
+    username: string;
+    avatar: string;
+    location: string;
+    images: string[];
+    caption: string;
+    hashtags: string[];
+    likesCount: number;
+    comments: { id: string; username: string; text: string }[];
+    image?: string;
+    title?: string;
+    categories?: string[];
+    platform?: string;
+    scheduleDate?: string;
+    scheduleTime?: string;
+    visibility?: string;
+    allowComments?: boolean;
+  }
+
   // Custom posts list state
-  const [posts, setPosts] = useState([
+  const [posts, setPosts] = useState<Post[]>([
     {
       id: 'post-1',
       username: 'wanderlust_jenny',
@@ -840,6 +1054,8 @@ export default function Home() {
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
   const [showHeartOverlay, setShowHeartOverlay] = useState(false);
 
+
+
   // Redesigned Destination Discovery States
   const [heroIndex, setHeroIndex] = useState(0);
   const [isHeroHovered, setIsHeroHovered] = useState(false);
@@ -1109,6 +1325,42 @@ export default function Home() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
+  // Creator Dashboard Refined wizard states
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isStepChanging, setIsStepChanging] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [previewPulse, setPreviewPulse] = useState(false);
+  const [likeParticles, setLikeParticles] = useState<{ id: number; x: number; y: number }[]>([]);
+
+  const goToStep = (step: 1 | 2 | 3 | 4) => {
+    setIsStepChanging(true);
+    setTimeout(() => {
+      setCurrentStep(step);
+      setIsStepChanging(false);
+    }, 220);
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'create') return;
+    setPreviewPulse(true);
+    const timer = setTimeout(() => setPreviewPulse(false), 650);
+    return () => clearTimeout(timer);
+  }, [postTitle, newPostLocation, newPostCaption, postImages, activeTab]);
+
+  const triggerDoubleTapParticles = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newParticles = Array.from({ length: 8 }).map((_, i) => ({
+      id: Date.now() + i,
+      x,
+      y,
+    }));
+    setLikeParticles(newParticles);
+    setTimeout(() => setLikeParticles([]), 700);
+  };
+
   // Story progression effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -1334,46 +1586,57 @@ export default function Home() {
     e.preventDefault();
     if (!newPostCaption.trim()) return;
 
-    // Parse hashtags dynamically from the caption, fallback if none found
-    const parsedHashtags = newPostCaption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust'];
-    
-    // Choose the first image in the attached images as the primary thumbnail/image for feed compatibility
-    const primaryImage = postImages.length > 0 ? postImages[0] : 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80';
+    setPublishStatus('loading');
 
-    const newPost = {
-      id: `post-${Date.now()}`,
-      username: user?.username || 'isabella_nilsson',
-      avatar: user?.avatarUrl ? <img src={user.avatarUrl} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : '🌟',
-      location: newPostLocation.trim() || 'Travel Heaven 📍',
-      image: primaryImage,
-      images: postImages.length > 0 ? postImages : [primaryImage],
-      title: postTitle.trim(),
-      caption: newPostCaption.trim(),
-      hashtags: parsedHashtags,
-      likesCount: 0,
-      comments: [],
-      categories: selectedCategories,
-      platform: selectedPlatform,
-      scheduleDate,
-      scheduleTime,
-      visibility,
-      allowComments
-    };
+    setTimeout(() => {
+      setPublishStatus('success');
 
-    setPosts((prev) => [newPost, ...prev]);
+      // Parse hashtags dynamically from the caption, fallback if none found
+      const parsedHashtags = (newPostCaption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust']) as string[];
+      
+      // Choose the first image in the attached images as the primary thumbnail/image for feed compatibility
+      const primaryImage = postImages.length > 0 ? postImages[0] : 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80';
+
+      const newPost: Post = {
+        id: `post-${Date.now()}`,
+        username: user?.username || 'isabella_nilsson',
+        avatar: user?.avatarUrl || '🌟',
+        location: newPostLocation.trim() || 'Travel Heaven 📍',
+        image: primaryImage,
+        images: postImages.length > 0 ? postImages : [primaryImage],
+        title: postTitle.trim(),
+        caption: newPostCaption.trim(),
+        hashtags: parsedHashtags,
+        likesCount: 0,
+        comments: [],
+        categories: selectedCategories,
+        platform: selectedPlatform,
+        scheduleDate,
+        scheduleTime,
+        visibility,
+        allowComments
+      };
+
+      setPosts((prev) => [newPost, ...prev]);
     
-    // Reset states after publishing
-    setNewPostCaption('');
-    setNewPostLocation('');
-    setPostTitle('');
-    setTaggedFriends(['@wanderlust.jenny', '@markstravels']);
-    setSelectedCategories(['Adventure']);
-    setPostImages([
-      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80'
-    ]);
-    
-    // Redirect to home feed
-    setActiveTab('home');
+      setTimeout(() => {
+        setPublishStatus('idle');
+
+        // Reset states after publishing
+        setNewPostCaption('');
+        setNewPostLocation('');
+        setPostTitle('');
+        setTaggedFriends(['@wanderlust.jenny', '@markstravels']);
+        setSelectedCategories(['Adventure']);
+        setPostImages([
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80'
+        ]);
+        
+        showToast('Post published successfully! ✨');
+        setActiveTab('home');
+        setCurrentStep(1); // Reset wizard to step 1
+      }, 1200);
+    }, 1800);
   };
 
   // Media panel helper functions
@@ -1418,9 +1681,10 @@ export default function Home() {
   };
 
   // Live Preview Helper for double tap like
-  const handleDoubleTapPreview = () => {
+  const handleDoubleTapPreview = (e: React.MouseEvent) => {
     setIsPreviewLiked(true);
     setShowHeartOverlay(true);
+    triggerDoubleTapParticles(e);
     setTimeout(() => {
       setShowHeartOverlay(false);
     }, 800);
@@ -1555,15 +1819,279 @@ export default function Home() {
     }
   ];
 
+  interface Milestone {
+    id: string;
+    title: string;
+    desc: string;
+    unlocked: boolean;
+    points: number;
+    badgeColor: string;
+    rarity: 'common' | 'rare' | 'epic' | 'legendary';
+    rarityPercent: string;
+    statValue: string;
+    date?: string;
+    progress?: string;
+  }
+
   // Mock Travel Milestones (no emojis)
-  const [milestones, setMilestones] = useState([
-    { id: 'ms-1', title: 'First Flight', desc: 'Booked and took first flight to a new destination.', unlocked: true, date: 'March 14, 2025', points: 100, badgeColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
-    { id: 'ms-2', title: 'Mountain Conqueror', desc: 'Ascended above 4,000m altitude in Leh pass.', unlocked: true, date: 'May 20, 2025', points: 250, badgeColor: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' },
-    { id: 'ms-3', title: 'Tropical Nomad', desc: 'Vlogged live in Ubud cafes and beach settings.', unlocked: true, date: 'June 02, 2025', points: 200, badgeColor: 'linear-gradient(135deg, #10b981 0%, #047857 100%)' },
-    { id: 'ms-4', title: 'Globetrotter Pro', desc: 'Visit 5 or more countries around the world.', unlocked: false, progress: '3/5', points: 500, badgeColor: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)' },
-    { id: 'ms-5', title: 'Storyteller Master', desc: 'Uploaded 5 or more vlogs or posts to Travora.', unlocked: true, date: 'June 28, 2026', points: 300, badgeColor: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)' },
-    { id: 'ms-6', title: 'SQLite Maestro', desc: 'Verified database connections and synchronized schema.', unlocked: true, date: 'July 01, 2026', points: 400, badgeColor: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }
+  const [milestones, setMilestones] = useState<Milestone[]>([
+    { id: 'ms-1', title: 'First Flight', desc: 'Booked and took first flight to a new destination.', unlocked: true, date: 'March 14, 2025', points: 100, badgeColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', rarity: 'common', rarityPercent: '85%', statValue: '1 flight' },
+    { id: 'ms-2', title: 'Mountain Conqueror', desc: 'Ascended above 4,000m altitude in Leh pass.', unlocked: true, date: 'May 20, 2025', points: 250, badgeColor: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', rarity: 'epic', rarityPercent: '18%', statValue: '4,200m alt' },
+    { id: 'ms-3', title: 'Tropical Nomad', desc: 'Vlogged live in Ubud cafes and beach settings.', unlocked: true, date: 'June 02, 2025', points: 200, badgeColor: 'linear-gradient(135deg, #10b981 0%, #047857 100%)', rarity: 'rare', rarityPercent: '45%', statValue: '3 cafes' },
+    { id: 'ms-4', title: 'Globetrotter Pro', desc: 'Visit 5 or more countries around the world.', unlocked: false, progress: '3/5', points: 500, badgeColor: 'linear-gradient(135deg, #a855f7 0%, #7e22ce 100%)', rarity: 'legendary', rarityPercent: '4%', statValue: '3/5 countries' },
+    { id: 'ms-5', title: 'Storyteller Master', desc: 'Uploaded 5 or more vlogs or posts to Travora.', unlocked: true, date: 'June 28, 2026', points: 300, badgeColor: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)', rarity: 'legendary', rarityPercent: '9%', statValue: '7 posts' },
+    { id: 'ms-6', title: 'Passport Stamped', desc: 'Completed your first international trip.', unlocked: true, date: 'June 29, 2026', points: 150, badgeColor: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', rarity: 'common', rarityPercent: '72%', statValue: '1 stamp' },
+    { id: 'ms-7', title: 'Night Owl Explorer', desc: 'Checked in at a destination after midnight local time.', unlocked: true, date: 'June 30, 2026', points: 180, badgeColor: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)', rarity: 'common', rarityPercent: '61%', statValue: '01:24 AM' },
+    { id: 'ms-8', title: 'Local Favorite', desc: 'Had a post liked by 50+ people from the destination country.', unlocked: false, progress: '38/50', points: 350, badgeColor: 'linear-gradient(135deg, #f43f5e 0%, #d946ef 100%)', rarity: 'epic', rarityPercent: '12%', statValue: '38/50 likes' },
+    { id: 'ms-9', title: 'Streak Keeper', desc: 'Posted travel content for 7 consecutive days.', unlocked: false, progress: '5/7', points: 400, badgeColor: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', rarity: 'epic', rarityPercent: '8%', statValue: '5/7 days' },
+    { id: 'ms-10', title: 'Hidden Gem Hunter', desc: 'Tagged a location with fewer than 100 prior check-ins.', unlocked: false, progress: '0/1', points: 600, badgeColor: 'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)', rarity: 'legendary', rarityPercent: '2%', statValue: '0/1 gems' },
+    { id: 'ms-11', title: 'Community Builder', desc: 'Reached 1,000 followers on Travora.', unlocked: true, date: 'July 02, 2026', points: 300, badgeColor: 'linear-gradient(135deg, #84cc16 0%, #4d7c0f 100%)', rarity: 'rare', rarityPercent: '27%', statValue: '1,048 followers' },
+    { id: 'ms-12', title: 'Road Warrior', desc: 'Logged 5,000+ km of travel distance in-app.', unlocked: false, progress: '4200/5000', points: 700, badgeColor: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)', rarity: 'legendary', rarityPercent: '3%', statValue: '4,200/5,000 km' },
+    { id: 'ms-13', title: 'Culture Seeker', desc: 'Visited destinations across 3 different continents.', unlocked: false, progress: '2/3', points: 800, badgeColor: 'linear-gradient(135deg, #ec4899 0%, #be123c 100%)', rarity: 'legendary', rarityPercent: '1.5%', statValue: '2/3 continents' }
   ]);
+
+  // Crest click click click click click easter egg state
+  const [crestClickCount, setCrestClickCount] = useState(0);
+  const [showDevPanel, setShowDevPanel] = useState(false);
+
+  const handleCrestClick = () => {
+    const nextCount = crestClickCount + 1;
+    if (nextCount >= 5) {
+      setShowDevPanel(!showDevPanel);
+      showToast(showDevPanel ? 'Developer tools hidden 🔒' : 'Developer tools activated! 🛠️');
+      setCrestClickCount(0);
+    } else {
+      setCrestClickCount(nextCount);
+      setTimeout(() => setCrestClickCount(c => c === nextCount ? 0 : c), 3000);
+    }
+  };
+
+  // Premium Game-Quality Milestones States
+  const [milestonesView, setMilestonesView] = useState<'grid' | 'timeline'>('grid');
+  const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(null);
+  const [tokenTurnedId, setTokenTurnedId] = useState<string | null>(null);
+  const [soundMuted, setSoundMuted] = useState(false);
+  const [unlockingMilestoneId, setUnlockingMilestoneId] = useState<string | null>(null);
+  const [celebrationConfetti, setCelebrationConfetti] = useState(false);
+  const [shareBadge, setShareBadge] = useState<any | null>(null);
+  const [animatedXP, setAnimatedXP] = useState(0);
+  const [animatedBadgesCount, setAnimatedBadgesCount] = useState(0);
+  const [activeTimelinePopoverId, setActiveTimelinePopoverId] = useState<string | null>(null);
+
+  // Audio synthesizer for achievement unlock chime
+  const playUnlockSound = () => {
+    if (soundMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      const playTone = (freq: number, start: number, duration: number, type: OscillatorType = 'sine') => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        
+        gain.gain.setValueAtTime(0.001, start);
+        gain.gain.exponentialRampToValueAtTime(0.15, start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+      };
+      
+      playTone(523.25, now, 0.12, 'triangle'); // C5
+      playTone(659.25, now + 0.1, 0.12, 'triangle'); // E5
+      playTone(783.99, now + 0.2, 0.12, 'triangle'); // G5
+      playTone(1046.50, now + 0.3, 0.4, 'sine'); // C6
+    } catch (e) {
+      console.warn("Audio Context failed", e);
+    }
+  };
+
+  // XP Progress & Badges count fill animation on Tab load
+  useEffect(() => {
+    if (profileTab === 'milestones') {
+      setAnimatedXP(0);
+      setAnimatedBadgesCount(0);
+      const targetXP = milestones.reduce((sum, ms) => sum + (ms.unlocked ? ms.points : 0), 0);
+      const unlockedCount = milestones.filter(m => m.unlocked).length;
+
+      let curXP = 0;
+      const xpTimer = setInterval(() => {
+        curXP += Math.ceil(targetXP / 20);
+        if (curXP >= targetXP) {
+          curXP = targetXP;
+          clearInterval(xpTimer);
+        }
+        setAnimatedXP(curXP);
+      }, 35);
+
+      let curBadges = 0;
+      const badgesTimer = setInterval(() => {
+        curBadges += 1;
+        if (curBadges >= unlockedCount) {
+          curBadges = unlockedCount;
+          clearInterval(badgesTimer);
+        }
+        setAnimatedBadgesCount(curBadges);
+      }, 100);
+
+      return () => {
+        clearInterval(xpTimer);
+        clearInterval(badgesTimer);
+      };
+    }
+  }, [profileTab, milestones]);
+
+  // Confetti particles for real-time unlock
+  const [particlesList, setParticlesList] = useState<{ id: number; color: string; x: number; y: number; vx: number; vy: number }[]>([]);
+  useEffect(() => {
+    if (celebrationConfetti) {
+      // Generate confetti particles
+      const colors = ['#f59e0b', '#3b82f6', '#10b981', '#a855f7', '#f43f5e', '#06b6d4'];
+      const newParts = Array.from({ length: 60 }).map((_, i) => ({
+        id: Date.now() + i,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        x: 50 + (Math.random() - 0.5) * 10, // center-ish horizontally
+        y: 40 + (Math.random() - 0.5) * 10, // middle-ish vertically
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.8) * 14 - 4
+      }));
+      setParticlesList(newParts);
+
+      // Animate particles list down
+      const interval = setInterval(() => {
+        setParticlesList(prev => prev.map(p => ({
+          ...p,
+          x: p.x + p.vx * 0.1,
+          y: p.y + p.vy * 0.1,
+          vy: p.vy + 0.7 // gravity
+        })).filter(p => p.y < 120 && p.x > -20 && p.x < 120));
+      }, 30);
+
+      const endTimer = setTimeout(() => {
+        setCelebrationConfetti(false);
+        setParticlesList([]);
+        clearInterval(interval);
+      }, 3000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(endTimer);
+      };
+    }
+  }, [celebrationConfetti]);
+
+  const getProgressFraction = (progressStr?: string) => {
+    if (!progressStr) return 0;
+    const parts = progressStr.split('/');
+    if (parts.length === 2) {
+      const val = parseFloat(parts[0]) / parseFloat(parts[1]);
+      return isNaN(val) ? 0 : val;
+    }
+    return 0;
+  };
+
+  const getTimelineConnectionLabel = (index: number) => {
+    const labels = [
+      "Starting out...",
+      "2 months later",
+      "500 km logged",
+      "First border crossing",
+      "3 weeks travel streak",
+      "Finding rare gems",
+      "Gaining followers",
+      "Continent hop",
+      "Crossing oceans",
+      "Frequent flyer status",
+      "Explorer Elite rank",
+      "Legendary status achieved"
+    ];
+    return labels[index] || "Moving along...";
+  };
+
+  const [tiltStyle, setTiltStyle] = useState<Record<string, React.CSSProperties>>({});
+
+  const handleMouseMove = (id: string, e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    
+    const tiltX = -(y / (rect.height / 2)) * 15;
+    const tiltY = (x / (rect.width / 2)) * 15;
+    
+    setTiltStyle(prev => ({
+      ...prev,
+      [id]: {
+        transform: `perspective(300px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.06)`,
+        transition: 'transform 0.05s ease-out'
+      }
+    }));
+  };
+
+  const handleMouseLeave = (id: string) => {
+    setTiltStyle(prev => ({
+      ...prev,
+      [id]: {
+        transform: 'perspective(300px) rotateX(0deg) rotateY(0deg) scale(1)',
+        transition: 'transform 0.3s cubic-bezier(0.25, 1, 0.4, 1)'
+      }
+    }));
+  };
+
+  const triggerMockUnlock = () => {
+    const isUnlocked = milestones.find(m => m.id === 'ms-4')?.unlocked;
+    if (isUnlocked) {
+      setMilestones(prev => prev.map(m => m.id === 'ms-4' ? { ...m, unlocked: false, date: undefined } : m));
+      setUnlockingMilestoneId(null);
+      showToast('Globetrotter Pro milestone locked! Click unlock to celebrate! 🔒');
+    } else {
+      setUnlockingMilestoneId('ms-4');
+      setTimeout(() => {
+        playUnlockSound();
+        setCelebrationConfetti(true);
+        setMilestones(prev => prev.map(m => m.id === 'ms-4' ? { ...m, unlocked: true, date: 'July 05, 2026' } : m));
+        showToast('Trophy Unlocked: Globetrotter Pro! 🏆');
+      }, 500);
+    }
+  };
+
+  const toggleCardFlip = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    if (expandedMilestoneId === id) {
+      // Close sequence
+      setExpandedMilestoneId(null);
+      setTimeout(() => {
+        setTokenTurnedId(null);
+      }, 250); // wait for collapse stretch
+    } else if (expandedMilestoneId !== null) {
+      // Another card is open. Collapse it first.
+      setExpandedMilestoneId(null);
+      setTimeout(() => {
+        setTokenTurnedId(null);
+        
+        // Wait for collapse + flip back, then trigger open sequence on new card
+        setTimeout(() => {
+          setTokenTurnedId(id);
+          setTimeout(() => {
+            setExpandedMilestoneId(id);
+          }, 180); // turn duration
+        }, 150); // reverse turn duration
+      }, 250); // collapse duration
+    } else {
+      // Open sequence from resting state
+      setTokenTurnedId(id);
+      setTimeout(() => {
+        setExpandedMilestoneId(id);
+      }, 180); // turn duration
+    }
+  };
 
   // Current slide index for highlight stories popup viewer
   const [activeStoryIdx, setActiveStoryIdx] = useState(0);
@@ -3507,7 +4035,6 @@ export default function Home() {
                               <span className="result-category">{dest.category}</span>
                             </div>
                           ))}
-                        
                         {travelDestinations.filter(dest => dest.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
                           <div className="palette-no-results">No matching destinations found. Press ESC to close.</div>
                         )}
@@ -3537,484 +4064,750 @@ export default function Home() {
                   </div>
                 </header>
 
-                <div className="creator-dashboard-layout">
-                  {/* Left Column: Media Panel */}
-                  <aside className="creator-dashboard-column media-panel-column">
-                    <div className="creator-glass-card media-panel-card">
-                      <div className="panel-header">
-                        <h3 className="panel-title">Upload Media</h3>
-                        <p className="panel-desc">Share photos or a video to attach to your post.</p>
-                      </div>
-                      
-                      {/* Drag & Drop zone */}
-                      <div 
-                        className="upload-dropzone"
-                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('dragover'); }}
-                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('dragover'); }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.currentTarget.classList.remove('dragover');
-                          const files = Array.from(e.dataTransfer.files);
-                          handleMediaUpload(files);
-                        }}
-                      >
-                        <input 
-                          type="file" 
-                          id="media-upload-input" 
-                          multiple 
-                          accept="image/*" 
-                          style={{ display: 'none' }} 
-                          onChange={(e) => {
-                            if (e.target.files) {
-                              handleMediaUpload(Array.from(e.target.files));
+                {/* Unified Stepper Progress Bar */}
+                <div className="creator-stepper-container">
+                  {[
+                    { number: 1, label: 'Upload Media' },
+                    { number: 2, label: 'Post Details' },
+                    { number: 3, label: 'Settings & Schedule' },
+                    { number: 4, label: 'Review & Publish' }
+                  ].map((step, idx) => {
+                    const isCompleted = currentStep > step.number;
+                    const isActive = currentStep === step.number;
+                    
+                    return (
+                      <React.Fragment key={step.number}>
+                        <div 
+                          className={`stepper-node ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                          onClick={() => {
+                            if (isCompleted || step.number <= currentStep + 1) {
+                              goToStep(step.number as any);
                             }
                           }}
-                        />
-                        <label htmlFor="media-upload-input" className="upload-label">
-                          <div className="upload-icon-wrapper">
-                            <svg className="upload-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
+                        >
+                          <div className="stepper-circle">
+                            {isCompleted ? (
+                              <svg className="checkmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                            ) : (
+                              step.number
+                            )}
                           </div>
-                          <span className="upload-title">Click to upload or drag & drop</span>
-                          <span className="upload-subtitle">Image, video, carousel</span>
-                        </label>
-                      </div>
-
-                      <div className="media-library-header">
-                        <span className="library-title">Media Library</span>
-                        <span className="library-count">All ({mediaLibrary.length})</span>
-                      </div>
-
-                      {/* Media library grid */}
-                      <div className="media-library-grid">
-                        {/* Plus button for quick upload */}
-                        <label htmlFor="media-upload-input" className="library-add-btn">
-                          <span className="add-plus-symbol">+</span>
-                        </label>
-
-                        {mediaLibrary.map((item) => {
-                          const isSelected = postImages.includes(item.url);
-                          return (
-                            <div 
-                              key={item.id} 
-                              className={`media-library-item ${isSelected ? 'selected' : ''}`}
-                              onClick={() => toggleMediaSelection(item.url)}
-                            >
-                              <img src={item.url} alt={item.name} className="library-item-img" />
-                              <div className="item-selection-overlay">
-                                <span className="selection-checkbox">
-                                  {isSelected && (
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
-                                      <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
-                                  )}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Attached Media List with details & reordering */}
-                      <div className="attached-media-section">
-                        <span className="section-label">Selected Media ({postImages.length})</span>
-                        {postImages.length === 0 ? (
-                          <div className="no-attached-media">No media attached to post. Select from library or upload.</div>
-                        ) : (
-                          <div className="attached-media-list">
-                            {postImages.map((imgUrl, index) => {
-                              const libItem = mediaLibrary.find(item => item.url === imgUrl) || {
-                                name: `uploaded_image_${index + 1}.jpg`,
-                                size: '1.4 MB',
-                                dimensions: '1326x1326'
-                              };
-                              return (
-                                <div key={imgUrl} className="attached-media-item">
-                                  <div className="attached-item-left">
-                                    {/* Reorder drag handle (mock buttons for precise control) */}
-                                    <div className="reorder-controls">
-                                      <button 
-                                        type="button" 
-                                        className="reorder-btn" 
-                                        disabled={index === 0}
-                                        onClick={(e) => { e.stopPropagation(); moveMedia(index, -1); }}
-                                        title="Move Up"
-                                      >
-                                        ▲
-                                      </button>
-                                      <button 
-                                        type="button" 
-                                        className="reorder-btn" 
-                                        disabled={index === postImages.length - 1}
-                                        onClick={(e) => { e.stopPropagation(); moveMedia(index, 1); }}
-                                        title="Move Down"
-                                      >
-                                        ▼
-                                      </button>
-                                    </div>
-                                    <img src={imgUrl} alt="Attached Preview" className="attached-item-thumbnail" />
-                                    <div className="attached-item-info">
-                                      <span className="item-filename">{libItem.name}</span>
-                                      <span className="item-meta">{libItem.dimensions} • {libItem.size}</span>
-                                    </div>
-                                  </div>
-                                  <div className="attached-item-actions">
-                                    <button 
-                                      type="button" 
-                                      className="media-item-action-btn delete-btn" 
-                                      onClick={() => toggleMediaSelection(imgUrl)}
-                                      title="Remove from post"
-                                    >
-                                      ✕
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                          <span className="stepper-label">{step.label}</span>
+                        </div>
+                        {idx < 3 && (
+                          <div className={`stepper-line ${currentStep > step.number ? 'completed' : ''}`} />
                         )}
-                      </div>
-                    </div>
-                  </aside>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
 
-                  {/* Center Column: Content Editor Form */}
-                  <main className="creator-dashboard-column editor-form-column">
-                    <div className="creator-glass-card editor-form-card">
-                      <form onSubmit={handleCreatePost} className="editor-form">
+                <div className="creator-dashboard-layout">
+                  {/* Left/Center Column: Wizard Step Card */}
+                  <div className={`creator-step-main-column ${isStepChanging ? 'exiting' : 'entering'}`}>
+                    
+                    {/* STEP 1: UPLOAD MEDIA */}
+                    {currentStep === 1 && (
+                      <div className="creator-glass-card media-panel-card animate-fade-in">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Upload Media</h3>
+                          <p className="panel-desc">Share photos or a video to attach to your post.</p>
+                        </div>
                         
-                        {/* Platform Selector Pills */}
-                        <div className="form-section">
-                          <label className="section-label">Platform Destination</label>
-                          <div className="platform-selector">
-                            {(['Feed', 'Stories', 'Community', 'Highlights'] as const).map((platform) => (
-                              <button
-                                key={platform}
-                                type="button"
-                                className={`platform-pill ${selectedPlatform === platform ? 'active' : ''}`}
-                                onClick={() => setSelectedPlatform(platform)}
-                              >
-                                <span className="platform-icon">
-                                  {platform === 'Feed' && '📱'}
-                                  {platform === 'Stories' && '✨'}
-                                  {platform === 'Community' && '👥'}
-                                  {platform === 'Highlights' && '⭐'}
-                                </span>
-                                {platform}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Title field */}
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="post-title-input">Title</label>
+                        {/* Drag & Drop zone */}
+                        <div 
+                          className={`upload-dropzone ${isDragOver ? 'dragover' : ''}`}
+                          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                          onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragOver(false);
+                            const files = Array.from(e.dataTransfer.files);
+                            handleMediaUpload(files);
+                          }}
+                        >
                           <input 
-                            type="text" 
-                            id="post-title-input" 
-                            className="form-input-premium" 
-                            placeholder="Austria: Panoramic Lake" 
-                            value={postTitle}
-                            onChange={(e) => setPostTitle(e.target.value)}
-                            required
+                            type="file" 
+                            id="media-upload-input" 
+                            multiple 
+                            accept="image/*" 
+                            style={{ display: 'none' }} 
+                            onChange={(e) => {
+                              if (e.target.files) {
+                                handleMediaUpload(Array.from(e.target.files));
+                              }
+                            }}
                           />
+                          <label htmlFor="media-upload-input" className="upload-label">
+                            <div className="upload-icon-wrapper">
+                              <svg className="upload-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                              </svg>
+                            </div>
+                            <span className="upload-title">Click to upload or drag & drop</span>
+                            <span className="upload-subtitle">Image, video, carousel</span>
+                          </label>
                         </div>
 
-                        {/* Location autocomplete */}
-                        <div className="form-group location-autocomplete-container">
-                          <label className="form-label" htmlFor="post-location-input">Location</label>
-                          <div className="form-input-with-icon">
-                            <span className="input-icon">📍</span>
-                            <input 
-                              type="text" 
-                              id="post-location-input" 
-                              className="form-input-premium" 
-                              placeholder="Where was this photo taken?" 
-                              value={newPostLocation}
-                              onChange={(e) => {
-                                setNewPostLocation(e.target.value);
-                                setLocationSuggestionsExpanded(true);
-                              }}
-                              onFocus={() => setLocationSuggestionsExpanded(true)}
-                              required
-                            />
-                          </div>
-                          
-                          {/* Autocomplete list dropdown */}
-                          {locationSuggestionsExpanded && newPostLocation && (
-                            <div className="autocomplete-suggestions">
-                              {travelDestinations
-                                .filter(dest => dest.name.toLowerCase().includes(newPostLocation.toLowerCase()))
-                                .map((dest) => (
-                                  <div 
-                                    key={dest.name} 
-                                    className="autocomplete-item"
-                                    onClick={() => {
-                                      setNewPostLocation(dest.name);
-                                      setLocationSuggestionsExpanded(false);
-                                    }}
-                                  >
-                                    <span className="suggestion-icon">📍</span>
-                                    <span className="suggestion-name">{dest.name}</span>
-                                  </div>
-                                ))}
+                        <div className="media-library-header">
+                          <span className="library-title">Media Library</span>
+                          <span className="library-count">All ({mediaLibrary.length})</span>
+                        </div>
+
+                        {/* Media library grid */}
+                        <div className="media-library-grid">
+                          <label htmlFor="media-upload-input" className="library-add-btn">
+                            <span className="add-plus-symbol">+</span>
+                          </label>
+
+                          {mediaLibrary.map((item) => {
+                            const isSelected = postImages.includes(item.url);
+                            return (
                               <div 
-                                className="autocomplete-item custom-add"
-                                onClick={() => setLocationSuggestionsExpanded(false)}
+                                key={item.id} 
+                                className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                                onClick={() => toggleMediaSelection(item.url)}
                               >
-                                <span className="suggestion-icon">➕</span>
-                                <span className="suggestion-name">Use custom: "{newPostLocation}"</span>
+                                <img src={item.url} alt={item.name} className="library-item-img" />
+                                <div className="item-selection-overlay">
+                                  <span className="selection-checkbox">
+                                    {isSelected && (
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                      </svg>
+                                    )}
+                                  </span>
+                                </div>
                               </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Attached Media List with details & reordering */}
+                        <div className="attached-media-section">
+                          <span className="section-label">Selected Media ({postImages.length})</span>
+                          {postImages.length === 0 ? (
+                            <div className="no-attached-media">No media attached to post. Select from library or upload.</div>
+                          ) : (
+                            <div className="attached-media-list">
+                              {postImages.map((imgUrl, index) => {
+                                const libItem = mediaLibrary.find(item => item.url === imgUrl) || {
+                                  name: `uploaded_image_${index + 1}.jpg`,
+                                  size: '1.4 MB',
+                                  dimensions: '1326x1326'
+                                };
+                                return (
+                                  <div key={imgUrl} className="attached-media-item">
+                                    <div className="attached-item-left">
+                                      <div className="reorder-controls">
+                                        <button 
+                                          type="button" 
+                                          className="reorder-btn" 
+                                          disabled={index === 0}
+                                          onClick={(e) => { e.stopPropagation(); moveMedia(index, -1); }}
+                                          title="Move Up"
+                                        >
+                                          ▲
+                                        </button>
+                                        <button 
+                                          type="button" 
+                                          className="reorder-btn" 
+                                          disabled={index === postImages.length - 1}
+                                          onClick={(e) => { e.stopPropagation(); moveMedia(index, 1); }}
+                                          title="Move Down"
+                                        >
+                                          ▼
+                                        </button>
+                                      </div>
+                                      <img src={imgUrl} alt="Attached Preview" className="attached-item-thumbnail" />
+                                      <div className="attached-item-info">
+                                        <span className="item-filename">{libItem.name}</span>
+                                        <span className="item-meta">{libItem.dimensions} • {libItem.size}</span>
+                                      </div>
+                                    </div>
+                                    <div className="attached-item-actions">
+                                      <button 
+                                        type="button" 
+                                        className="media-item-action-btn delete-btn" 
+                                        onClick={() => toggleMediaSelection(imgUrl)}
+                                        title="Remove from post"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
 
-                        {/* Caption Textarea with character count */}
-                        <div className="form-group">
-                          <div className="label-row">
-                            <label className="form-label" htmlFor="post-caption-input">Caption</label>
-                            <span className="char-count">{newPostCaption.length} / 2200</span>
-                          </div>
-                          <textarea 
-                            id="post-caption-input" 
-                            className="form-input-premium form-textarea-premium" 
-                            placeholder="Write a caption... (e.g. Scooter rides in Bali rice fields!) #wanderlust"
-                            value={newPostCaption}
-                            onChange={(e) => setNewPostCaption(e.target.value)}
-                            required
-                          />
+                        {/* Navigation Row */}
+                        <div style={{ marginTop: '24px' }}>
+                          <button 
+                            type="button" 
+                            className="creator-action-btn btn-publish"
+                            disabled={postImages.length === 0}
+                            onClick={() => goToStep(2)}
+                            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                          >
+                            Next: Post Details
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 2: POST DETAILS */}
+                    {currentStep === 2 && (
+                      <div className="creator-glass-card editor-form-card animate-fade-in">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Post Details</h3>
+                          <p className="panel-desc">Define target platform, title, location, caption, and categories.</p>
                         </div>
 
-                        {/* Tag travelers/friends section */}
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="friend-tag-input">Tag Travelers / Friends</label>
-                          <div className="tag-friends-input-wrapper">
-                            <input
-                              type="text"
-                              id="friend-tag-input"
-                              className="form-input-premium"
-                              placeholder="Add people by name or username"
-                              value={friendInput}
-                              onChange={(e) => setFriendInput(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ',') {
-                                  e.preventDefault();
-                                  const tag = friendInput.trim();
-                                  if (tag) {
-                                    const formatted = tag.startsWith('@') ? tag : `@${tag}`;
-                                    if (!taggedFriends.includes(formatted)) {
-                                      setTaggedFriends(prev => [...prev, formatted]);
-                                    }
-                                    setFriendInput('');
-                                  }
-                                }
-                              }}
+                        <form onSubmit={(e) => e.preventDefault()} className="editor-form">
+                          {/* Platform Selector Pills */}
+                          <div className="form-section">
+                            <label className="section-label">Platform Destination</label>
+                            <div className="platform-selector">
+                              {(['Feed', 'Stories', 'Community', 'Highlights'] as const).map((platform) => (
+                                <button
+                                  key={platform}
+                                  type="button"
+                                  className={`platform-pill ${selectedPlatform === platform ? 'active' : ''}`}
+                                  onClick={() => setSelectedPlatform(platform)}
+                                >
+                                  <span className="platform-icon">
+                                    {platform === 'Feed' && (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                                        <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="4" />
+                                      </svg>
+                                    )}
+                                    {platform === 'Stories' && (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" />
+                                      </svg>
+                                    )}
+                                    {platform === 'Community' && (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                      </svg>
+                                    )}
+                                    {platform === 'Highlights' && (
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                      </svg>
+                                    )}
+                                  </span>
+                                  {platform}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Title field */}
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="post-title-input">Title</label>
+                            <input 
+                              type="text" 
+                              id="post-title-input" 
+                              className="form-input-premium" 
+                              placeholder="Austria: Panoramic Lake" 
+                              value={postTitle}
+                              onChange={(e) => setPostTitle(e.target.value)}
+                              required
                             />
                           </div>
-                          <div className="tagged-friends-list">
-                            {taggedFriends.map(friend => (
-                              <span key={friend} className="friend-tag-pill">
-                                {friend}
-                                <button 
-                                  type="button" 
-                                  className="remove-tag-btn"
-                                  onClick={() => setTaggedFriends(prev => prev.filter(f => f !== friend))}
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
 
-                        {/* Travel Categories */}
-                        <div className="form-group">
-                          <label className="form-label">Travel Categories</label>
-                          <div className="categories-selection">
-                            {['Adventure', 'Food', 'Beaches', 'Mountains', 'Culture'].map(cat => {
-                              const isSelected = selectedCategories.includes(cat);
-                              return (
-                                <button
-                                  key={cat}
-                                  type="button"
-                                  className={`category-pill ${isSelected ? 'selected' : ''}`}
-                                  onClick={() => {
-                                    setSelectedCategories(prev => {
-                                      if (prev.includes(cat)) {
-                                        return prev.filter(c => c !== cat);
-                                      } else {
-                                        return [...prev, cat];
+                          {/* Location autocomplete */}
+                          <div className="form-group location-autocomplete-container">
+                            <label className="form-label" htmlFor="post-location-input">Location</label>
+                            <div className="form-input-with-icon">
+                              <span className="input-icon">📍</span>
+                              <input 
+                                type="text" 
+                                id="post-location-input" 
+                                className="form-input-premium" 
+                                placeholder="Where was this photo taken?" 
+                                value={newPostLocation}
+                                onChange={(e) => {
+                                  setNewPostLocation(e.target.value);
+                                  setLocationSuggestionsExpanded(true);
+                                }}
+                                onFocus={() => setLocationSuggestionsExpanded(true)}
+                                required
+                              />
+                            </div>
+                            
+                            {locationSuggestionsExpanded && newPostLocation && (
+                              <div className="autocomplete-suggestions">
+                                {travelDestinations
+                                  .filter(dest => dest.name.toLowerCase().includes(newPostLocation.toLowerCase()))
+                                  .map((dest) => (
+                                    <div 
+                                      key={dest.name} 
+                                      className="autocomplete-item"
+                                      onClick={() => {
+                                        setNewPostLocation(dest.name);
+                                        setLocationSuggestionsExpanded(false);
+                                      }}
+                                    >
+                                      <span className="suggestion-icon">📍</span>
+                                      <span className="suggestion-name">{dest.name}</span>
+                                    </div>
+                                  ))}
+                                <div 
+                                  className="autocomplete-item custom-add"
+                                  onClick={() => setLocationSuggestionsExpanded(false)}
+                                >
+                                  <span className="suggestion-icon">➕</span>
+                                  <span className="suggestion-name">Use custom: "{newPostLocation}"</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Caption Textarea */}
+                          <div className="form-group">
+                            <div className="label-row">
+                              <label className="form-label" htmlFor="post-caption-input">Caption</label>
+                              <span className="char-count">{newPostCaption.length} / 2200</span>
+                            </div>
+                            <textarea 
+                              id="post-caption-input" 
+                              className="form-input-premium form-textarea-premium" 
+                              placeholder="Write a caption... (e.g. Scooter rides in Bali rice fields!) #wanderlust"
+                              value={newPostCaption}
+                              onChange={(e) => setNewPostCaption(e.target.value)}
+                              required
+                            />
+                          </div>
+
+                          {/* Tag travelers */}
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="friend-tag-input">Tag Travelers / Friends</label>
+                            <div className="tag-friends-input-wrapper">
+                              <input
+                                type="text"
+                                id="friend-tag-input"
+                                className="form-input-premium"
+                                placeholder="Add people by name or username"
+                                value={friendInput}
+                                onChange={(e) => setFriendInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ',') {
+                                    e.preventDefault();
+                                    const tag = friendInput.trim();
+                                    if (tag) {
+                                      const formatted = tag.startsWith('@') ? tag : `@${tag}`;
+                                      if (!taggedFriends.includes(formatted)) {
+                                        setTaggedFriends(prev => [...prev, formatted]);
                                       }
-                                    });
-                                  }}
-                                >
-                                  {cat}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Schedule Section */}
-                        <div className="form-group schedule-form-section">
-                          <label className="form-label">Schedule Post</label>
-                          <div className="scheduler-inputs">
-                            <div className="input-group">
-                              <span className="scheduler-icon">📅</span>
-                              <input 
-                                type="date" 
-                                className="form-input-premium schedule-date-picker"
-                                value={scheduleDate} 
-                                onChange={(e) => setScheduleDate(e.target.value)}
+                                      setFriendInput('');
+                                    }
+                                  }
+                                }}
                               />
                             </div>
-                            <div className="input-group">
-                              <span className="scheduler-icon">⏰</span>
-                              <input 
-                                type="time" 
-                                className="form-input-premium schedule-time-picker"
-                                value={scheduleTime} 
-                                onChange={(e) => setScheduleTime(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Visibility elegant radio cards */}
-                        <div className="form-group">
-                          <label className="form-label">Post Visibility</label>
-                          <div className="visibility-options-grid">
-                            {[
-                              { key: 'public', title: 'Public', desc: 'Anyone on Travora can see this post' },
-                              { key: 'followers', title: 'Followers Only', desc: 'Only your active followers can view' },
-                              { key: 'private', title: 'Private (Only Me)', desc: 'Hidden completely from other users' }
-                            ].map(option => (
-                              <label key={option.key} className={`visibility-radio-card ${visibility === option.key ? 'active' : ''}`}>
-                                <input
-                                  type="radio"
-                                  name="visibility-selection"
-                                  value={option.key}
-                                  checked={visibility === option.key}
-                                  onChange={() => setVisibility(option.key as any)}
-                                  className="sr-only"
-                                />
-                                <span className="radio-indicator"></span>
-                                <span className="radio-content">
-                                  <span className="radio-title">{option.title}</span>
-                                  <span className="radio-description">{option.desc}</span>
+                            <div className="tagged-friends-list">
+                              {taggedFriends.map(friend => (
+                                <span key={friend} className="friend-tag-pill">
+                                  {friend}
+                                  <button 
+                                    type="button" 
+                                    className="remove-tag-btn"
+                                    onClick={() => setTaggedFriends(prev => prev.filter(f => f !== friend))}
+                                  >
+                                    ✕
+                                  </button>
                                 </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Travel Categories */}
+                          <div className="form-group">
+                            <label className="form-label">Travel Categories</label>
+                            <div className="categories-selection">
+                              {['Adventure', 'Food', 'Beaches', 'Mountains', 'Culture'].map(cat => {
+                                const isSelected = selectedCategories.includes(cat);
+                                return (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    className={`category-pill ${isSelected ? 'selected' : ''} ${scalingActiveBtn === `cat-${cat}` ? 'scale-bump' : ''}`}
+                                    onClick={() => {
+                                      setScalingActiveBtn(`cat-${cat}`);
+                                      setTimeout(() => setScalingActiveBtn(null), 250);
+                                      setSelectedCategories(prev => {
+                                        if (prev.includes(cat)) {
+                                          return prev.filter(c => c !== cat);
+                                        } else {
+                                          return [...prev, cat];
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    {isSelected && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '6px' }}>
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                          <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                      </span>
+                                    )}
+                                    {cat}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Navigation row */}
+                          <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-draft"
+                              onClick={() => goToStep(1)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                              </svg>
+                              Back
+                            </button>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-publish"
+                              disabled={!postTitle.trim() || !newPostLocation.trim() || !newPostCaption.trim()}
+                              onClick={() => goToStep(3)}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                            >
+                              Next: Settings
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                              </svg>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {/* STEP 3: SETTINGS & SCHEDULE */}
+                    {currentStep === 3 && (
+                      <div className="creator-glass-card editor-form-card animate-fade-in">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Settings & Schedule</h3>
+                          <p className="panel-desc">Configure publication timing, target audience, and syndication options.</p>
+                        </div>
+
+                        {/* Cohesive Bordered Card Block for scheduling & configurations */}
+                        <div className="creator-inner-glass-card">
+                          
+                          {/* Schedule Section */}
+                          <div className="form-group schedule-form-section">
+                            <label className="form-label" style={{ display: 'block', marginBottom: '10px' }}>Schedule Post</label>
+                            <div className="scheduler-inputs">
+                              <div className="input-group">
+                                <span className="scheduler-icon">
+                                  {/* Line SVG Calendar */}
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                  </svg>
+                                </span>
+                                <input 
+                                  type="date" 
+                                  className="form-input-premium schedule-date-picker"
+                                  value={scheduleDate} 
+                                  onChange={(e) => setScheduleDate(e.target.value)}
+                                />
+                              </div>
+                              <div className="input-group">
+                                <span className="scheduler-icon">
+                                  {/* Line SVG Alarm Clock */}
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                </span>
+                                <input 
+                                  type="time" 
+                                  className="form-input-premium schedule-time-picker"
+                                  value={scheduleTime} 
+                                  onChange={(e) => setScheduleTime(e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Post Visibility */}
+                          <div className="form-group" style={{ marginTop: '24px' }}>
+                            <label className="form-label">Post Visibility</label>
+                            <div className="visibility-options-grid">
+                              {[
+                                { key: 'public', title: 'Public', desc: 'Anyone on Travora can see this post' },
+                                { key: 'followers', title: 'Followers Only', desc: 'Only your active followers can view' },
+                                { key: 'private', title: 'Private (Only Me)', desc: 'Hidden completely from other users' }
+                              ].map(option => (
+                                <label key={option.key} className={`visibility-radio-card ${visibility === option.key ? 'active' : ''}`}>
+                                  <input
+                                    type="radio"
+                                    name="visibility-selection"
+                                    value={option.key}
+                                    checked={visibility === option.key}
+                                    onChange={() => setVisibility(option.key as any)}
+                                    className="sr-only"
+                                  />
+                                  <span className="radio-indicator"></span>
+                                  <span className="radio-content">
+                                    <span className="radio-title">{option.title}</span>
+                                    <span className="radio-description">{option.desc}</span>
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Feature Toggles List */}
+                          <div className="toggles-list-section" style={{ marginTop: '24px' }}>
+                            {/* Allow Comments */}
+                            <div className="toggle-switch-row">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="platform-logo-icon">
+                                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                  </svg>
+                                </span>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title">Allow Comments</span>
+                                  <span className="toggle-label-desc">Let followers interact and leave comments on this post</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input 
+                                  type="checkbox" 
+                                  checked={allowComments} 
+                                  onChange={(e) => setAllowComments(e.target.checked)} 
+                                />
+                                <span className="slider round"></span>
                               </label>
-                            ))}
+                            </div>
+
+                            {/* Cross Post Facebook */}
+                            <div className="toggle-switch-row">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="platform-logo-icon">
+                                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z" />
+                                  </svg>
+                                </span>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title">Cross-Post to Facebook</span>
+                                  <span className="toggle-label-desc">Automatically post to linked Facebook pages</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input 
+                                  type="checkbox" 
+                                  checked={crossPostFacebook} 
+                                  onChange={(e) => setCrossPostFacebook(e.target.checked)} 
+                                />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Cross Post Twitter / X */}
+                            <div className="toggle-switch-row">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="platform-logo-icon">
+                                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                  </svg>
+                                </span>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title">Cross-Post to Twitter / X</span>
+                                  <span className="toggle-label-desc">Push link and caption updates to your X audience</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input 
+                                  type="checkbox" 
+                                  checked={crossPostTwitter} 
+                                  onChange={(e) => setCrossPostTwitter(e.target.checked)} 
+                                />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Cross Post TikTok */}
+                            <div className="toggle-switch-row">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="platform-logo-icon">
+                                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .57.04.84.11V9.42a7.21 7.21 0 0 0-1-.07 6.33 6.33 0 0 0-.25 12.65 6.18 6.18 0 0 0 5.25-4.26V9.11A7.26 7.26 0 0 0 21 11.72v-3.45a4.88 4.88 0 0 1-1.41-1.58z" />
+                                  </svg>
+                                </span>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title">Cross-Post to TikTok</span>
+                                  <span className="toggle-label-desc">Share visual content onto your TikTok profile</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input 
+                                  type="checkbox" 
+                                  checked={crossPostTiktok} 
+                                  onChange={(e) => setCrossPostTiktok(e.target.checked)} 
+                                />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Push Notifications */}
+                            <div className="toggle-switch-row">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span className="platform-logo-icon">
+                                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                  </svg>
+                                </span>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title">Push Notifications</span>
+                                  <span className="toggle-label-desc">Alert close friends and top subscribers immediately</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input 
+                                  type="checkbox" 
+                                  checked={sendNotification} 
+                                  onChange={(e) => setSendNotification(e.target.checked)} 
+                                />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
                           </div>
                         </div>
 
-                        {/* Feature Toggle Switches */}
-                        <div className="toggles-list-section">
-                          <div className="toggle-switch-row">
-                            <div className="toggle-info">
-                              <span className="toggle-label-title">Allow Comments</span>
-                              <span className="toggle-label-desc">Let followers interact and leave comments on this post</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={allowComments} 
-                                onChange={(e) => setAllowComments(e.target.checked)} 
-                              />
-                              <span className="slider round"></span>
-                            </label>
-                          </div>
-
-                          <div className="toggle-switch-row">
-                            <div className="toggle-info">
-                              <span className="toggle-label-title">Cross-Post to Facebook</span>
-                              <span className="toggle-label-desc">Automatically post to linked Facebook pages</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={crossPostFacebook} 
-                                onChange={(e) => setCrossPostFacebook(e.target.checked)} 
-                              />
-                              <span className="slider round"></span>
-                            </label>
-                          </div>
-
-                          <div className="toggle-switch-row">
-                            <div className="toggle-info">
-                              <span className="toggle-label-title">Cross-Post to Twitter / X</span>
-                              <span className="toggle-label-desc">Push link and caption updates to your X audience</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={crossPostTwitter} 
-                                onChange={(e) => setCrossPostTwitter(e.target.checked)} 
-                              />
-                              <span className="slider round"></span>
-                            </label>
-                          </div>
-
-                          <div className="toggle-switch-row">
-                            <div className="toggle-info">
-                              <span className="toggle-label-title">Cross-Post to TikTok</span>
-                              <span className="toggle-label-desc">Share visual content onto your TikTok profile</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={crossPostTiktok} 
-                                onChange={(e) => setCrossPostTiktok(e.target.checked)} 
-                              />
-                              <span className="slider round"></span>
-                            </label>
-                          </div>
-
-                          <div className="toggle-switch-row">
-                            <div className="toggle-info">
-                              <span className="toggle-label-title">Push Notifications</span>
-                              <span className="toggle-label-desc">Alert close friends and top subscribers immediately</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={sendNotification} 
-                                onChange={(e) => setSendNotification(e.target.checked)} 
-                              />
-                              <span className="slider round"></span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="form-action-buttons">
+                        {/* Navigation row */}
+                        <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
                           <button 
                             type="button" 
                             className="creator-action-btn btn-draft"
-                            onClick={() => alert('Draft saved successfully!')}
+                            onClick={() => goToStep(2)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                           >
-                            Save Draft
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Back
                           </button>
                           <button 
                             type="button" 
-                            className="creator-action-btn btn-schedule"
-                            onClick={() => alert(`Post scheduled for ${scheduleDate} at ${scheduleTime}`)}
-                          >
-                            Schedule Post
-                          </button>
-                          <button 
-                            type="submit" 
                             className="creator-action-btn btn-publish"
+                            onClick={() => goToStep(4)}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                           >
-                            Publish Now
+                            Review & Preview
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
                           </button>
                         </div>
+                      </div>
+                    )}
 
-                      </form>
-                    </div>
-                  </main>
+                    {/* STEP 4: REVIEW & PUBLISH */}
+                    {currentStep === 4 && (
+                      <div className="creator-glass-card editor-form-card animate-fade-in">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Review & Publish</h3>
+                          <p className="panel-desc">Check your live preview on the right and choose how to proceed.</p>
+                        </div>
 
-                  {/* Right Column: Sticky Live Preview Panel */}
+                        <div className="review-summary-details" style={{ marginBottom: '24px', background: 'rgba(255, 255, 255, 0.02)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Platform:</span>
+                            <span style={{ fontWeight: 600 }}>{selectedPlatform}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Location:</span>
+                            <span style={{ fontWeight: 600 }}>{newPostLocation || 'None'}</span>
+                          </div>
+                          {scheduleDate && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Scheduled Date:</span>
+                              <span style={{ fontWeight: 600 }}>{scheduleDate} at {scheduleTime}</span>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Visibility:</span>
+                            <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>{visibility}</span>
+                          </div>
+                        </div>
+
+                        {/* Final Action buttons */}
+                        <div className="form-action-buttons-refined" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <button 
+                            type="button" 
+                            className="creator-action-btn btn-publish"
+                            disabled={publishStatus !== 'idle'}
+                            onClick={handleCreatePost}
+                            style={{ width: '100%', height: '46px', fontSize: '15px' }}
+                          >
+                            {publishStatus === 'idle' && 'Publish Now'}
+                            {publishStatus === 'loading' && <span className="spinner-loader"></span>}
+                            {publishStatus === 'success' && <span className="success-checkmark">✓ Success</span>}
+                          </button>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-schedule"
+                              onClick={() => { showToast(`Post scheduled for ${scheduleDate || 'today'} at ${scheduleTime || 'noon'} 📅`); setActiveTab('home'); setCurrentStep(1); }}
+                              style={{ width: '100%' }}
+                            >
+                              Schedule Post
+                            </button>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-draft"
+                              onClick={() => { showToast('Draft saved successfully! 📁'); setActiveTab('home'); setCurrentStep(1); }}
+                              style={{ width: '100%' }}
+                            >
+                              Save Draft
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px' }}>
+                          <button 
+                            type="button" 
+                            className="creator-action-btn btn-draft" 
+                            onClick={() => goToStep(3)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                            Back to Settings
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Sticky Live Preview Panel (Always Visible in Steps 1,2,3,4!) */}
                   <aside className="creator-dashboard-column preview-panel-column">
                     <div className="sticky-preview-wrapper">
                       <div className="preview-header">
@@ -4023,6 +4816,13 @@ export default function Home() {
                       
                       {/* Glassmorphism Phone Frame */}
                       <div className="mobile-phone-frame">
+                        {/* Shimmer pulse effect overlay when data synchronizes */}
+                        {previewPulse && (
+                          <div className="preview-updating-shimmer-active">
+                            <span className="shimmer-text-glow">Syncing Live...</span>
+                          </div>
+                        )}
+
                         {/* Device glare reflections */}
                         <div className="phone-glass-shine"></div>
                         <div className="phone-glass-border"></div>
@@ -4100,6 +4900,26 @@ export default function Home() {
                                 </div>
                               )}
                               
+                              {/* Custom Interactive Particle Burst Overlay */}
+                              {likeParticles.map((p, index) => {
+                                const angle = (index * 45 * Math.PI) / 180;
+                                const distance = 45 + Math.random() * 15;
+                                const tx = Math.cos(angle) * distance;
+                                const ty = Math.sin(angle) * distance;
+                                return (
+                                  <span 
+                                    key={p.id} 
+                                    className="like-particle-dot"
+                                    style={{
+                                      left: `${p.x}px`,
+                                      top: `${p.y}px`,
+                                      '--tx': `${tx}px`,
+                                      '--ty': `${ty}px`,
+                                    } as React.CSSProperties}
+                                  />
+                                );
+                              })}
+                              
                               {postImages.length === 0 ? (
                                 <div className="media-placeholder-visual">
                                   <span className="visual-icon">📸</span>
@@ -4108,12 +4928,13 @@ export default function Home() {
                               ) : (
                                 <>
                                   <img 
+                                    key={postImages[previewCarouselIndex < postImages.length ? previewCarouselIndex : 0]}
                                     src={postImages[previewCarouselIndex < postImages.length ? previewCarouselIndex : 0]} 
                                     alt="Live Post Preview" 
-                                    className="phone-preview-media-img" 
+                                    className="phone-preview-media-img phone-preview-fade" 
                                   />
                                   
-                                  {/* Instagram-style indicator dots overlay at bottom center */}
+                                  {/* Dynamic Carousel dots indicators array length sync */}
                                   {postImages.length > 1 && (
                                     <div className="preview-carousel-indicators-dots">
                                       {postImages.map((_, idx) => (
@@ -4506,50 +5327,436 @@ export default function Home() {
 
                   {/* TAB C: MILESTONES ACHIEVEMENT timeline/grid */}
                   {profileTab === 'milestones' && (
-                    <div className="profile-milestones-grid">
-                      {milestones.map((ms) => (
-                        <div 
-                          key={ms.id} 
-                          className={`milestone-badge-card ${ms.unlocked ? 'unlocked' : 'locked'}`}
-                          onClick={() => setSelectedMilestone(ms)}
-                        >
-                          {/* Locked Badge Overlay */}
-                          {!ms.unlocked && (
-                            <div className="milestone-locked-badge" title="Locked milestone">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <div className="milestones-tab-container animate-fade-in">
+                      {/* Summary stats HUD strip */}
+                      <header className="milestones-stats-header">
+                        <div className="stats-header-left">
+                          <div className="rank-crest-title-row">
+                            {/* Detailed Rank Crest SVG with easter egg click handler */}
+                            <div className="rank-crest-wrapper animate-pulse-slow" onClick={handleCrestClick} title="Double-click 5 times for Developer tools">
+                              <svg className="rank-crest-svg" width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2L3 5v6c0 5.5 4.5 10 9 12 4.5-2 9-6.5 9-12V5l-9-3z" fill="url(#goldRing)" stroke="#ffe082" strokeWidth="1" />
+                                <path d="M12 6l1.5 3 3.5.5-2.5 2.5 1 3.5-3.5-2-3.5 2 1-3.5-2.5-2.5 3.5-.5L12 6z" fill="#1e293b" />
                               </svg>
                             </div>
-                          )}
-
-                          <div 
-                            className="milestone-badge-icon-sphere"
-                            style={{ background: ms.badgeColor }}
-                          >
-                            {renderMilestoneIcon(ms.id)}
+                            <span className="milestones-rank-title">
+                              {milestones.find(m => m.id === 'ms-4')?.unlocked ? 'Explorer Elite' : 'Explorer'} — Level 4
+                            </span>
                           </div>
                           
-                          <div className="milestone-text-details">
-                            <h4 className="milestone-title">{ms.title}</h4>
-                            <p className="milestone-desc">{ms.desc}</p>
-                            
-                            {ms.unlocked ? (
-                              <div className="milestone-unlock-date-badge">
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginRight: '4px', color: '#10b981' }}>
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                                {ms.date}
-                              </div>
-                            ) : (
-                              <div className="milestone-progress-bar-wrapper">
-                                <div className="milestone-progress-bar-fill" style={{ width: '60%' }} />
-                                <span className="milestone-progress-bar-text">{ms.progress}</span>
-                              </div>
-                            )}
+                          {/* Animated flip/count-up badge counter */}
+                          <div className="milestones-badges-ratio">
+                            🏆 {animatedBadgesCount} / {milestones.length} Badges Unlocked
                           </div>
                         </div>
-                      ))}
+                        
+                        {/* XP bar with count-up animated bar */}
+                        <div className="milestones-xp-progress-column">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', fontWeight: 600 }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>TOTAL EXPERIENCE</span>
+                            <span style={{ color: '#ec4899' }}>{animatedXP} / 3000 XP</span>
+                          </div>
+                          <div className="milestones-xp-track">
+                            <div 
+                              className="milestones-xp-fill" 
+                              style={{ width: `${(animatedXP / 3000) * 100}%` }} 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="milestones-controls-row">
+                          <button 
+                            type="button"
+                            className="milestones-control-btn sound-toggle"
+                            onClick={() => setSoundMuted(!soundMuted)}
+                            title={soundMuted ? 'Unmute achievement sounds' : 'Mute achievement sounds'}
+                          >
+                            {soundMuted ? '🔇' : '🔊'}
+                          </button>
+                          
+                          {/* Grid/Timeline switcher with sliding indicator */}
+                          <div className="view-mode-toggle-group">
+                            <div className={`sliding-indicator ${milestonesView === 'timeline' ? 'slide-right' : ''}`} />
+                            <button 
+                              type="button"
+                              className={`view-mode-btn ${milestonesView === 'grid' ? 'active' : ''}`}
+                              onClick={() => setMilestonesView('grid')}
+                            >
+                              Grid
+                            </button>
+                            <button 
+                              type="button"
+                              className={`view-mode-btn ${milestonesView === 'timeline' ? 'active' : ''}`}
+                              onClick={() => setMilestonesView('timeline')}
+                            >
+                              Timeline
+                            </button>
+                          </div>
+                        </div>
+                      </header>
+
+                      {/* Hidden Dev Panel (Visible only when double-clicked crest 5 times) */}
+                      {showDevPanel && (
+                        <div className="dev-cheats-panel animate-fade-in">
+                          <span style={{ fontWeight: 800, fontSize: '12px' }}>🛠️ DEVELOPER TOOLS</span>
+                          <button 
+                            type="button"
+                            className="milestones-control-btn mock-trigger-btn"
+                            onClick={triggerMockUnlock}
+                          >
+                            {milestones.find(m => m.id === 'ms-4')?.unlocked ? 'Re-lock Trophy' : 'Test Unlock (Confetti/Conf/Sound)'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Confetti particles for real-time unlock */}
+                      {celebrationConfetti && (
+                        <div className="confetti-particles-overlay">
+                          {particlesList.map((p) => (
+                            <div 
+                              key={p.id}
+                              className="confetti-particle"
+                              style={{
+                                backgroundColor: p.color,
+                                left: `${p.x}%`,
+                                top: `${p.y}%`,
+                                width: `${Math.random() * 6 + 6}px`,
+                                height: `${Math.random() * 6 + 6}px`,
+                                transform: `rotate(${p.y * 5}deg)`
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* GRID VIEW */}
+                      {milestonesView === 'grid' ? (
+                        <div className="profile-milestones-grid">
+                          {milestones.map((ms, index) => {
+                            const isExpanded = expandedMilestoneId === ms.id;
+                            const isTurned = tokenTurnedId === ms.id;
+                            const progressFraction = getProgressFraction(ms.progress);
+                            const msUnlocked = ms.unlocked;
+                            
+                            return (
+                              <motion.div 
+                                layout
+                                key={ms.id} 
+                                className={`milestone-card-3d-wrapper ${isExpanded ? 'is-expanded' : 'is-resting'}`}
+                                style={{ animationDelay: `${index * 30}ms` }}
+                              >
+                                <div 
+                                  className={`milestone-card-inner-mechanic ${isTurned ? 'token-turned' : ''}`}
+                                  onClick={(e) => toggleCardFlip(ms.id, e)}
+                                >
+                                  {isExpanded ? (
+                                    /* EXPANDED OPAQUE PANEL VIEW */
+                                    <div className="milestone-expanded-panel animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+                                      {/* Close control button */}
+                                      <button 
+                                        type="button" 
+                                        className="panel-close-btn" 
+                                        onClick={(e) => toggleCardFlip(ms.id, e)}
+                                      >
+                                        &times;
+                                      </button>
+
+                                      {/* Share button */}
+                                      {msUnlocked && (
+                                        <button 
+                                          type="button"
+                                          className="badge-share-icon-btn" 
+                                          onClick={(e) => { e.stopPropagation(); setShareBadge(ms); }}
+                                          title="Share achievement"
+                                          style={{ top: '14px', right: '40px' }}
+                                        >
+                                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                            <polyline points="16 6 12 2 8 6" />
+                                            <line x1="12" y1="2" x2="12" y2="15" />
+                                          </svg>
+                                        </button>
+                                      )}
+
+                                      {/* Rarity Ribbon Tag in corner */}
+                                      <div className={`milestone-rarity-ribbon ${ms.rarity}`}>
+                                        {ms.rarity.toUpperCase()}
+                                      </div>
+
+                                      {/* Large Medallion Art at Top */}
+                                      <div className="panel-medallion-sphere">
+                                        {renderMilestoneIcon(ms.id, 64)}
+                                      </div>
+
+                                      {/* Title & Description */}
+                                      <h3 className="panel-badge-title">{ms.title}</h3>
+                                      <p className="panel-badge-desc">{ms.desc}</p>
+
+                                      {/* Clean 2x2 stats grid rows */}
+                                      <div className="card-back-chips-grid">
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-amber-500" width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                          </svg>
+                                          <span className="chip-value">+{ms.points} XP</span>
+                                        </div>
+                                        
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-cyan-400" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 6v6l4 2" />
+                                          </svg>
+                                          <span className="chip-value">{ms.rarityPercent} users</span>
+                                        </div>
+
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-rose-500" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                                            <circle cx="12" cy="10" r="3"/>
+                                          </svg>
+                                          <span className="chip-value">{ms.statValue}</span>
+                                        </div>
+
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-purple-400" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                                            <path d="M12 2a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
+                                          </svg>
+                                          <span className="chip-value" style={{ textTransform: 'capitalize' }}>{ms.rarity}</span>
+                                        </div>
+                                      </div>
+
+                                      <div className="panel-footer-date">
+                                        {msUnlocked ? `Unlocked: ${ms.date}` : `Progress: ${ms.progress}`}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    /* RESTING IDENTICAL BADGE VIEW */
+                                    <div className={`milestone-resting-badge ${msUnlocked ? 'unlocked' : 'locked'}`}>
+                                      <div className="resting-badge-outer">
+                                        {/* Embedded dynamic medallion */}
+                                        <div className="resting-badge-sphere">
+                                          {renderMilestoneIcon(ms.id, 56)}
+                                        </div>
+                                        
+                                        {/* Tac lock if locked */}
+                                        {!msUnlocked && (
+                                          <div className="milestone-tactile-lock">
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* TIMELINE VIEW (Full Winding Road Redesign) */
+                        <div className="profile-milestones-timeline winding-timeline-container">
+                          
+                          {/* Winding dynamic center vector line */}
+                          <svg className="timeline-winding-svg" viewBox="0 0 100 1300" preserveAspectRatio="none">
+                            <defs>
+                              <linearGradient id="cosmicTrail" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="#ec4899" />
+                                <stop offset="50%" stopColor="#a855f7" />
+                                <stop offset="100%" stopColor="#6366f1" />
+                              </linearGradient>
+                            </defs>
+                            {/* Winding road path outline */}
+                            <path 
+                              d="M 25 40 C 25 95, 75 95, 75 150 C 75 205, 25 205, 25 260 C 25 315, 75 315, 75 370 C 75 425, 25 425, 25 480 C 25 535, 75 535, 75 590 C 75 645, 25 645, 25 700 C 25 755, 75 755, 75 810 C 75 865, 25 865, 25 920 C 25 975, 75 975, 75 1030 C 75 1085, 25 1085, 25 1140 C 25 1195, 75 1195, 75 1250"
+                              fill="none" 
+                              stroke="rgba(255, 255, 255, 0.05)" 
+                              strokeWidth="4" 
+                            />
+                            {/* Winding road path active light-up line */}
+                            <path 
+                              className="timeline-trail-active"
+                              d="M 25 40 C 25 95, 75 95, 75 150 C 75 205, 25 205, 25 260 C 25 315, 75 315, 75 370 C 75 425, 25 425, 25 480 C 25 535, 75 535, 75 590 C 75 645, 25 645, 25 700 C 25 755, 75 755, 75 810 C 75 865, 25 865, 25 920 C 25 975, 75 975, 75 1030 C 75 1085, 25 1085, 25 1140 C 25 1195, 75 1195, 75 1250"
+                              fill="none" 
+                              stroke="url(#cosmicTrail)" 
+                              strokeWidth="4" 
+                              strokeDasharray="1300"
+                              strokeDashoffset="130"
+                            />
+                          </svg>
+
+                          {milestones.map((ms, index) => {
+                            const progressFraction = getProgressFraction(ms.progress);
+                            const msUnlocked = ms.unlocked;
+                            // Alternate nodes along trail left/right
+                            const isLeft = index % 2 === 0;
+                            const isNodeLocked = !msUnlocked;
+                            
+                            return (
+                              <div 
+                                key={ms.id}
+                                className={`timeline-node-row ${isLeft ? 'row-left' : 'row-right'} ${msUnlocked ? 'unlocked' : 'locked'}`}
+                                style={{ 
+                                  animationDelay: `${index * 80}ms`,
+                                  top: `${index * 110}px` 
+                                }}
+                              >
+                                {/* Narrative timeline connecting distance labels */}
+                                {index > 0 && (
+                                  <div className="timeline-narrative-connector">
+                                    <span>{getTimelineConnectionLabel(index - 1)}</span>
+                                  </div>
+                                )}
+
+                                {/* Medallion sphere sitting directly on trail X point */}
+                                <div 
+                                  className={`timeline-node-badge-sphere ${msUnlocked ? 'unlocked' : 'locked-foggy'}`}
+                                  style={{ background: ms.badgeColor }}
+                                  onClick={() => setActiveTimelinePopoverId(activeTimelinePopoverId === ms.id ? null : ms.id)}
+                                >
+                                  {renderMilestoneIcon(ms.id, 32)}
+                                  
+                                  {/* Padlock Overlay for locked node */}
+                                  {!msUnlocked && (
+                                    <div className="timeline-node-lock">
+                                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Info card sitting on side of trail */}
+                                <div className="timeline-node-card-wrapper">
+                                  <div 
+                                    className={`timeline-mini-card ${msUnlocked ? 'unlocked' : 'locked'} ${activeTimelinePopoverId === ms.id ? 'popover-active' : ''}`}
+                                    onClick={() => setActiveTimelinePopoverId(activeTimelinePopoverId === ms.id ? null : ms.id)}
+                                  >
+                                    <div className="timeline-mini-card-header">
+                                      <h4 className="timeline-node-title">{ms.title}</h4>
+                                      <span className={`milestone-rarity-pill ${ms.rarity}`}>{ms.rarity}</span>
+                                    </div>
+                                    <p className="timeline-node-desc">{ms.desc}</p>
+                                    {msUnlocked ? (
+                                      <span className="timeline-node-date">🏆 Completed {ms.date}</span>
+                                    ) : (
+                                      <span className="timeline-node-progress">Progress: {ms.progress}</span>
+                                    )}
+                                  </div>
+
+                                  {/* Redesigned Trophy Popover showcase from node point */}
+                                  {activeTimelinePopoverId === ms.id && (
+                                    <div className="timeline-popover-card animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+                                      <button type="button" className="timeline-popover-close" onClick={() => setActiveTimelinePopoverId(null)}>&times;</button>
+                                      
+                                      <div className="timeline-popover-header">
+                                        <span className="popover-badge-rarity">{ms.rarity.toUpperCase()} TROPHY</span>
+                                        <h4 className="popover-badge-title">{ms.title}</h4>
+                                        <p className="popover-badge-desc">{ms.desc}</p>
+                                      </div>
+
+                                      <div className="card-back-chips-grid">
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-amber-500" width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                          </svg>
+                                          <span className="chip-value">+{ms.points} XP</span>
+                                        </div>
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-cyan-400" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M12 6v6l4 2" />
+                                          </svg>
+                                          <span className="chip-value">{ms.rarityPercent} users</span>
+                                        </div>
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-rose-500" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                                            <circle cx="12" cy="10" r="3"/>
+                                          </svg>
+                                          <span className="chip-value" style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{ms.statValue}</span>
+                                        </div>
+                                        <div className="stat-chip">
+                                          <svg className="chip-icon text-purple-400" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+                                            <path d="M12 2a4 4 0 0 1 4 4v5a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z" />
+                                          </svg>
+                                          <span className="chip-value" style={{ textTransform: 'capitalize' }}>{ms.rarity}</span>
+                                        </div>
+                                      </div>
+
+                                      {msUnlocked && (
+                                        <button 
+                                          type="button"
+                                          className="popover-share-btn"
+                                          onClick={() => { setShareBadge(ms); setActiveTimelinePopoverId(null); }}
+                                        >
+                                          Share Certificate
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Polaroid Share modal */}
+                      {shareBadge && (
+                        <div className="share-polaroid-modal-overlay" onClick={() => setShareBadge(null)}>
+                          <div className="share-polaroid-card animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+                            <button type="button" className="polaroid-close-btn" onClick={() => setShareBadge(null)}>×</button>
+                            
+                            <div className="polaroid-header">
+                              <span className="polaroid-brand">TRAVEHOLIC</span>
+                              <span className="polaroid-badge-status">OFFICIAL TROPHY CERTIFICATE</span>
+                            </div>
+
+                            <div className="polaroid-body">
+                              <div className="polaroid-badge-glow-outer" style={{ background: shareBadge.badgeColor }}>
+                                {renderMilestoneIcon(shareBadge.id, 46)}
+                              </div>
+                              
+                              <h3 className="polaroid-title">{shareBadge.title}</h3>
+                              <p className="polaroid-rarity">{shareBadge.rarity.toUpperCase()} TROPHY</p>
+                              
+                              <div className="polaroid-divider" />
+                              
+                              <p className="polaroid-congrats">
+                                Congratulations to <strong>{editFullName || user?.username || 'traveler'}</strong> for unlocking this travel milestone on Traveholic.
+                              </p>
+                              
+                              <span className="polaroid-date-completed">UNLOCKED: {shareBadge.date}</span>
+                            </div>
+
+                            <div className="polaroid-footer">
+                              <div className="polaroid-stamp">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                <span>VERIFIED</span>
+                              </div>
+                              
+                              <button 
+                                type="button"
+                                className="polaroid-download-btn"
+                                onClick={() => { showToast('Certificate downloaded to desktop! 🏆'); setShareBadge(null); }}
+                              >
+                                Download Image
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -4708,62 +5915,7 @@ export default function Home() {
                   );
                 })()}
 
-                {/* --- MODAL 2: DETAIL ACHIEVEMENT MILESTONE SUCCESS BADGE CARD --- */}
-                {selectedMilestone && (
-                  <div className="milestone-badge-modal-overlay" onClick={() => setSelectedMilestone(null)}>
-                    <div 
-                      className="milestone-badge-modal-card"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button className="milestone-modal-close-x" onClick={() => setSelectedMilestone(null)}>
-                        &times;
-                      </button>
 
-                      <div 
-                        className={`milestone-modal-badge-sphere ${selectedMilestone.unlocked ? 'glow' : 'locked'}`}
-                        style={{ background: selectedMilestone.badgeColor }}
-                      >
-                        {renderMilestoneIcon(selectedMilestone.id, 34)}
-                      </div>
-
-                      <div className="milestone-modal-card-details">
-                        <span className="milestone-modal-badge-status">
-                          {selectedMilestone.unlocked ? 'ACHIEVEMENT UNLOCKED' : 'ACHIEVEMENT LOCKED'}
-                        </span>
-                        <h3 className="milestone-modal-card-title">{selectedMilestone.title}</h3>
-                        <p className="milestone-modal-card-desc">{selectedMilestone.desc}</p>
-                        
-                        {selectedMilestone.unlocked ? (
-                          <div className="milestone-modal-status-badge success">
-                            <span style={{ fontSize: '13px', fontWeight: 700 }}>Unearned: +{selectedMilestone.points} EXP</span>
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Completed on {selectedMilestone.date}</span>
-                          </div>
-                        ) : (
-                          <div className="milestone-modal-status-badge locked">
-                            <span style={{ fontSize: '13px', fontWeight: 700 }}>EXP Reward: {selectedMilestone.points} EXP</span>
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>Progress: {selectedMilestone.progress || '0%'} Completed</span>
-                          </div>
-                        )}
-
-                        <div className="milestone-modal-actions-row">
-                          <button 
-                            className="milestone-modal-action-btn-main"
-                            onClick={() => {
-                              if (selectedMilestone.unlocked) {
-                                alert(`Shared achievement: Unlocked ${selectedMilestone.title}!`);
-                              } else {
-                                alert(`Start travelling to unlock this badge!`);
-                              }
-                            }}
-                          >
-                            {selectedMilestone.unlocked ? 'Share Achievement' : 'Conquer Milestone'}
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                )}
 
               </div>
             )}
