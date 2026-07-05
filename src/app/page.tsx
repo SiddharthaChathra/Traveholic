@@ -179,7 +179,7 @@ export default function Home() {
     {
       id: 'vlog-1',
       username: 'nomad_alex',
-      avatar: '🏃‍♂️',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
       location: 'Leh-Ladakh 🏔️',
       title: 'Solo biking across the highest motorable road in Khardung La! 🏍️ Peak adventure vibes.',
       views: '42.8K views',
@@ -191,8 +191,8 @@ export default function Home() {
     {
       id: 'vlog-2',
       username: 'wanderlust_jenny',
-      avatar: '👩‍🌾',
-      location: 'Seminyak, Bali 🌊',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+      location: 'Seminyak, Bali 🌴',
       title: 'Top 5 secret beach cafes you must visit in Bali this year! 🍹🌴 Saved the best for last.',
       views: '89.2K views',
       likes: 3821,
@@ -203,7 +203,7 @@ export default function Home() {
     {
       id: 'vlog-3',
       username: 'nomad_vlogs',
-      avatar: '📹',
+      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
       location: 'Cappadocia, Turkey 🎈',
       title: 'Waking up at 5 AM to witness hundreds of hot air balloons fill the sky! Absolutely magical ✨',
       views: '112.5K views',
@@ -215,7 +215,7 @@ export default function Home() {
     {
       id: 'vlog-4',
       username: 'backpack_guide',
-      avatar: '🎒',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
       location: 'Kyoto, Japan ⛩️',
       title: 'Exploring the quiet bamboo forests of Arashiyama in the early morning. Sound on 🔊',
       views: '61.4K views',
@@ -246,9 +246,13 @@ export default function Home() {
     {
       id: 'post-1',
       username: 'wanderlust_jenny',
-      avatar: '👩‍🌾',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
       location: 'Ubud, Bali 🌴',
-      image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=600&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80'
+      ],
       caption: 'Waking up to tropical jungle sounds in Bali... this place is absolute heaven! 💚 Who wants to join my next backpacking trip here?',
       hashtags: ['#bali', '#backpacking', '#nature', '#travelbuddy'],
       likesCount: 142,
@@ -260,9 +264,12 @@ export default function Home() {
     {
       id: 'post-2',
       username: 'backpacker_sam',
-      avatar: '🧗‍♂️',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
       location: 'Solang Valley, Manali 🏔️',
-      image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
+      ],
       caption: 'First summit climb of the year! The thin air, cold wind, and majestic views are worth every step. 🏔️ Solang Valley never ceases to amaze.',
       hashtags: ['#manali', '#climbing', '#adventure', '#mountains'],
       likesCount: 98,
@@ -273,9 +280,12 @@ export default function Home() {
     {
       id: 'post-3',
       username: 'stay_luxury_bali',
-      avatar: '🏨',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
       location: 'Seminyak, Goa 🌊',
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+        'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=80'
+      ],
       caption: 'Golden hour at our beachside resort. Private pool villas available direct. Link in bio! 🌅🍹',
       hashtags: ['#goa', '#luxuryresort', '#sunset', '#beachlife'],
       likesCount: 215,
@@ -287,11 +297,11 @@ export default function Home() {
 
   // Stories list state
   const [stories, setStories] = useState([
-    { id: 'story-1', username: 'Your Story', avatar: '👋', image: '', caption: '', viewed: false, isLive: false },
-    { id: 'story-2', username: 'nomad_vlogs', avatar: '🎥', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80', caption: 'LIVE STREAM: Hidden Waterfalls Trek! 💦🎥', viewed: false, isLive: true },
-    { id: 'story-3', username: 'backpacker_sam', avatar: '🧗‍♂️', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80', caption: 'Campfire talks in the freezing cold! 🪵🔥', viewed: false, isLive: false },
-    { id: 'story-4', username: 'wanderlust_jenny', avatar: '👩‍🌾', image: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop&q=80', caption: 'Scooter rides through Bali rice fields! 🛵🌾', viewed: false, isLive: false },
-    { id: 'story-5', username: 'nomad_alex', avatar: '🏃‍♂️', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=80', caption: 'Fresh croissants in Paris! 🥐🇫🇷', viewed: false, isLive: false }
+    { id: 'story-1', username: 'Your Story', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&auto=format&fit=crop&q=80', caption: 'Sunrise hike above the clouds! 🌅🧗‍♂️', viewed: false, isLive: false },
+    { id: 'story-2', username: 'nomad_vlogs', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80', caption: 'LIVE STREAM: Hidden Waterfalls Trek! 💦🎥', viewed: false, isLive: true },
+    { id: 'story-3', username: 'backpacker_sam', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&auto=format&fit=crop&q=80', caption: 'Campfire talks in the freezing cold! 🪵🔥', viewed: false, isLive: false },
+    { id: 'story-4', username: 'wanderlust_jenny', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', image: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop&q=80', caption: 'Scooter rides through Bali rice fields! 🛵🌾', viewed: false, isLive: false },
+    { id: 'story-5', username: 'nomad_alex', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=80', caption: 'Fresh croissants in Paris! 🥐🇫🇷', viewed: false, isLive: false }
   ]);
 
   // Active story viewing states
@@ -302,9 +312,9 @@ export default function Home() {
   // Notifications State
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 'n1', username: 'backpacker_sam', avatar: '🧗‍♂️', type: 'like', text: 'liked your post.', time: '2m ago' },
-    { id: 'n2', username: 'wanderlust_jenny', avatar: '👩‍🌾', type: 'comment', text: 'commented: "Stunning shot!"', time: '15m ago' },
-    { id: 'n3', username: 'nomad_alex', avatar: '🏃‍♂️', type: 'follow', text: 'started following you.', time: '1h ago' }
+    { id: 'n1', username: 'backpacker_sam', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', type: 'like', text: 'liked your post.', time: '2m ago' },
+    { id: 'n2', username: 'wanderlust_jenny', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', type: 'comment', text: 'commented: "Stunning shot!"', time: '15m ago' },
+    { id: 'n3', username: 'nomad_alex', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', type: 'follow', text: 'started following you.', time: '1h ago' }
   ]);
   const [unreadNotifications, setUnreadNotifications] = useState(3);
 
@@ -335,6 +345,20 @@ export default function Home() {
 
   const handleSwitchExploreCategory = (cat: string) => {
     if (cat === activeExploreCategory) return;
+    
+    // Play synthesized micro-sound click
+    playUISound('click');
+    
+    // Dynamically update background mood glow color based on category
+    let moodColor = 'rgba(139, 92, 246, 0.15)';
+    if (cat === 'Mountains') moodColor = 'rgba(59, 130, 246, 0.15)';
+    else if (cat === 'Beaches') moodColor = 'rgba(236, 72, 153, 0.15)';
+    else if (cat === 'Tropical') moodColor = 'rgba(245, 158, 11, 0.15)';
+    else if (cat === 'Cities') moodColor = 'rgba(16, 185, 129, 0.15)';
+    else if (cat === 'Winter') moodColor = 'rgba(6, 182, 212, 0.15)';
+    else if (cat === 'Cultural') moodColor = 'rgba(219, 39, 119, 0.15)';
+    setCategoryMoodColor(moodColor);
+
     setHasEverSwitchedCategory(true);
     setIsSwitchingCategory(true);
     setTimeout(() => {
@@ -627,6 +651,292 @@ export default function Home() {
     'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=600&auto=format&fit=crop&q=80'
   ];
 
+  // Premium Social Dashboard States
+  const [postTitle, setPostTitle] = useState('Austria: Panoramic Lake');
+  const [selectedPlatform, setSelectedPlatform] = useState<'Feed' | 'Stories' | 'Community' | 'Highlights'>('Feed');
+  const [taggedFriends, setTaggedFriends] = useState<string[]>(['@wanderlust.jenny', '@markstravels']);
+  const [friendInput, setFriendInput] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(['Mountains', 'Adventure']);
+  const [scheduleDate, setScheduleDate] = useState('2026-07-04');
+  const [scheduleTime, setScheduleTime] = useState('12:00');
+  const [visibility, setVisibility] = useState<'public' | 'followers' | 'private'>('public');
+  const [allowComments, setAllowComments] = useState(true);
+  const [crossPostFacebook, setCrossPostFacebook] = useState(false);
+  const [crossPostTwitter, setCrossPostTwitter] = useState(false);
+  const [crossPostTiktok, setCrossPostTiktok] = useState(false);
+  const [sendNotification, setSendNotification] = useState(true);
+  const [previewCarouselIndex, setPreviewCarouselIndex] = useState(0);
+  const [locationSuggestionsExpanded, setLocationSuggestionsExpanded] = useState(false);
+  const [isPreviewLiked, setIsPreviewLiked] = useState(false);
+  const [isPreviewSaved, setIsPreviewSaved] = useState(false);
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
+  const [showHeartOverlay, setShowHeartOverlay] = useState(false);
+
+  // Redesigned Destination Discovery States
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [isHeroHovered, setIsHeroHovered] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [liveUpticks, setLiveUpticks] = useState<Record<number, number>>({});
+  const [categoryMoodColor, setCategoryMoodColor] = useState('rgba(139, 92, 246, 0.15)'); // default violet glow
+  const [discoverMousePos, setDiscoverMousePos] = useState({ x: -1000, y: -1000 }); // start hidden
+  const [typedPlaceholderIndex, setTypedPlaceholderIndex] = useState(0);
+  const [typedText, setTypedText] = useState('');
+
+  // Elevated Home Feed States
+  const [hoveredStoryId, setHoveredStoryId] = useState<string | null>(null);
+  const [activeDoubleTapPostId, setActiveDoubleTapPostId] = useState<string | null>(null);
+  const [activeMapPostId, setActiveMapPostId] = useState<string | null>(null);
+  const [postCarouselIndices, setPostCarouselIndices] = useState<Record<string, number>>({});
+  const [loadedFeedImages, setLoadedFeedImages] = useState<Record<string, boolean>>({});
+  const [showSwitchDropdown, setShowSwitchDropdown] = useState(false);
+  const [hoveredVlogId, setHoveredVlogId] = useState<string | null>(null);
+  const [showBellNotifications, setShowBellNotifications] = useState(false);
+  const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
+  const [globalMousePos, setGlobalMousePos] = useState({ x: -1000, y: -1000 });
+  const [isLoadingFeed, setIsLoadingFeed] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [visiblePostsCount, setVisiblePostsCount] = useState(2);
+  const [viewCounts, setViewCounts] = useState<Record<string, number>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  const showToast = (message: string) => {
+    const id = Date.now().toString();
+    setToasts(prev => [...prev, { id, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 2800);
+  };
+
+  const handleFeedCarouselLeft = (postId: string, maxLen: number) => {
+    setPostCarouselIndices(prev => {
+      const cur = prev[postId] || 0;
+      const next = cur === 0 ? maxLen - 1 : cur - 1;
+      return { ...prev, [postId]: next };
+    });
+  };
+
+  const handleFeedCarouselRight = (postId: string, maxLen: number) => {
+    setPostCarouselIndices(prev => {
+      const cur = prev[postId] || 0;
+      const next = cur === maxLen - 1 ? 0 : cur + 1;
+      return { ...prev, [postId]: next };
+    });
+  };
+
+  // Global mouse move tracker for reactive glows
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      setGlobalMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, []);
+
+  // Skeleton loader effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingFeed(false);
+    }, 1100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Live feed count-up effect
+  useEffect(() => {
+    if (activeTab === 'home') {
+      vlogs.forEach((v) => {
+        let targetViews = parseFloat(v.views.replace('K views', '')) * 1000 || 42800;
+        let targetLikes = v.likes || 1254;
+
+        let viewsStart = Math.floor(targetViews * 0.75);
+        let likesStart = Math.floor(targetLikes * 0.75);
+
+        setViewCounts(prev => ({ ...prev, [v.id]: viewsStart }));
+        setLikeCounts(prev => ({ ...prev, [v.id]: likesStart }));
+
+        let vStep = Math.ceil((targetViews - viewsStart) / 10);
+        let lStep = Math.ceil((targetLikes - likesStart) / 10);
+
+        let count = 0;
+        let interval = setInterval(() => {
+          count++;
+          setViewCounts(prev => {
+            const cur = prev[v.id] || viewsStart;
+            if (cur >= targetViews || count >= 10) {
+              clearInterval(interval);
+              return { ...prev, [v.id]: targetViews };
+            }
+            return { ...prev, [v.id]: cur + vStep };
+          });
+          setLikeCounts(prev => {
+            const cur = prev[v.id] || likesStart;
+            if (cur >= targetLikes || count >= 10) {
+              return { ...prev, [v.id]: targetLikes };
+            }
+            return { ...prev, [v.id]: cur + lStep };
+          });
+        }, 60);
+      });
+    }
+  }, [activeTab]);
+
+  // --- DESTINATION DISCOVERY REDESIGN HELPERS & EFFECTS ---
+  const heroDestinations = [
+    { name: 'Ubud, Bali 🌴', desc: "Experience the calming spiritual energy, lush green rice terraces, and beautiful waterfalls of Bali's cultural heart.", visitors: '12.5k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Reykjavik, Iceland ❄️', desc: 'Marvel at the magical Northern lights, geothermal pools, and active volcanoes in this icy Nordic wonderland.', visitors: '3.5k posts', rating: '4.8', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Amalfi Coast, Italy 🍋', desc: 'Wander along vertical cliffs, colorful fishing villages, and cliffside lemon gardens overlooking the Tyrrhenian Sea.', visitors: '18.7k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Manali, Himachal Pradesh 🏔️', desc: 'Explore snow-covered valleys, local wooden temples, and active winter sports routes in the high Himalayas.', visitors: '4.8k posts', rating: '4.7', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80' }
+  ];
+
+  // Synthesize Web Audio click/pop sound dynamically without audio assets
+  const playUISound = (type: 'tap' | 'open' | 'click' | 'hover') => {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'tap') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.015, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+      } else if (type === 'open') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(250, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(550, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+      } else if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.02, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } else if (type === 'hover') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.006, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.04);
+      }
+    } catch (e) {
+      console.warn("Web Audio block:", e);
+    }
+  };
+
+  // Cycle hero index for live morphing banner
+  useEffect(() => {
+    if (activeTab !== 'search' || isHeroHovered) return;
+    const interval = setInterval(() => {
+      setHeroIndex(prev => (prev + 1) % heroDestinations.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [activeTab, isHeroHovered]);
+
+  // Command key listener (⌘K / Ctrl+K)
+  useEffect(() => {
+    const handleCmdK = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => {
+          const next = !prev;
+          playUISound(next ? 'open' : 'click');
+          return next;
+        });
+      }
+      if (e.key === 'Escape') {
+        setShowCommandPalette(false);
+      }
+    };
+    window.addEventListener('keydown', handleCmdK);
+    return () => window.removeEventListener('keydown', handleCmdK);
+  }, [soundEnabled]);
+
+  // Typing animation suggest loop inside search palette
+  useEffect(() => {
+    if (!showCommandPalette) return;
+    const searchSuggestions = [
+      'romantic beach getaways...',
+      'trekking in the Himalayas...',
+      'winter snowy adventures...',
+      'historic cultural pagodas...',
+      'best street food spots...'
+    ];
+    let wordIndex = typedPlaceholderIndex;
+    let charIndex = 0;
+    let isDeleting = false;
+    let currentWord = searchSuggestions[wordIndex];
+    let timer: NodeJS.Timeout;
+
+    const tick = () => {
+      if (!isDeleting) {
+        setTypedText(currentWord.slice(0, charIndex + 1));
+        charIndex++;
+        if (charIndex >= currentWord.length) {
+          isDeleting = true;
+          timer = setTimeout(tick, 2000);
+        } else {
+          timer = setTimeout(tick, 100);
+        }
+      } else {
+        setTypedText(currentWord.slice(0, charIndex - 1));
+        charIndex--;
+        if (charIndex <= 0) {
+          isDeleting = false;
+          wordIndex = (wordIndex + 1) % searchSuggestions.length;
+          setTypedPlaceholderIndex(wordIndex);
+          currentWord = searchSuggestions[wordIndex];
+          timer = setTimeout(tick, 500);
+        } else {
+          timer = setTimeout(tick, 50);
+        }
+      }
+    };
+
+    timer = setTimeout(tick, 500);
+    return () => clearTimeout(timer);
+  }, [showCommandPalette, typedPlaceholderIndex]);
+
+  // Uptick likes simulation loop
+  useEffect(() => {
+    if (activeTab !== 'search') return;
+    const interval = setInterval(() => {
+      const randomIdx = Math.floor(Math.random() * travelDestinations.length);
+      setLiveUpticks(prev => ({
+        ...prev,
+        [randomIdx]: (prev[randomIdx] || 0) + 1
+      }));
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
+  const [mediaLibrary, setMediaLibrary] = useState([
+    { id: 'lib-1', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80', name: 'mountain_sunrise.jpg', size: '1.2 MB', dimensions: '1920x1080' },
+    { id: 'lib-2', url: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop&q=80', name: 'amalfi_sunset.jpg', size: '2.4 MB', dimensions: '2400x1600' },
+    { id: 'lib-3', url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&auto=format&fit=crop&q=80', name: 'paris_eiffel.jpg', size: '980 KB', dimensions: '1200x800' },
+    { id: 'lib-4', url: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=600&auto=format&fit=crop&q=80', name: 'iceland_winter.jpg', size: '1.8 MB', dimensions: '1600x1200' },
+    { id: 'lib-5', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80', name: 'goa_beach.jpg', size: '1.5 MB', dimensions: '1920x1080' },
+    { id: 'lib-6', url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=300&auto=format&fit=crop&q=80', name: 'manali_valley.jpg', size: '1.1 MB', dimensions: '1200x900' }
+  ]);
+
+  const [postImages, setPostImages] = useState<string[]>([
+    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&auto=format&fit=crop&q=80'
+  ]);
+
   // Comment input state dictionary
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
@@ -856,22 +1166,109 @@ export default function Home() {
     e.preventDefault();
     if (!newPostCaption.trim()) return;
 
+    // Parse hashtags dynamically from the caption, fallback if none found
+    const parsedHashtags = newPostCaption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust'];
+    
+    // Choose the first image in the attached images as the primary thumbnail/image for feed compatibility
+    const primaryImage = postImages.length > 0 ? postImages[0] : 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80';
+
     const newPost = {
       id: `post-${Date.now()}`,
-      username: user?.username || 'me',
-      avatar: '🌟',
+      username: user?.username || 'isabella_nilsson',
+      avatar: user?.avatarUrl ? <img src={user.avatarUrl} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : '🌟',
       location: newPostLocation.trim() || 'Travel Heaven 📍',
-      image: creatorPresets[selectedPresetImageIndex],
+      image: primaryImage,
+      images: postImages.length > 0 ? postImages : [primaryImage],
+      title: postTitle.trim(),
       caption: newPostCaption.trim(),
-      hashtags: ['#travora', '#explore', '#wanderlust'],
+      hashtags: parsedHashtags,
       likesCount: 0,
-      comments: []
+      comments: [],
+      categories: selectedCategories,
+      platform: selectedPlatform,
+      scheduleDate,
+      scheduleTime,
+      visibility,
+      allowComments
     };
 
     setPosts((prev) => [newPost, ...prev]);
+    
+    // Reset states after publishing
     setNewPostCaption('');
     setNewPostLocation('');
+    setPostTitle('');
+    setTaggedFriends(['@wanderlust.jenny', '@markstravels']);
+    setSelectedCategories(['Adventure']);
+    setPostImages([
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80'
+    ]);
+    
+    // Redirect to home feed
     setActiveTab('home');
+  };
+
+  // Media panel helper functions
+  const handleMediaUpload = (files: File[]) => {
+    files.forEach((file) => {
+      const url = URL.createObjectURL(file);
+      const name = file.name;
+      const dimensions = '1920x1080';
+      const sizeStr = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+      const newItem = {
+        id: `lib-${Date.now()}-${Math.random()}`,
+        url,
+        name,
+        size: sizeStr,
+        dimensions
+      };
+      setMediaLibrary(prev => [newItem, ...prev]);
+      setPostImages(prev => [...prev, url]);
+    });
+  };
+
+  const toggleMediaSelection = (url: string) => {
+    setPostImages(prev => {
+      if (prev.includes(url)) {
+        return prev.filter(img => img !== url);
+      } else {
+        return [...prev, url];
+      }
+    });
+  };
+
+  const moveMedia = (index: number, direction: number) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= postImages.length) return;
+    setPostImages(prev => {
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[targetIndex];
+      updated[targetIndex] = temp;
+      return updated;
+    });
+  };
+
+  // Live Preview Helper for double tap like
+  const handleDoubleTapPreview = () => {
+    setIsPreviewLiked(true);
+    setShowHeartOverlay(true);
+    setTimeout(() => {
+      setShowHeartOverlay(false);
+    }, 800);
+  };
+
+  // Live Preview Helper for click-to-slide
+  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (postImages.length <= 1) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    if (clickX < width * 0.4) {
+      setPreviewCarouselIndex(prev => (prev === 0 ? postImages.length - 1 : prev - 1));
+    } else {
+      setPreviewCarouselIndex(prev => (prev === postImages.length - 1 ? 0 : prev + 1));
+    }
   };
 
   // --- PROFILE DASHBOARD REDESIGN STATES ---
@@ -1210,6 +1607,15 @@ export default function Home() {
           <div className="bg-blob bg-blob-1" />
           <div className="bg-blob bg-blob-2" />
           <div className="bg-blob bg-blob-3" />
+          
+          {/* Cursor-reactive ambient background glow */}
+          <div 
+            className="global-cursor-reactive-glow"
+            style={{
+              left: `${globalMousePos.x}px`,
+              top: `${globalMousePos.y}px`
+            }}
+          />
         </div>
         
         {/* MOBILE ONLY: Top Header Bar */}
@@ -1334,7 +1740,8 @@ export default function Home() {
               >
                 <span className="instagram-sidebar-item-icon" style={{ position: 'relative' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill={showNotificationsDrawer ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                   </svg>
                   {unreadNotifications > 0 && (
                     <span className="instagram-sidebar-badge">{unreadNotifications}</span>
@@ -1587,6 +1994,8 @@ export default function Home() {
                         <div 
                           key={story.id} 
                           className="story-wrapper"
+                          onMouseEnter={() => setHoveredStoryId(story.id)}
+                          onMouseLeave={() => setHoveredStoryId(null)}
                           onClick={() => {
                             if (story.id === 'story-1') {
                               setActiveTab('create');
@@ -1600,121 +2009,324 @@ export default function Home() {
                           }}
                         >
                           <div className={`story-ring ${story.viewed ? 'viewed' : ''} ${story.id === 'story-1' ? 'user-story-ring' : ''} ${story.isLive ? 'live-story' : ''}`}>
-                            <div className="story-avatar">{story.avatar}</div>
+                            <div className="story-avatar">
+                              {story.avatar.startsWith('http') ? (
+                                <img src={story.avatar} alt={story.username} className="story-avatar-img" />
+                              ) : (
+                                story.avatar
+                              )}
+                            </div>
                             {story.id === 'story-1' && <div className="user-add-story-badge">+</div>}
+                            {story.isLive && <span className="story-live-badge-glow">LIVE</span>}
+                            {hoveredStoryId === story.id && (
+                              <svg className="story-progress-arc-overlay" viewBox="0 0 70 70">
+                                <circle cx="35" cy="35" r="32" className="story-progress-circle-path" />
+                              </svg>
+                            )}
                           </div>
                           <span className="story-username">{story.username}</span>
+                          
+                          {/* Floating story thumbnail preview */}
+                          {hoveredStoryId === story.id && story.image && (
+                            <div className="story-hover-preview-card discover-premium-card animate-slide-up">
+                              <img src={story.image} alt="preview" className="story-hover-preview-img" />
+                              <div className="story-hover-preview-meta">
+                                <span className="story-hover-preview-text">{story.caption.slice(0, 48)}...</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Posts feed */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    {posts.map((post) => {
-                      const isLiked = likedPosts.has(post.id);
-                      const isSaved = savedPosts.has(post.id);
-                      const commentsOpen = expandedComments[post.id];
-
-                      return (
-                        <article key={post.id} className="post-card">
-                          
-                          {/* Post Header */}
-                          <div className="post-card-header">
-                            <div className="post-card-user-info">
-                              <div className="post-card-avatar">{post.avatar}</div>
-                              <div>
-                                <span className="post-card-username">{post.username}</span>
-                                <span className="post-card-location">📍 {post.location}</span>
-                              </div>
-                            </div>
-                            <button className="post-action-btn" style={{ color: 'var(--text-muted)' }}>•••</button>
-                          </div>
-
-                          {/* Post Media */}
-                          <div className="post-card-media-container" onDoubleClick={() => toggleLike(post.id)}>
-                            <img src={post.image} alt="post" className="post-card-img" />
-                          </div>
-
-                          {/* Post Actions */}
-                          <div className="post-card-actions">
-                            <div className="post-card-left-actions">
-                              <button className={`post-action-btn-with-count ${isLiked ? 'liked' : ''}`} onClick={() => toggleLike(post.id)}>
-                                <svg width="22" height="22" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
-                                <span className="post-action-count">{formatCount(post.likesCount)}</span>
-                              </button>
-                              
-                              <button className="post-action-btn-with-count" onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !commentsOpen }))}>
-                                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                                </svg>
-                                <span className="post-action-count">{post.comments.length}</span>
-                              </button>
-
-                              <button className="post-action-btn-with-count" onClick={() => alert('Post shared!')}>
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <line x1="22" y1="2" x2="11" y2="13" />
-                                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                                </svg>
-                              </button>
-                            </div>
-                            <button className={`post-action-btn ${isSaved ? 'saved' : ''}`} onClick={() => toggleSave(post.id)}>
-                              <svg width="22" height="22" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                              </svg>
-                            </button>
-                          </div>
-
-                          {/* Caption */}
-                          <div className="post-card-caption-section" style={{ padding: 0, marginTop: '4px' }}>
-                            <span className="post-card-caption-username">{post.username}</span>
-                            <span>{post.caption}</span>
-                            <div style={{ marginTop: '4px' }}>
-                              {post.hashtags.map((tag, tIdx) => (
-                                <span key={tIdx} className="post-card-caption-hashtags" style={{ marginRight: '6px' }}>{tag}</span>
-                              ))}
+                  {/* Posts feed with Skeleton/Shimmer loaders support */}
+                  {isLoadingFeed ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {[1, 2].map((i) => (
+                        <div key={i} className="post-card skeleton-card">
+                          <div className="post-card-header" style={{ padding: '12px 16px', display: 'flex', gap: '12px' }}>
+                            <div className="skeleton-avatar skeleton-shimmer" style={{ width: '38px', height: '38px', borderRadius: '50%' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, justifyContent: 'center' }}>
+                              <div className="skeleton-line skeleton-shimmer" style={{ width: '40%', height: '10px', borderRadius: '4px' }} />
+                              <div className="skeleton-line skeleton-shimmer" style={{ width: '25%', height: '8px', borderRadius: '4px' }} />
                             </div>
                           </div>
+                          <div className="skeleton-media skeleton-shimmer" style={{ height: '380px', margin: '0 16px', borderRadius: '16px' }} />
+                          <div className="post-card-actions" style={{ padding: '16px' }}>
+                            <div className="skeleton-line skeleton-shimmer" style={{ width: '30%', height: '14px', borderRadius: '4px' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                      {posts.slice(0, visiblePostsCount).map((post, postIdx) => {
+                        const isLiked = likedPosts.has(post.id);
+                        const isSaved = savedPosts.has(post.id);
+                        const commentsOpen = expandedComments[post.id];
 
-                          {/* Comment trigger */}
-                          <button 
-                            className="post-card-comments-toggle" 
-                            style={{ padding: 0, margin: '8px 0 0 0' }}
-                            onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !commentsOpen }))}
+                        return (
+                          <article 
+                            key={post.id} 
+                            className="post-card fade-slide-up"
+                            style={{ animationDelay: `${postIdx * 0.15}s` }}
                           >
-                            {commentsOpen ? 'Hide comments' : `View all ${post.comments.length} comments`}
-                          </button>
+                            
+                            {/* Post Header */}
+                            <div className="post-card-header">
+                              <div className="post-card-user-info">
+                                <div className="post-card-avatar">
+                                  {post.avatar.startsWith('http') ? (
+                                    <img src={post.avatar} alt={post.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                  ) : (
+                                    post.avatar
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="post-card-username">{post.username}</span>
+                                  <span className="post-card-location" onClick={() => setActiveMapPostId(prev => prev === post.id ? null : post.id)}>
+                                    📍 {post.location}
+                                  </span>
+                                </div>
+                              </div>
+                              <button className="post-action-btn spring-active" style={{ color: 'var(--text-muted)' }}>•••</button>
+                            </div>
 
-                          {commentsOpen && (
-                            <div className="post-card-comments-drawer" style={{ background: 'var(--input-bg)', padding: '12px', borderRadius: '8px', marginTop: '10px' }}>
-                              <div className="post-card-comments-list" style={{ maxHeight: '150px' }}>
-                                {post.comments.map((c) => (
-                                  <div key={c.id} className="comment-item">
-                                    <span className="comment-username">{c.username}</span>
-                                    <span>{c.text}</span>
+                            {/* Tappable Inline Map Preview Card */}
+                            {activeMapPostId === post.id && (
+                              <div className="post-inline-map-card discover-premium-card animate-slide-up">
+                                <div className="map-card-header">
+                                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    Map Explorer: {post.location}
+                                  </span>
+                                  <button onClick={() => setActiveMapPostId(null)} className="map-close-btn">&times;</button>
+                                </div>
+                                <div className="map-card-body">
+                                  <div className="radar-grid-bg"></div>
+                                  <div className="radar-ping"></div>
+                                  <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '28px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}>📍</span>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '12px', marginTop: '4px' }}>
+                                      {post.location}
+                                    </span>
                                   </div>
+                                  <div style={{ position: 'absolute', bottom: '8px', right: '8px', zIndex: 2, fontSize: '10px', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', borderRadius: '4px' }}>
+                                    GPS Active
+                                  </div>
+                                </div>
+                                <div className="map-card-footer">
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Coordinates: 8.4095° S, 115.1889° E</span>
+                                  <button className="map-directions-btn" onClick={() => { showToast(`Opening Google Maps for ${post.location}...`); }}>
+                                    Get Directions
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Post Media Carousel with double-tap heart burst overlay */}
+                            <div 
+                              className="post-card-media-container" 
+                              onDoubleClick={() => {
+                                setActiveDoubleTapPostId(post.id);
+                                if (!isLiked) {
+                                  toggleLike(post.id);
+                                  showToast(`Liked @${post.username}'s post`);
+                                }
+                                setTimeout(() => {
+                                  setActiveDoubleTapPostId(null);
+                                }, 800);
+                              }}
+                              style={{ position: 'relative', overflow: 'hidden' }}
+                            >
+                              <div 
+                                className="post-carousel-track" 
+                                style={{ 
+                                  display: 'flex', 
+                                  transition: 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)', 
+                                  transform: `translateX(-${(postCarouselIndices[post.id] || 0) * 100}%)`,
+                                  height: '100%'
+                                }}
+                              >
+                                {(post.images || [post.image]).map((imgUrl, imgIdx) => {
+                                  const isImgLoaded = loadedFeedImages[`${post.id}-${imgIdx}`];
+                                  return (
+                                    <div key={imgIdx} style={{ minWidth: '100%', position: 'relative' }}>
+                                      {!isImgLoaded && (
+                                        <div className="skeleton-loader-shimmer" style={{ position: 'absolute', inset: 0 }} />
+                                      )}
+                                      <img 
+                                        src={imgUrl} 
+                                        alt={`post-${imgIdx}`} 
+                                        className={`post-card-img ${isImgLoaded ? 'sharpen' : 'blur-placeholder'}`} 
+                                        onLoad={() => setLoadedFeedImages(prev => ({ ...prev, [`${post.id}-${imgIdx}`]: true }))}
+                                        style={{ 
+                                          width: '100%', 
+                                          height: '100%', 
+                                          objectFit: 'cover',
+                                          filter: isImgLoaded ? 'none' : 'blur(15px)',
+                                          transition: 'filter 0.4s ease'
+                                        }}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Heart burst scale-in overlay */}
+                              {activeDoubleTapPostId === post.id && (
+                                <div className="double-tap-heart-burst">
+                                  <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                  </svg>
+                                </div>
+                              )}
+
+                              {/* Dot Indicators */}
+                              {post.images && post.images.length > 1 && (
+                                <>
+                                  <button 
+                                    className="carousel-nav-btn prev"
+                                    onClick={(e) => { e.stopPropagation(); handleFeedCarouselLeft(post.id, post.images.length); }}
+                                    style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                                  >
+                                    ‹
+                                  </button>
+                                  <button 
+                                    className="carousel-nav-btn next"
+                                    onClick={(e) => { e.stopPropagation(); handleFeedCarouselRight(post.id, post.images.length); }}
+                                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }}
+                                  >
+                                    ›
+                                  </button>
+                                  
+                                  <div className="feed-carousel-indicators">
+                                    {post.images.map((_, dotIdx) => (
+                                      <span 
+                                        key={dotIdx} 
+                                        className={`feed-carousel-dot ${(postCarouselIndices[post.id] || 0) === dotIdx ? 'active' : ''}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Post Actions */}
+                            <div className="post-card-actions">
+                              <div className="post-card-left-actions">
+                                <button className={`post-action-btn-with-count spring-active ${isLiked ? 'liked' : ''}`} onClick={() => {
+                                  toggleLike(post.id);
+                                  if (!isLiked) {
+                                    showToast(`Liked @${post.username}'s post`);
+                                  }
+                                }}>
+                                  <svg width="22" height="22" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                  <span className="post-action-count animated-count">{formatCount(post.likesCount)}</span>
+                                </button>
+                                
+                                <button className="post-action-btn-with-count spring-active" onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !commentsOpen }))}>
+                                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                                  </svg>
+                                  <span className="post-action-count">{post.comments.length}</span>
+                                </button>
+
+                                <button className="post-action-btn-with-count spring-active" onClick={() => showToast(`Link copied for @${post.username}'s post!`)}>
+                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13" />
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                  </svg>
+                                </button>
+                              </div>
+                              <button className={`post-action-btn spring-active ${isSaved ? 'saved' : ''}`} onClick={() => {
+                                toggleSave(post.id);
+                                showToast(isSaved ? "Removed from saved posts" : "Saved post to bookmarks");
+                              }}>
+                                <svg width="22" height="22" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Caption */}
+                            <div className="post-card-caption-section" style={{ padding: 0, marginTop: '4px' }}>
+                              <span className="post-card-caption-username">{post.username}</span>
+                              <span>{post.caption}</span>
+                              <div style={{ marginTop: '4px' }}>
+                                {post.hashtags.map((tag, tIdx) => (
+                                  <span key={tIdx} className="post-card-caption-hashtags" style={{ marginRight: '6px' }}>{tag}</span>
                                 ))}
                               </div>
-                              <div className="comment-input-container" style={{ marginTop: '10px' }}>
-                                <input 
-                                  type="text" 
-                                  className="comment-input" 
-                                  placeholder="Add a comment..."
-                                  value={commentInputs[post.id] || ''}
-                                  onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(post.id); }}
-                                />
-                                <button className="comment-submit-btn" onClick={() => handleAddComment(post.id)}>Post</button>
-                              </div>
                             </div>
-                          )}
 
-                        </article>
-                      );
-                    })}
-                  </div>
+                            {/* Comment trigger */}
+                            <button 
+                              className="post-card-comments-toggle" 
+                              style={{ padding: 0, margin: '8px 0 0 0' }}
+                              onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !commentsOpen }))}
+                            >
+                              {commentsOpen ? 'Hide comments' : `View all ${post.comments.length} comments`}
+                            </button>
+
+                            {commentsOpen && (
+                              <div className="post-card-comments-drawer" style={{ background: 'var(--input-bg)', padding: '12px', borderRadius: '8px', marginTop: '10px' }}>
+                                <div className="post-card-comments-list" style={{ maxHeight: '150px' }}>
+                                  {post.comments.map((c) => (
+                                    <div key={c.id} className="comment-item">
+                                      <span className="comment-username">{c.username}</span>
+                                      <span>{c.text}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="comment-input-container" style={{ marginTop: '10px' }}>
+                                  <input 
+                                    type="text" 
+                                    className="comment-input" 
+                                    placeholder="Add a comment..."
+                                    value={commentInputs[post.id] || ''}
+                                    onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(post.id); }}
+                                  />
+                                  <button className="comment-submit-btn spring-active" onClick={() => handleAddComment(post.id)}>Post</button>
+                                </div>
+                              </div>
+                            )}
+
+                          </article>
+                        );
+                      })}
+
+                      {/* Infinite Scroll Trigger Indicator */}
+                      <div className="feed-infinite-scroll-trigger">
+                        {isLoadingMore ? (
+                          <div className="infinite-scroll-loader-spinner">
+                            <div className="accent-loader-circle"></div>
+                            <span>Fetching more travel stories...</span>
+                          </div>
+                        ) : visiblePostsCount < posts.length ? (
+                          <button 
+                            className="load-more-feed-btn spring-active"
+                            onClick={() => {
+                              setIsLoadingMore(true);
+                              setTimeout(() => {
+                                setVisiblePostsCount(prev => prev + 1);
+                                setIsLoadingMore(false);
+                                showToast("New travel posts loaded successfully!");
+                              }, 1000);
+                            }}
+                          >
+                            Load More Stories
+                          </button>
+                        ) : (
+                          <span className="feed-end-message">✨ You've caught up with all travel updates!</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                 </div>
 
@@ -1722,68 +2334,127 @@ export default function Home() {
                 <div className="instagram-feed-right-column">
                   
                   {/* Current User Card */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px', position: 'relative' }}>
                     <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800 }}>
                       {user.fullName.charAt(0)}
                     </div>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: '13px' }}>{user.username}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.fullName}</div>
                     </div>
-                    <button className="suggested-profile-switch-btn" onClick={() => setActiveTab('profile')}>Switch</button>
+                    
+                    <div style={{ position: 'relative' }}>
+                      <button 
+                        className="suggested-profile-switch-btn spring-active" 
+                        onClick={() => setShowSwitchDropdown(!showSwitchDropdown)}
+                      >
+                        Switch
+                      </button>
+
+                      {showSwitchDropdown && (
+                        <div className="switch-accounts-dropdown discover-premium-card animate-slide-up" style={{ right: 0, top: '24px', zIndex: 120 }}>
+                          <div className="switch-dropdown-header">
+                            <span>Switch Accounts</span>
+                            <button className="switch-close-btn" onClick={() => setShowSwitchDropdown(false)}>&times;</button>
+                          </div>
+                          <div className="switch-accounts-list">
+                            <div className="switch-account-item active" onClick={() => { showToast("Already logged in as Suvarnatest"); setShowSwitchDropdown(false); }}>
+                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, marginRight: '8px' }}>S</div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@Suvarnatest</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Shashank (Active)</div>
+                              </div>
+                              <span style={{ color: 'var(--accent-blue)', fontSize: '12px' }}>✓</span>
+                            </div>
+                            <div className="switch-account-item" onClick={() => { showToast("Switched to @traveler_shashank"); setShowSwitchDropdown(false); }}>
+                              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@traveler_shashank</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Siddhartha Chathra</div>
+                              </div>
+                            </div>
+                            <div className="switch-account-item" onClick={() => { showToast("Switched to @sid_vlogs"); setShowSwitchDropdown(false); }}>
+                              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@sid_vlogs</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Siddhartha Vlogs</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Suggestions Header */}
                   <div className="instagram-suggested-header">
                     <span>Suggested for you</span>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => alert('Suggested based on local buddies activity!')}>See all</button>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => showToast('Displaying travel creators near Ubud...')}>See all</button>
                   </div>
 
                   {/* Suggested list */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    
-                    <div className="instagram-suggested-user-row">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f4a261', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>👩‍🌾</div>
-                      <div className="instagram-suggested-user-info">
-                        <span className="instagram-suggested-username">wanderlust_jenny</span>
-                        <span className="instagram-suggested-relationship">Suggested for you</span>
-                      </div>
-                      <button className="follow-btn" onClick={() => alert('Jenny added to your network!')}>Follow</button>
-                    </div>
-
-                    <div className="instagram-suggested-user-row">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#2a9d8f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>🧗‍♂️</div>
-                      <div className="instagram-suggested-user-info">
-                        <span className="instagram-suggested-username">backpacker_sam</span>
-                        <span className="instagram-suggested-relationship">Followed by nomad_vlogs + 2 others</span>
-                      </div>
-                      <button className="follow-btn" onClick={() => alert('Sam added to your network!')}>Follow</button>
-                    </div>
-
-                    <div className="instagram-suggested-user-row">
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e76f51', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px' }}>🏨</div>
-                      <div className="instagram-suggested-user-info">
-                        <span className="instagram-suggested-username">stay_luxury_bali</span>
-                        <span className="instagram-suggested-relationship">Suggested Stay partner</span>
-                      </div>
-                      <button className="follow-btn" onClick={() => alert('Stay partner saved.')}>Follow</button>
-                    </div>
-
+                    {[
+                      { username: 'wanderlust_jenny', relation: 'Suggested for you', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', active: true },
+                      { username: 'backpacker_sam', relation: 'Followed by nomad_vlogs + 2 others', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', active: false },
+                      { username: 'stay_luxury_bali', relation: 'Suggested Stay partner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', active: true }
+                    ].map((sUser) => {
+                      const isFld = followedUsers.has(sUser.username);
+                      return (
+                        <div key={sUser.username} className="instagram-suggested-user-row">
+                          <div style={{ position: 'relative', width: '32px', height: '32px' }}>
+                            <img src={sUser.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            {sUser.active && (
+                              <span className="suggested-presence-indicator"></span>
+                            )}
+                          </div>
+                          <div className="instagram-suggested-user-info">
+                            <span className="instagram-suggested-username">{sUser.username}</span>
+                            <span className="instagram-suggested-relationship">{sUser.relation}</span>
+                          </div>
+                          <button 
+                            className={`follow-btn spring-active ${isFld ? 'following' : ''}`}
+                            onClick={() => {
+                              setFollowedUsers(prev => {
+                                const next = new Set(prev);
+                                if (next.has(sUser.username)) {
+                                  next.delete(sUser.username);
+                                  showToast(`Unfollowed @${sUser.username}`);
+                                } else {
+                                  next.add(sUser.username);
+                                  showToast(`Started following @${sUser.username}`);
+                                }
+                                return next;
+                              });
+                            }}
+                          >
+                            {isFld ? '✓ Following' : 'Follow'}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Vlogs Scrollable Feed Section */}
                   <div className="vlogs-section-header">
                     <span className="vlogs-section-title">Explore Travel Vlogs</span>
-                    <span className="vlogs-section-badge">Live Feed</span>
+                    <span className="vlogs-section-badge-pulsing">LIVE FEED</span>
                   </div>
 
                   <div className="vlogs-scroll-container">
                     {vlogs.map((vlog) => (
-                      <div key={vlog.id} className="vlog-feed-card">
+                      <div 
+                        key={vlog.id} 
+                        className="vlog-feed-card spring-active"
+                        onMouseEnter={() => setHoveredVlogId(vlog.id)}
+                        onMouseLeave={() => setHoveredVlogId(null)}
+                      >
                         {/* Vlog Header */}
                         <div className="vlog-card-header">
                           <div className="vlog-user-info">
-                            <span className="vlog-avatar">{vlog.avatar}</span>
+                            <span className="vlog-avatar">
+                              <img src={vlog.avatar} alt={vlog.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            </span>
                             <div className="vlog-user-details">
                               <span className="vlog-username">{vlog.username}</span>
                               <span className="vlog-location">📍 {vlog.location}</span>
@@ -1793,7 +2464,7 @@ export default function Home() {
                         </div>
 
                         {/* Vlog Thumbnail Media */}
-                        <div className="vlog-media-container" onClick={() => alert(`Opening Full Screen Vlog Player for @${vlog.username}'s journey...`)}>
+                        <div className="vlog-media-container" onClick={() => showToast(`Opening Vlog Player: Solo Trekking...`)}>
                           <img src={vlog.thumbnail} alt={vlog.title} className="vlog-img" />
                           <div className="vlog-play-overlay">
                             <div className="vlog-play-button">
@@ -1802,18 +2473,33 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
+                          {hoveredVlogId === vlog.id && (
+                            <div className="vlog-playback-progress-bar-container">
+                              <div className="vlog-playback-progress-bar-fill"></div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Vlog Details */}
                         <div className="vlog-caption-section">
                           <p className="vlog-title-text">{vlog.title}</p>
                           <div className="vlog-metrics-row">
-                            <span className="vlog-views">{vlog.views}</span>
+                            <span className="vlog-views">
+                              {viewCounts[vlog.id] !== undefined ? `${(viewCounts[vlog.id] / 1000).toFixed(1)}K views` : vlog.views}
+                            </span>
                             <button 
-                              className={`vlog-like-btn ${vlog.liked ? 'liked' : ''}`} 
-                              onClick={() => toggleLikeVlog(vlog.id)}
+                              className={`vlog-like-btn spring-active ${vlog.liked ? 'liked' : ''}`} 
+                              onClick={() => {
+                                toggleLikeVlog(vlog.id);
+                                if (!vlog.liked) {
+                                  showToast(`Liked @${vlog.username}'s vlog`);
+                                }
+                              }}
                             >
-                              {vlog.liked ? '❤️' : '🤍'} {vlog.likes}
+                              <svg width="12" height="12" fill={vlog.liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ marginRight: '4px' }}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                              </svg>
+                              {likeCounts[vlog.id] !== undefined ? likeCounts[vlog.id] : vlog.likes}
                             </button>
                           </div>
                         </div>
@@ -2249,11 +2935,32 @@ export default function Home() {
 
             {/* VIEW 4: EXPLORE SEARCH GRID */}
             {activeTab === 'search' && (
-              <div className="instagram-explore-container">
-                
+              <div 
+                className="discover-page-container"
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setDiscoverMousePos({
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                  });
+                }}
+              >
+                {/* Cursor-reactive ambient background glow */}
+                <div 
+                  className="cursor-reactive-glow"
+                  style={{
+                    left: `${discoverMousePos.x}px`,
+                    top: `${discoverMousePos.y}px`
+                  }}
+                ></div>
+
+                {/* Corner vignette glows */}
+                <div className="discover-corner-glow glow-topleft"></div>
+                <div className="discover-corner-glow glow-bottomright"></div>
+
                 {/* Explore Search Header Row with Action Buttons */}
                 <div className="explore-search-header-row">
-                  <div className="instagram-explore-search-bar">
+                  <div className="instagram-explore-search-bar" onClick={() => { setShowCommandPalette(true); playUISound('open'); }}>
                     <div className="search-input-wrapper explore-search-input-wrapper">
                       {/* App Logo */}
                       <div className="explore-search-logo-container" title="Travora">
@@ -2276,18 +2983,65 @@ export default function Home() {
                       </svg>
                       <input 
                         type="text" 
+                        readOnly
                         className="comment-input explore-search-field"
-                        placeholder="Search explore destinations..."
+                        placeholder="Search romantic beach getaways..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', marginLeft: '10px' }}
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', marginLeft: '10px', cursor: 'pointer' }}
                       />
+                      <span className="search-hotkey-badge">⌘K</span>
                     </div>
                   </div>
 
                   {/* Quick Action controls to the right of the Search Bar */}
                   <div className="explore-search-actions">
-                    <button className="explore-action-btn" onClick={() => alert('Opening advanced travel filters...')} title="Advanced Filters">
+                    {/* Sound Toggle controls */}
+                    <button 
+                      type="button" 
+                      className={`explore-action-btn sound-toggle-btn ${soundEnabled ? 'active' : ''}`}
+                      onClick={() => {
+                        const next = !soundEnabled;
+                        setSoundEnabled(next);
+                        if (next) {
+                          // synthesize visual confirmation tick
+                          try {
+                            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.connect(gain);
+                            gain.connect(ctx.destination);
+                            osc.frequency.setValueAtTime(600, ctx.currentTime);
+                            gain.gain.setValueAtTime(0.015, ctx.currentTime);
+                            osc.start();
+                            osc.stop(ctx.currentTime + 0.1);
+                          } catch(err) {}
+                        }
+                      }}
+                      title={soundEnabled ? "Disable UI Sounds" : "Enable UI Sounds"}
+                    >
+                      <span className="action-icon-wrapper-sound">
+                        {soundEnabled ? (
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                          </svg>
+                        ) : (
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                          </svg>
+                        )}
+                      </span>
+                      <span>{soundEnabled ? 'Sound On' : 'Muted'}</span>
+                    </button>
+
+                    <button 
+                      className="explore-action-btn" 
+                      onClick={() => { playUISound('click'); alert('Opening advanced travel filters...'); }} 
+                      title="Advanced Filters"
+                      onMouseEnter={() => playUISound('hover')}
+                    >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="4" y1="21" x2="4" y2="14" />
                         <line x1="4" y1="10" x2="4" y2="3" />
@@ -2301,7 +3055,12 @@ export default function Home() {
                       </svg>
                       <span>Filters</span>
                     </button>
-                    <button className="explore-action-btn active" onClick={() => alert('Travora interactive Map coming soon!')} title="Map View">
+                    <button 
+                      className="explore-action-btn active" 
+                      onClick={() => { playUISound('click'); alert('Travora interactive Map coming soon!'); }} 
+                      title="Map View"
+                      onMouseEnter={() => playUISound('hover')}
+                    >
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
                         <line x1="9" y1="3" x2="9" y2="18" />
@@ -2328,6 +3087,7 @@ export default function Home() {
                         key={catName}
                         className={`explore-category-btn ${activeExploreCategory === catName ? 'active' : ''}`}
                         onClick={() => handleSwitchExploreCategory(catName)}
+                        onMouseEnter={() => playUISound('hover')}
                       >
                         <span className="explore-category-icon-svg">
                           {renderCategoryIcon(catName)}
@@ -2338,38 +3098,63 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Hero Popular Destination Banner (Above grid) */}
-                <div className="explore-popular-hero-card" onClick={() => setSearchQuery('Ubud')}>
+                {/* Living Morphing Hero Banner */}
+                <div 
+                  className="explore-popular-hero-card discover-premium-card" 
+                  onMouseEnter={() => setIsHeroHovered(true)} 
+                  onMouseLeave={() => setIsHeroHovered(false)}
+                  onClick={() => {
+                    setSearchQuery(heroDestinations[heroIndex].name.split(',')[0]);
+                    playUISound('tap');
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="explore-popular-hero-bg-wrapper">
-                    <img 
-                      src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80" 
-                      alt="Popular Bali today" 
-                      className="explore-popular-hero-bg"
-                    />
+                    {heroDestinations.map((dest, idx) => (
+                      <img 
+                        key={dest.name}
+                        src={dest.img} 
+                        alt={dest.name} 
+                        className={`explore-popular-hero-bg ${heroIndex === idx ? 'visible' : ''}`}
+                      />
+                    ))}
                     <div className="explore-popular-hero-gradient-overlay" />
                   </div>
                   
                   <div className="explore-popular-hero-badge">
                     <span className="explore-badge-pulse" />
-                    🔥 POPULAR DESTINATION OF TODAY
+                    <span className="pulse-ripple-wave"></span>
+                    <span className="badge-text-glow">⚡ LIVE TRENDING OF TODAY</span>
                   </div>
                   
                   <div className="explore-popular-hero-content-glass">
                     <div className="explore-popular-hero-text">
-                      <h4 className="explore-popular-hero-title">Ubud, Bali 🌴</h4>
-                      <p className="explore-popular-hero-desc">Experience the calming spiritual energy, lush green rice terraces, and beautiful waterfalls of Bali's cultural heart.</p>
+                      <h4 className="explore-popular-hero-title">
+                        {heroDestinations[heroIndex].name}
+                      </h4>
+                      <p className="explore-popular-hero-desc">
+                        {heroDestinations[heroIndex].desc}
+                      </p>
                     </div>
+                    
                     <div className="explore-popular-hero-stats">
                       <div className="explore-hero-stat-item">
                         <span className="explore-hero-stat-label">DAILY VISITORS</span>
-                        <span className="explore-hero-stat-value">12.5k posts</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="live-stat-dot-pulse"></span>
+                          <span className="explore-hero-stat-value count-up">
+                            {heroDestinations[heroIndex].visitors}
+                          </span>
+                        </div>
                       </div>
                       <div className="explore-hero-stat-divider" />
                       <div className="explore-hero-stat-item">
                         <span className="explore-hero-stat-label">RATING</span>
-                        <span className="explore-hero-stat-value">4.9 ★★★★★</span>
+                        <span className="explore-hero-stat-value count-up">
+                          {heroDestinations[heroIndex].rating} <span style={{ color: '#f59e0b', fontSize: '9px' }}>{heroDestinations[heroIndex].stars}</span>
+                        </span>
                       </div>
-                      <button className="explore-hero-cta-btn">
+                      <button className="explore-hero-cta-btn btn-shimmer-sweep">
                         Explore
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
                           <line x1="5" y1="12" x2="19" y2="12" />
@@ -2380,51 +3165,105 @@ export default function Home() {
                   </div>
                 </div>
 
-                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '24px 0 16px', fontFamily: 'var(--font-title)' }}>Trending Destinations</h3>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '24px 0 16px', fontFamily: 'var(--font-title)', letterSpacing: '-0.3px', background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Trending Destinations</h3>
                 
                 {/* Premium Explore Grid */}
-                <div className={`instagram-explore-grid ${isSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedCategory ? 'no-animate' : ''}`}>
+                <div 
+                  className={`instagram-explore-grid ${isSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedCategory ? 'no-animate' : ''}`}
+                  style={{ transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                >
                   {travelDestinations
                     .filter(dest => {
                       const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
                       const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
                       return matchesSearch && matchesCategory;
                     })
-                    .map((dest, idx) => (
-                      <div 
-                        key={idx} 
-                        className="instagram-explore-item-card"
-                        onClick={() => {
-                          setSearchQuery(dest.name.split(',')[0]);
-                        }}
-                      >
-                        <div className="explore-item-image-wrapper">
-                          <img src={dest.img} alt={dest.name} className="explore-item-image" />
-                          <div className="explore-item-gradient-overlay" />
-                        </div>
-                        
-                        {/* Top Floating Badges */}
-                        <div className="explore-item-floating-header">
-                          <span className="explore-item-category-badge">{dest.category}</span>
-                        </div>
-                        
-                        {/* Floating Info card at bottom */}
-                        <div className="explore-item-footer-glass">
-                          <div className="explore-item-info">
-                            <span className="explore-item-name">{dest.name}</span>
-                            <span className="explore-item-count">{dest.count}</span>
+                    .map((dest, idx) => {
+                      const totalLikes = 120 + (liveUpticks[idx] || 0);
+                      return (
+                        <div 
+                          key={idx} 
+                          className="instagram-explore-item-card discover-premium-card"
+                          onMouseMove={(e) => {
+                            const card = e.currentTarget;
+                            const rect = card.getBoundingClientRect();
+                            const x = e.clientX - rect.left;
+                            const y = e.clientY - rect.top;
+                            const xc = rect.width / 2;
+                            const yc = rect.height / 2;
+                            const angleX = (yc - y) / 12; // degree tilt
+                            const angleY = (x - xc) / 12; // degree tilt
+                            card.style.transform = `perspective(800px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.02, 1.02, 1.02)`;
+                            
+                            // Parallax glare spotlight sweep
+                            const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
+                            if (glare) {
+                              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 255, 255, 0.08) 0%, transparent 60%)`;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            const card = e.currentTarget;
+                            card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                            const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
+                            if (glare) {
+                              glare.style.background = 'transparent';
+                            }
+                          }}
+                          onClick={() => {
+                            setSearchQuery(dest.name.split(',')[0]);
+                            playUISound('tap');
+                          }}
+                        >
+                          {/* Spotlight Glare */}
+                          <div className="card-glare-overlay"></div>
+
+                          <div className="explore-item-image-wrapper">
+                            <img src={dest.img} alt={dest.name} className="explore-item-image" />
+                            <div className="explore-item-gradient-overlay" />
                           </div>
-                          <div className="explore-item-stats">
-                            <div className="explore-item-stat-pill" title="Likes">
-                              <span>❤️</span> 120
+                          
+                          {/* Top Floating Badges */}
+                          <div className="explore-item-floating-header">
+                            <span className="explore-item-category-badge">{dest.category}</span>
+                            
+                            {/* Live viewers pulse badge */}
+                            <span className="explore-live-pulse-badge">
+                              <span className="pulse-dot-red"></span>
+                              <span>{8 + (idx * 3)} viewing</span>
+                            </span>
+                          </div>
+                          
+                          {/* Floating Info card at bottom */}
+                          <div className="explore-item-footer-glass">
+                            <div className="explore-item-info">
+                              {/* Destination copy handles names correctly without truncations */}
+                              <span className="explore-item-name">{dest.name}</span>
+                              <span className="explore-item-count">{dest.count}</span>
                             </div>
-                            <div className="explore-item-stat-pill" title="Comments">
-                              <span>💬</span> {3 + (idx * 2)}
+                            
+                            <div className="explore-item-stats">
+                              {/* Likes indicator counter increments dynamically */}
+                              <div 
+                                className={`explore-item-stat-pill ${liveUpticks[idx] ? 'stat-uptick-pulse' : ''}`} 
+                                title="Likes"
+                                onClick={(e) => { e.stopPropagation(); playUISound('tap'); }}
+                              >
+                                <svg width="11" height="11" fill="currentColor" style={{ color: '#ec4899', marginRight: '2px' }} viewBox="0 0 24 24">
+                                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                                <span className="stat-count-text">{totalLikes}</span>
+                              </div>
+                              <div className="explore-item-stat-pill" title="Comments">
+                                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '2px' }} viewBox="0 0 24 24">
+                                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                                </svg>
+                                <span>{3 + (idx * 2)}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   }
                   
                   {travelDestinations.filter(dest => {
@@ -2444,65 +3283,757 @@ export default function Home() {
                   )}
                 </div>
 
+                {/* Command-K style AI Search Palette Overlay Modal */}
+                {showCommandPalette && (
+                  <div className="command-palette-overlay" onClick={() => setShowCommandPalette(false)}>
+                    <div className="command-palette-modal" onClick={(e) => e.stopPropagation()}>
+                      <div className="command-palette-header">
+                        <svg className="palette-search-icon" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input 
+                          type="text" 
+                          className="command-palette-input"
+                          placeholder={`Search '${typedText}'`}
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          autoFocus
+                        />
+                        <span className="command-palette-close-badge" onClick={() => setShowCommandPalette(false)}>ESC</span>
+                      </div>
+                      
+                      <div className="command-palette-results">
+                        <div className="palette-section-title">MATCHING EXPLORE DESTINATIONS</div>
+                        {travelDestinations
+                          .filter(dest => dest.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((dest, idx) => (
+                            <div 
+                              key={idx}
+                              className="palette-result-item"
+                              onClick={() => {
+                                setSearchQuery(dest.name.split(',')[0]);
+                                setShowCommandPalette(false);
+                                playUISound('tap');
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="palette-pin">📍</span>
+                                <span className="result-name">{dest.name}</span>
+                              </div>
+                              <span className="result-category">{dest.category}</span>
+                            </div>
+                          ))}
+                        
+                        {travelDestinations.filter(dest => dest.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                          <div className="palette-no-results">No matching destinations found. Press ESC to close.</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* VIEW 5: CREATE POST */}
+            {/* VIEW 5: CREATE POST (REDESIGNED 3-COLUMN SOCIAL SCHEDULING DASHBOARD) */}
             {activeTab === 'create' && (
-              <div className="create-post-container" style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 24px' }}>
-                <h2 className="form-title" style={{ textAlign: 'left', fontSize: '24px', fontWeight: 800, fontFamily: 'var(--font-title)' }}>Create Travel Post</h2>
-                <p className="form-subtitle" style={{ textAlign: 'left', marginBottom: '24px' }}>Share your journeys and stories with the network.</p>
-
-                <form onSubmit={handleCreatePost}>
-                  {/* Preset picker */}
-                  <div className="form-group">
-                    <label className="form-label" style={{ fontSize: '11px', fontWeight: 600 }}>Select Travel Photo</label>
-                    <div style={{ height: '300px', borderRadius: '12px', overflow: 'hidden', background: '#cbd5e1', marginBottom: '10px' }}>
-                      <img src={creatorPresets[selectedPresetImageIndex]} alt="Creator preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div className="creator-dashboard-wrapper">
+                <header className="creator-dashboard-header">
+                  <div className="header-left">
+                    <h2 className="creator-dashboard-title">Create Travel Post</h2>
+                    <p className="creator-dashboard-subtitle">Craft, organize, and schedule your next travel story effortlessly.</p>
+                  </div>
+                  <div className="header-right">
+                    <div className="breadcrumb-nav">
+                      <span className="breadcrumb-item">Dashboard</span>
+                      <span className="breadcrumb-arrow">/</span>
+                      <span className="breadcrumb-item">Content List</span>
+                      <span className="breadcrumb-arrow">/</span>
+                      <span className="breadcrumb-item active">Create Post</span>
                     </div>
-                    <div className="create-preset-grid">
-                      {creatorPresets.map((preset, idx) => (
-                        <div 
-                          key={idx}
-                          className={`create-preset-item ${selectedPresetImageIndex === idx ? 'selected' : ''}`}
-                          onClick={() => setSelectedPresetImageIndex(idx)}
-                        >
-                          <img src={preset} alt={`Preset ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                </header>
+
+                <div className="creator-dashboard-layout">
+                  {/* Left Column: Media Panel */}
+                  <aside className="creator-dashboard-column media-panel-column">
+                    <div className="creator-glass-card media-panel-card">
+                      <div className="panel-header">
+                        <h3 className="panel-title">Upload Media</h3>
+                        <p className="panel-desc">Share photos or a video to attach to your post.</p>
+                      </div>
+                      
+                      {/* Drag & Drop zone */}
+                      <div 
+                        className="upload-dropzone"
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('dragover'); }}
+                        onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove('dragover'); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.currentTarget.classList.remove('dragover');
+                          const files = Array.from(e.dataTransfer.files);
+                          handleMediaUpload(files);
+                        }}
+                      >
+                        <input 
+                          type="file" 
+                          id="media-upload-input" 
+                          multiple 
+                          accept="image/*" 
+                          style={{ display: 'none' }} 
+                          onChange={(e) => {
+                            if (e.target.files) {
+                              handleMediaUpload(Array.from(e.target.files));
+                            }
+                          }}
+                        />
+                        <label htmlFor="media-upload-input" className="upload-label">
+                          <div className="upload-icon-wrapper">
+                            <svg className="upload-icon" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                          </div>
+                          <span className="upload-title">Click to upload or drag & drop</span>
+                          <span className="upload-subtitle">Image, video, carousel</span>
+                        </label>
+                      </div>
+
+                      <div className="media-library-header">
+                        <span className="library-title">Media Library</span>
+                        <span className="library-count">All ({mediaLibrary.length})</span>
+                      </div>
+
+                      {/* Media library grid */}
+                      <div className="media-library-grid">
+                        {/* Plus button for quick upload */}
+                        <label htmlFor="media-upload-input" className="library-add-btn">
+                          <span className="add-plus-symbol">+</span>
+                        </label>
+
+                        {mediaLibrary.map((item) => {
+                          const isSelected = postImages.includes(item.url);
+                          return (
+                            <div 
+                              key={item.id} 
+                              className={`media-library-item ${isSelected ? 'selected' : ''}`}
+                              onClick={() => toggleMediaSelection(item.url)}
+                            >
+                              <img src={item.url} alt={item.name} className="library-item-img" />
+                              <div className="item-selection-overlay">
+                                <span className="selection-checkbox">
+                                  {isSelected && (
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                                      <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Attached Media List with details & reordering */}
+                      <div className="attached-media-section">
+                        <span className="section-label">Selected Media ({postImages.length})</span>
+                        {postImages.length === 0 ? (
+                          <div className="no-attached-media">No media attached to post. Select from library or upload.</div>
+                        ) : (
+                          <div className="attached-media-list">
+                            {postImages.map((imgUrl, index) => {
+                              const libItem = mediaLibrary.find(item => item.url === imgUrl) || {
+                                name: `uploaded_image_${index + 1}.jpg`,
+                                size: '1.4 MB',
+                                dimensions: '1326x1326'
+                              };
+                              return (
+                                <div key={imgUrl} className="attached-media-item">
+                                  <div className="attached-item-left">
+                                    {/* Reorder drag handle (mock buttons for precise control) */}
+                                    <div className="reorder-controls">
+                                      <button 
+                                        type="button" 
+                                        className="reorder-btn" 
+                                        disabled={index === 0}
+                                        onClick={(e) => { e.stopPropagation(); moveMedia(index, -1); }}
+                                        title="Move Up"
+                                      >
+                                        ▲
+                                      </button>
+                                      <button 
+                                        type="button" 
+                                        className="reorder-btn" 
+                                        disabled={index === postImages.length - 1}
+                                        onClick={(e) => { e.stopPropagation(); moveMedia(index, 1); }}
+                                        title="Move Down"
+                                      >
+                                        ▼
+                                      </button>
+                                    </div>
+                                    <img src={imgUrl} alt="Attached Preview" className="attached-item-thumbnail" />
+                                    <div className="attached-item-info">
+                                      <span className="item-filename">{libItem.name}</span>
+                                      <span className="item-meta">{libItem.dimensions} • {libItem.size}</span>
+                                    </div>
+                                  </div>
+                                  <div className="attached-item-actions">
+                                    <button 
+                                      type="button" 
+                                      className="media-item-action-btn delete-btn" 
+                                      onClick={() => toggleMediaSelection(imgUrl)}
+                                      title="Remove from post"
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </aside>
+
+                  {/* Center Column: Content Editor Form */}
+                  <main className="creator-dashboard-column editor-form-column">
+                    <div className="creator-glass-card editor-form-card">
+                      <form onSubmit={handleCreatePost} className="editor-form">
+                        
+                        {/* Platform Selector Pills */}
+                        <div className="form-section">
+                          <label className="section-label">Platform Destination</label>
+                          <div className="platform-selector">
+                            {(['Feed', 'Stories', 'Community', 'Highlights'] as const).map((platform) => (
+                              <button
+                                key={platform}
+                                type="button"
+                                className={`platform-pill ${selectedPlatform === platform ? 'active' : ''}`}
+                                onClick={() => setSelectedPlatform(platform)}
+                              >
+                                <span className="platform-icon">
+                                  {platform === 'Feed' && '📱'}
+                                  {platform === 'Stories' && '✨'}
+                                  {platform === 'Community' && '👥'}
+                                  {platform === 'Highlights' && '⭐'}
+                                </span>
+                                {platform}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="form-group" style={{ marginTop: '24px' }}>
-                    <div className="form-input-container">
-                      <input 
-                        type="text" 
-                        className="form-input" 
-                        placeholder="Location tag (e.g. Ubud, Bali 🌴)" 
-                        value={newPostLocation}
-                        onChange={(e) => setNewPostLocation(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
+                        {/* Title field */}
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="post-title-input">Title</label>
+                          <input 
+                            type="text" 
+                            id="post-title-input" 
+                            className="form-input-premium" 
+                            placeholder="Austria: Panoramic Lake" 
+                            value={postTitle}
+                            onChange={(e) => setPostTitle(e.target.value)}
+                            required
+                          />
+                        </div>
 
-                  <div className="form-group">
-                    <div className="form-input-container">
-                      <textarea 
-                        className="form-input" 
-                        placeholder="Write a caption... (e.g. Scooter rides in Bali rice fields!)" 
-                        style={{ minHeight: '100px', resize: 'vertical', paddingTop: '10px' }}
-                        value={newPostCaption}
-                        onChange={(e) => setNewPostCaption(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
+                        {/* Location autocomplete */}
+                        <div className="form-group location-autocomplete-container">
+                          <label className="form-label" htmlFor="post-location-input">Location</label>
+                          <div className="form-input-with-icon">
+                            <span className="input-icon">📍</span>
+                            <input 
+                              type="text" 
+                              id="post-location-input" 
+                              className="form-input-premium" 
+                              placeholder="Where was this photo taken?" 
+                              value={newPostLocation}
+                              onChange={(e) => {
+                                setNewPostLocation(e.target.value);
+                                setLocationSuggestionsExpanded(true);
+                              }}
+                              onFocus={() => setLocationSuggestionsExpanded(true)}
+                              required
+                            />
+                          </div>
+                          
+                          {/* Autocomplete list dropdown */}
+                          {locationSuggestionsExpanded && newPostLocation && (
+                            <div className="autocomplete-suggestions">
+                              {travelDestinations
+                                .filter(dest => dest.name.toLowerCase().includes(newPostLocation.toLowerCase()))
+                                .map((dest) => (
+                                  <div 
+                                    key={dest.name} 
+                                    className="autocomplete-item"
+                                    onClick={() => {
+                                      setNewPostLocation(dest.name);
+                                      setLocationSuggestionsExpanded(false);
+                                    }}
+                                  >
+                                    <span className="suggestion-icon">📍</span>
+                                    <span className="suggestion-name">{dest.name}</span>
+                                  </div>
+                                ))}
+                              <div 
+                                className="autocomplete-item custom-add"
+                                onClick={() => setLocationSuggestionsExpanded(false)}
+                              >
+                                <span className="suggestion-icon">➕</span>
+                                <span className="suggestion-name">Use custom: "{newPostLocation}"</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
-                  <button type="submit" className="btn-primary" style={{ marginTop: '10px' }}>
-                    Share Post
-                  </button>
-                </form>
+                        {/* Caption Textarea with character count */}
+                        <div className="form-group">
+                          <div className="label-row">
+                            <label className="form-label" htmlFor="post-caption-input">Caption</label>
+                            <span className="char-count">{newPostCaption.length} / 2200</span>
+                          </div>
+                          <textarea 
+                            id="post-caption-input" 
+                            className="form-input-premium form-textarea-premium" 
+                            placeholder="Write a caption... (e.g. Scooter rides in Bali rice fields!) #wanderlust"
+                            value={newPostCaption}
+                            onChange={(e) => setNewPostCaption(e.target.value)}
+                            required
+                          />
+                        </div>
+
+                        {/* Tag travelers/friends section */}
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="friend-tag-input">Tag Travelers / Friends</label>
+                          <div className="tag-friends-input-wrapper">
+                            <input
+                              type="text"
+                              id="friend-tag-input"
+                              className="form-input-premium"
+                              placeholder="Add people by name or username"
+                              value={friendInput}
+                              onChange={(e) => setFriendInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ',') {
+                                  e.preventDefault();
+                                  const tag = friendInput.trim();
+                                  if (tag) {
+                                    const formatted = tag.startsWith('@') ? tag : `@${tag}`;
+                                    if (!taggedFriends.includes(formatted)) {
+                                      setTaggedFriends(prev => [...prev, formatted]);
+                                    }
+                                    setFriendInput('');
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="tagged-friends-list">
+                            {taggedFriends.map(friend => (
+                              <span key={friend} className="friend-tag-pill">
+                                {friend}
+                                <button 
+                                  type="button" 
+                                  className="remove-tag-btn"
+                                  onClick={() => setTaggedFriends(prev => prev.filter(f => f !== friend))}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Travel Categories */}
+                        <div className="form-group">
+                          <label className="form-label">Travel Categories</label>
+                          <div className="categories-selection">
+                            {['Adventure', 'Food', 'Beaches', 'Mountains', 'Culture'].map(cat => {
+                              const isSelected = selectedCategories.includes(cat);
+                              return (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  className={`category-pill ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => {
+                                    setSelectedCategories(prev => {
+                                      if (prev.includes(cat)) {
+                                        return prev.filter(c => c !== cat);
+                                      } else {
+                                        return [...prev, cat];
+                                      }
+                                    });
+                                  }}
+                                >
+                                  {cat}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Schedule Section */}
+                        <div className="form-group schedule-form-section">
+                          <label className="form-label">Schedule Post</label>
+                          <div className="scheduler-inputs">
+                            <div className="input-group">
+                              <span className="scheduler-icon">📅</span>
+                              <input 
+                                type="date" 
+                                className="form-input-premium schedule-date-picker"
+                                value={scheduleDate} 
+                                onChange={(e) => setScheduleDate(e.target.value)}
+                              />
+                            </div>
+                            <div className="input-group">
+                              <span className="scheduler-icon">⏰</span>
+                              <input 
+                                type="time" 
+                                className="form-input-premium schedule-time-picker"
+                                value={scheduleTime} 
+                                onChange={(e) => setScheduleTime(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Visibility elegant radio cards */}
+                        <div className="form-group">
+                          <label className="form-label">Post Visibility</label>
+                          <div className="visibility-options-grid">
+                            {[
+                              { key: 'public', title: 'Public', desc: 'Anyone on Travora can see this post' },
+                              { key: 'followers', title: 'Followers Only', desc: 'Only your active followers can view' },
+                              { key: 'private', title: 'Private (Only Me)', desc: 'Hidden completely from other users' }
+                            ].map(option => (
+                              <label key={option.key} className={`visibility-radio-card ${visibility === option.key ? 'active' : ''}`}>
+                                <input
+                                  type="radio"
+                                  name="visibility-selection"
+                                  value={option.key}
+                                  checked={visibility === option.key}
+                                  onChange={() => setVisibility(option.key as any)}
+                                  className="sr-only"
+                                />
+                                <span className="radio-indicator"></span>
+                                <span className="radio-content">
+                                  <span className="radio-title">{option.title}</span>
+                                  <span className="radio-description">{option.desc}</span>
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Feature Toggle Switches */}
+                        <div className="toggles-list-section">
+                          <div className="toggle-switch-row">
+                            <div className="toggle-info">
+                              <span className="toggle-label-title">Allow Comments</span>
+                              <span className="toggle-label-desc">Let followers interact and leave comments on this post</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={allowComments} 
+                                onChange={(e) => setAllowComments(e.target.checked)} 
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          </div>
+
+                          <div className="toggle-switch-row">
+                            <div className="toggle-info">
+                              <span className="toggle-label-title">Cross-Post to Facebook</span>
+                              <span className="toggle-label-desc">Automatically post to linked Facebook pages</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={crossPostFacebook} 
+                                onChange={(e) => setCrossPostFacebook(e.target.checked)} 
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          </div>
+
+                          <div className="toggle-switch-row">
+                            <div className="toggle-info">
+                              <span className="toggle-label-title">Cross-Post to Twitter / X</span>
+                              <span className="toggle-label-desc">Push link and caption updates to your X audience</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={crossPostTwitter} 
+                                onChange={(e) => setCrossPostTwitter(e.target.checked)} 
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          </div>
+
+                          <div className="toggle-switch-row">
+                            <div className="toggle-info">
+                              <span className="toggle-label-title">Cross-Post to TikTok</span>
+                              <span className="toggle-label-desc">Share visual content onto your TikTok profile</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={crossPostTiktok} 
+                                onChange={(e) => setCrossPostTiktok(e.target.checked)} 
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          </div>
+
+                          <div className="toggle-switch-row">
+                            <div className="toggle-info">
+                              <span className="toggle-label-title">Push Notifications</span>
+                              <span className="toggle-label-desc">Alert close friends and top subscribers immediately</span>
+                            </div>
+                            <label className="switch">
+                              <input 
+                                type="checkbox" 
+                                checked={sendNotification} 
+                                onChange={(e) => setSendNotification(e.target.checked)} 
+                              />
+                              <span className="slider round"></span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="form-action-buttons">
+                          <button 
+                            type="button" 
+                            className="creator-action-btn btn-draft"
+                            onClick={() => alert('Draft saved successfully!')}
+                          >
+                            Save Draft
+                          </button>
+                          <button 
+                            type="button" 
+                            className="creator-action-btn btn-schedule"
+                            onClick={() => alert(`Post scheduled for ${scheduleDate} at ${scheduleTime}`)}
+                          >
+                            Schedule Post
+                          </button>
+                          <button 
+                            type="submit" 
+                            className="creator-action-btn btn-publish"
+                          >
+                            Publish Now
+                          </button>
+                        </div>
+
+                      </form>
+                    </div>
+                  </main>
+
+                  {/* Right Column: Sticky Live Preview Panel */}
+                  <aside className="creator-dashboard-column preview-panel-column">
+                    <div className="sticky-preview-wrapper">
+                      <div className="preview-header">
+                        <h3 className="preview-header-title">Live Preview</h3>
+                      </div>
+                      
+                      {/* Glassmorphism Phone Frame */}
+                      <div className="mobile-phone-frame">
+                        {/* Device glare reflections */}
+                        <div className="phone-glass-shine"></div>
+                        <div className="phone-glass-border"></div>
+                        
+                        {/* Dynamic Island */}
+                        <div className="phone-notch-island"></div>
+                        
+                        <div className="phone-screen-content">
+                          {/* Status Bar */}
+                          <div className="phone-status-bar">
+                            <span className="status-time">9:41</span>
+                            <div className="status-icons">
+                              {/* Signal Bars SVG */}
+                              <svg width="15" height="10" viewBox="0 0 15 10" fill="currentColor" className="status-icon-svg">
+                                <rect x="0" y="7" width="2" height="3" rx="0.5" />
+                                <rect x="3" y="5" width="2" height="5" rx="0.5" />
+                                <rect x="6" y="3" width="2" height="7" rx="0.5" />
+                                <rect x="9" y="1" width="2" height="9" rx="0.5" />
+                                <rect x="12" y="0" width="2" height="10" rx="0.5" opacity="0.3" />
+                              </svg>
+                              {/* WiFi SVG */}
+                              <svg width="14" height="10" viewBox="0 0 16 12" fill="currentColor" className="status-icon-svg">
+                                <path d="M8 12a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm-3.55-3.55a1.5 1.5 0 0 1 0-2.12c1.95-1.95 5.15-1.95 7.1 0a1.5 1.5 0 0 1-2.12 2.12c-.78-.78-2.06-.78-2.84 0a1.5 1.5 0 0 1-2.14 0zm-2.83-2.83a1.5 1.5 0 0 1 0-2.12c3.5-3.5 9.19-3.5 12.7 0a1.5 1.5 0 1 1-2.12 2.12c-2.33-2.33-6.13-2.33-8.46 0a1.5 1.5 0 0 1-2.12 0z" />
+                              </svg>
+                              {/* Battery SVG */}
+                              <svg width="20" height="10" viewBox="0 0 22 11" fill="currentColor" className="status-icon-svg">
+                                <rect x="1" y="1" width="16" height="9" rx="2" fill="none" stroke="currentColor" strokeWidth="1" />
+                                <rect x="3" y="3" width="12" height="5" rx="1" fill="#10b981" />
+                                <path d="M18 4h1v3h-1z" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          {/* Social Post Content Preview */}
+                          <div className="phone-post-card">
+                            {/* Post Header */}
+                            <div className="phone-post-header">
+                              <div className="user-profile-info">
+                                <div className="user-avatar-placeholder">
+                                  {user?.avatarUrl ? (
+                                    <img src={user.avatarUrl} alt="Avatar" className="user-avatar-preview-img" />
+                                  ) : (
+                                    <div className="default-avatar-glow">🌟</div>
+                                  )}
+                                </div>
+                                <div className="user-text-meta">
+                                  <span className="preview-username">@{user?.username || 'Suvarnatest'}</span>
+                                  <span className="preview-location">{newPostLocation ? newPostLocation.split(',')[0] : 'Travel Heaven 📍'}</span>
+                                </div>
+                              </div>
+                              <button type="button" className="post-header-more-btn">
+                                <svg width="18" height="4" viewBox="0 0 24 6" fill="currentColor">
+                                  <circle cx="3" cy="3" r="3" />
+                                  <circle cx="12" cy="3" r="3" />
+                                  <circle cx="21" cy="3" r="3" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Divider line */}
+                            <div className="phone-post-divider"></div>
+
+                            {/* Post Carousel Images */}
+                            <div 
+                              className="phone-post-media-container"
+                              onClick={handleImageClick}
+                              onDoubleClick={handleDoubleTapPreview}
+                            >
+                              {/* Glowing Heart animation overlay */}
+                              {showHeartOverlay && (
+                                <div className="heart-overlay-container animate-pop">
+                                  <svg className="heart-overlay-icon" viewBox="0 0 24 24" fill="#ff007f">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                  </svg>
+                                </div>
+                              )}
+                              
+                              {postImages.length === 0 ? (
+                                <div className="media-placeholder-visual">
+                                  <span className="visual-icon">📸</span>
+                                  <span className="visual-text">No media attached</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <img 
+                                    src={postImages[previewCarouselIndex < postImages.length ? previewCarouselIndex : 0]} 
+                                    alt="Live Post Preview" 
+                                    className="phone-preview-media-img" 
+                                  />
+                                  
+                                  {/* Instagram-style indicator dots overlay at bottom center */}
+                                  {postImages.length > 1 && (
+                                    <div className="preview-carousel-indicators-dots">
+                                      {postImages.map((_, idx) => (
+                                        <span 
+                                          key={idx} 
+                                          className={`indicator-dot-small ${(previewCarouselIndex < postImages.length ? previewCarouselIndex : 0) === idx ? 'active' : ''}`}
+                                        ></span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+
+                            {/* Divider line */}
+                            <div className="phone-post-divider"></div>
+
+                            {/* Post Interaction Actions */}
+                            <div className="phone-post-actions-row">
+                              <div className="left-interactions-group">
+                                <button 
+                                  type="button" 
+                                  className={`action-btn-preview heart-btn ${isPreviewLiked ? 'liked' : ''}`}
+                                  onClick={() => setIsPreviewLiked(!isPreviewLiked)}
+                                >
+                                  <svg width="22" height="22" fill={isPreviewLiked ? "#ff007f" : "none"} stroke={isPreviewLiked ? "#ff007f" : "currentColor"} strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                </button>
+                                
+                                <button type="button" className="action-btn-preview">
+                                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                  </svg>
+                                </button>
+                                
+                                <button type="button" className="action-btn-preview">
+                                  <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                                  </svg>
+                                </button>
+                              </div>
+                              
+                              <button 
+                                type="button" 
+                                className={`action-btn-preview save-btn ${isPreviewSaved ? 'saved' : ''}`}
+                                onClick={() => setIsPreviewSaved(!isPreviewSaved)}
+                              >
+                                <svg width="22" height="22" fill={isPreviewSaved ? "#ec4899" : "none"} stroke={isPreviewSaved ? "#ec4899" : "currentColor"} strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Divider line */}
+                            <div className="phone-post-divider"></div>
+
+                            {/* Likes info */}
+                            <div className="phone-likes-section">
+                              <span className="likes-bold">{isPreviewLiked ? '1,249 likes' : '1,248 likes'}</span>
+                              <span className="likes-subtext">
+                                Liked by <strong>traveler_anna</strong> and <strong>{isPreviewLiked ? '1,248' : '1,247'} others</strong>
+                              </span>
+                            </div>
+
+                            {/* Caption details */}
+                            <div className="phone-caption-section">
+                              <div className="caption-text-block">
+                                <span className="caption-username">@{user?.username || 'Suvarnatest'}</span>{' '}
+                                {postTitle && <span className="caption-title">{postTitle} 🏔️</span>}{' '}
+                                <span className="caption-body">
+                                  {isCaptionExpanded 
+                                    ? (newPostCaption || "The perfect morning view after hiking through the Alps. One of my favorite places I've ever visited.")
+                                    : (newPostCaption ? (newPostCaption.length > 85 ? newPostCaption.slice(0, 85) : newPostCaption) : "The perfect morning view after hiking through the Alps. One of my favorite places I've ever visited.")
+                                  }
+                                  {!isCaptionExpanded && (newPostCaption ? newPostCaption.length > 85 : true) && (
+                                    <span 
+                                      className="caption-more-trigger"
+                                      onClick={() => setIsCaptionExpanded(true)}
+                                    >
+                                      ...more
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                              
+                              <div className="preview-hashtags-inline">
+                                {(newPostCaption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust']).join(' ')}
+                              </div>
+
+                              {newPostLocation && (
+                                <div className="preview-location-chip">
+                                  <span className="chip-icon">📍</span>
+                                  <span className="chip-text">{newPostLocation}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
               </div>
             )}
 
@@ -3161,23 +4692,69 @@ export default function Home() {
         {user && (
           <div className="floating-messages-tray-container">
             {!isMiniInboxOpen ? (
-              <div className="floating-messages-pill" onClick={() => setIsMiniInboxOpen(true)}>
-                <div className="floating-messages-pill-left">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {/* Floating Notification Bell Button */}
+                <div 
+                  className={`floating-notifications-pill spring-active ${showBellNotifications ? 'active' : ''}`}
+                  onClick={() => setShowBellNotifications(!showBellNotifications)}
+                >
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-15deg)' }}>
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
-                    <span className="messages-pill-badge">2</span>
+                    {unreadNotifications > 0 && (
+                      <span className="notifications-pill-badge">{unreadNotifications}</span>
+                    )}
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: '14px', marginLeft: '8px' }}>Messages</span>
                 </div>
-                <div className="floating-messages-pill-avatars">
-                  <div className="floating-messages-pill-avatar-item">
-                    {renderAvatar('backpacker_sam', 24)}
+
+                {/* Floating Notifications Dropdown Panel */}
+                {showBellNotifications && (
+                  <div className="floating-notifications-panel discover-premium-card animate-slide-up" style={{ zIndex: 120 }}>
+                    <div className="notifications-panel-header">
+                      <span>Notifications</span>
+                      <button className="notifications-close-btn" onClick={() => setShowBellNotifications(false)}>&times;</button>
+                    </div>
+                    <div className="notifications-panel-list">
+                      {notifications.map((notif) => (
+                        <div key={notif.id} className="notification-panel-item" onClick={() => { setShowBellNotifications(false); showToast(`Viewing @${notif.username}'s action`); }}>
+                          <span className="notification-avatar">
+                            {notif.avatar.startsWith('http') || notif.avatar.startsWith('https') ? (
+                              <img src={notif.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              notif.avatar
+                            )}
+                          </span>
+                          <div className="notification-content">
+                            <span className="notification-username">@{notif.username}</span> {notif.text}
+                            <span className="notification-time">{notif.time}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="floating-messages-pill-avatar-item">
-                    {renderAvatar('wanderlust_jenny', 24)}
+                )}
+
+                {/* Messages Pill */}
+                <div className="floating-messages-pill spring-active" onClick={() => setIsMiniInboxOpen(true)}>
+                  <div className="floating-messages-pill-left">
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(-15deg)' }}>
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
+                      <span className="messages-pill-badge">2</span>
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: '14px', marginLeft: '8px' }}>Messages</span>
+                  </div>
+                  <div className="floating-messages-pill-avatars">
+                    <div className="floating-messages-pill-avatar-item">
+                      {renderAvatar('backpacker_sam', 24)}
+                    </div>
+                    <div className="floating-messages-pill-avatar-item">
+                      {renderAvatar('wanderlust_jenny', 24)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3376,6 +4953,16 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* --- GLOBAL TOAST SYSTEM --- */}
+        <div className="toast-notifications-container">
+          {toasts.map((t) => (
+            <div key={t.id} className="custom-toast-notification discover-premium-card animate-slide-up">
+              <span className="toast-icon">✨</span>
+              <span className="toast-message">{t.message}</span>
+            </div>
+          ))}
+        </div>
 
       </div>
      </>
