@@ -1,10 +1,163 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+
+interface HighlightStoryModalProps {
+  selectedHighlight: string;
+  setSelectedHighlight: (id: string | null) => void;
+  activeStoryIdx: number;
+  setActiveStoryIdx: React.Dispatch<React.SetStateAction<number>>;
+  storyTimerProgress: number;
+  storyImageLoaded: boolean;
+  setStoryImageLoaded: (loaded: boolean) => void;
+  highlights: any[];
+  user: any;
+  renderAvatar: (username: string, size?: number) => React.ReactNode;
+}
+
+function HighlightStoryModal({
+  selectedHighlight,
+  setSelectedHighlight,
+  activeStoryIdx,
+  setActiveStoryIdx,
+  storyTimerProgress,
+  storyImageLoaded,
+  setStoryImageLoaded,
+  highlights,
+  user,
+  renderAvatar
+}: HighlightStoryModalProps) {
+  const hl = highlights.find(h => h.id === selectedHighlight);
+  if (!hl) return null;
+  const currentStory = hl.stories[activeStoryIdx % hl.stories.length];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="highlight-stories-modal-overlay"
+      onClick={() => setSelectedHighlight(null)}
+    >
+      <motion.div 
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.85, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+        className="highlight-stories-modal-container"
+        onClick={(e) => e.stopPropagation()}
+      >
+        
+        {/* Progress Segment indicators */}
+        <div className="story-progress-segments-bar">
+          {hl.stories.map((s: any, idx: number) => {
+            const isCompleted = idx < activeStoryIdx;
+            const isActive = idx === activeStoryIdx;
+            const fillWidth = isCompleted ? '100%' : isActive ? `${storyTimerProgress}%` : '0%';
+            
+            return (
+              <div key={idx} className="story-progress-bar-track">
+                <div 
+                  className="story-progress-bar-fill-indicator"
+                  style={{ 
+                    width: fillWidth,
+                    background: 'white',
+                    height: '100%',
+                    borderRadius: '4px',
+                    transition: isActive ? 'none' : 'width 0.1s linear'
+                  }} 
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="story-viewer-top-row">
+          <div className="story-creator-avatar">
+            {renderAvatar(user.username, 30)}
+          </div>
+          <span className="story-creator-username">{user.username}</span>
+          <span className="story-topic-badge">{hl.title}</span>
+          <button 
+            type="button"
+            className="story-viewer-close-btn"
+            onClick={() => setSelectedHighlight(null)}
+          >
+            &times;
+          </button>
+        </div>
+
+        <div className="story-viewer-image-pane">
+          {/* Tap Navigation Zones Overlay */}
+          <div className="story-navigation-zones">
+            <div className="story-nav-zone left-zone" onClick={(e) => {
+              e.stopPropagation();
+              if (activeStoryIdx > 0) {
+                setActiveStoryIdx(prev => prev - 1);
+              } else {
+                setActiveStoryIdx(hl.stories.length - 1);
+              }
+            }} />
+            <div className="story-nav-zone right-zone" onClick={(e) => {
+              e.stopPropagation();
+              if (activeStoryIdx < hl.stories.length - 1) {
+                setActiveStoryIdx(prev => prev + 1);
+              } else {
+                setSelectedHighlight(null);
+              }
+            }} />
+          </div>
+
+          <img 
+            src={currentStory.img} 
+            alt={currentStory.caption} 
+            className="story-viewer-img" 
+            onLoad={() => setStoryImageLoaded(true)}
+            style={{ 
+              opacity: storyImageLoaded ? 1 : 0, 
+              filter: storyImageLoaded ? 'blur(0)' : 'blur(10px)',
+              transition: 'opacity 0.25s ease-out, filter 0.25s ease-out' 
+            }}
+          />
+          <div className="story-viewer-caption-badge">
+            {currentStory.caption}
+          </div>
+        </div>
+
+        {hl.stories.length > 1 && (
+          <>
+            <button 
+              type="button"
+              className="story-nav-btn prev"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveStoryIdx(prev => (prev - 1 + hl.stories.length) % hl.stories.length);
+              }}
+            >
+              &#10094;
+            </button>
+            <button 
+              type="button"
+              className="story-nav-btn next"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveStoryIdx(prev => (prev + 1) % hl.stories.length);
+              }}
+            >
+              &#10095;
+            </button>
+          </>
+        )}
+
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -1871,12 +2024,25 @@ export default function Home() {
   const [expandedMilestoneId, setExpandedMilestoneId] = useState<string | null>(null);
   const [tokenTurnedId, setTokenTurnedId] = useState<string | null>(null);
   const [soundMuted, setSoundMuted] = useState(false);
+
+  // Premium Profile Header States
+  const [profileOwnerUser, setProfileOwnerUser] = useState<any | null>(null);
+  const [showCountriesPopover, setShowCountriesPopover] = useState(false);
+  const [animatedPosts, setAnimatedPosts] = useState(0);
+  const [animatedFollowers, setAnimatedFollowers] = useState(0);
+  const [animatedFollowing, setAnimatedFollowing] = useState(0);
+  const [animatedCountries, setAnimatedCountries] = useState(0);
+  const [animatedBadges, setAnimatedBadges] = useState(0);
   const [unlockingMilestoneId, setUnlockingMilestoneId] = useState<string | null>(null);
   const [celebrationConfetti, setCelebrationConfetti] = useState(false);
   const [shareBadge, setShareBadge] = useState<any | null>(null);
   const [animatedXP, setAnimatedXP] = useState(0);
   const [animatedBadgesCount, setAnimatedBadgesCount] = useState(0);
   const [activeTimelinePopoverId, setActiveTimelinePopoverId] = useState<string | null>(null);
+
+  // Premium Highlights Story Modal States
+  const [storyTimerProgress, setStoryTimerProgress] = useState(0);
+  const [storyImageLoaded, setStoryImageLoaded] = useState(false);
 
   // Audio synthesizer for achievement unlock chime
   const playUnlockSound = () => {
@@ -1946,6 +2112,104 @@ export default function Home() {
       };
     }
   }, [profileTab, milestones]);
+
+  // Stats summary numbers count-up animation on Profile Tab load
+  useEffect(() => {
+    if (activeTab === 'profile') {
+      const postsTarget = profileOwnerUser ? parseInt(profileOwnerUser.postsCount) : userPosts.length;
+      const followersTarget = profileOwnerUser ? 24800 : 12500;
+      const followingTarget = profileOwnerUser ? 412 : 595;
+      const countriesTarget = profileOwnerUser ? parseInt(profileOwnerUser.countriesCount) : 6;
+      const badgesTarget = profileOwnerUser ? parseInt(profileOwnerUser.badgesCount) : milestones.filter(m => m.unlocked).length;
+
+      setAnimatedPosts(0);
+      setAnimatedFollowers(0);
+      setAnimatedFollowing(0);
+      setAnimatedCountries(0);
+      setAnimatedBadges(0);
+
+      let postsVal = 0;
+      let followersVal = 0;
+      let followingVal = 0;
+      let countriesVal = 0;
+      let badgesVal = 0;
+
+      const interval = setInterval(() => {
+        let done = true;
+        if (postsVal < postsTarget) {
+          postsVal += Math.ceil(postsTarget / 15) || 1;
+          if (postsVal >= postsTarget) postsVal = postsTarget;
+          done = false;
+        }
+        if (followersVal < followersTarget) {
+          followersVal += Math.ceil(followersTarget / 15) || 100;
+          if (followersVal >= followersTarget) followersVal = followersTarget;
+          done = false;
+        }
+        if (followingVal < followingTarget) {
+          followingVal += Math.ceil(followingTarget / 15) || 10;
+          if (followingVal >= followingTarget) followingVal = followingTarget;
+          done = false;
+        }
+        if (countriesVal < countriesTarget) {
+          countriesVal += 1;
+          if (countriesVal >= countriesTarget) countriesVal = countriesTarget;
+          done = false;
+        }
+        if (badgesVal < badgesTarget) {
+          badgesVal += 1;
+          if (badgesVal >= badgesTarget) badgesVal = badgesTarget;
+          done = false;
+        }
+
+        setAnimatedPosts(postsVal);
+        setAnimatedFollowers(followersVal);
+        setAnimatedFollowing(followingVal);
+        setAnimatedCountries(countriesVal);
+        setAnimatedBadges(badgesVal);
+
+        if (done) clearInterval(interval);
+      }, 35);
+
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, profileOwnerUser, userPosts, milestones]);
+
+  const openUserProfile = (username: string) => {
+    // Look up in reels or mock one
+    if (username === '@Suvarnatest' || username === user?.username) {
+      setProfileOwnerUser(null);
+    } else {
+      const reelUser = reels.find(r => r.username === username);
+      if (reelUser) {
+        setProfileOwnerUser({
+          username: reelUser.username,
+          fullName: reelUser.username.slice(1).replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          avatarUrl: reelUser.avatar || null,
+          bio: 'Exploring the world one adventure at a time. | Mountain climber & Coffee lover',
+          followersCount: '24800',
+          followingCount: '412',
+          postsCount: '18',
+          countriesCount: '14',
+          badgesCount: '8'
+        });
+      } else {
+        setProfileOwnerUser({
+          username: username,
+          fullName: username.slice(1).replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          avatarUrl: null,
+          bio: 'Travel enthusiast. Capturing moments worldwide. | Adventure seeker',
+          followersCount: '5200',
+          followingCount: '280',
+          postsCount: '12',
+          countriesCount: '5',
+          badgesCount: '3'
+        });
+      }
+    }
+    setActiveTab('profile');
+  };
+
 
   // Confetti particles for real-time unlock
   const [particlesList, setParticlesList] = useState<{ id: number; color: string; x: number; y: number; vx: number; vy: number }[]>([]);
@@ -2095,6 +2359,59 @@ export default function Home() {
 
   // Current slide index for highlight stories popup viewer
   const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+
+  // Lock body background scroll when highlights modal is open
+  useEffect(() => {
+    if (selectedHighlight) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedHighlight]);
+
+  // Escape key listener to close highlights modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedHighlight(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Story Timer Autoplay Progress Bar and Auto-Advance Logic
+  useEffect(() => {
+    if (selectedHighlight) {
+      setStoryTimerProgress(0);
+      setStoryImageLoaded(false);
+      const duration = 5000; // 5 seconds per story
+      const intervalTime = 50; // update progress every 50ms
+      const step = (intervalTime / duration) * 100;
+
+      const timer = setInterval(() => {
+        setStoryTimerProgress(prev => {
+          if (prev >= 100) {
+            const hl = highlights.find(h => h.id === selectedHighlight);
+            if (hl) {
+              if (activeStoryIdx < hl.stories.length - 1) {
+                setActiveStoryIdx(prevIdx => prevIdx + 1);
+              } else {
+                setSelectedHighlight(null);
+              }
+            }
+            return 0;
+          }
+          return prev + step;
+        });
+      }, intervalTime);
+
+      return () => clearInterval(timer);
+    }
+  }, [selectedHighlight, activeStoryIdx]);
 
   // Forgot Password Modal States
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -2470,6 +2787,7 @@ export default function Home() {
               <button 
                 className={`instagram-sidebar-item ${activeTab === 'profile' && !showSearchDrawer && !showNotificationsDrawer ? 'active' : ''}`}
                 onClick={() => {
+                  setProfileOwnerUser(null);
                   setActiveTab('profile');
                   setShowSearchDrawer(false);
                   setShowNotificationsDrawer(false);
@@ -2494,7 +2812,7 @@ export default function Home() {
                {/* More Menu Dropdown */}
               {showMoreMenu && (
                 <div className="instagram-more-menu-dropdown">
-                  <button className="instagram-more-menu-item" onClick={() => { setActiveTab('profile'); setShowMoreMenu(false); }}>
+                  <button className="instagram-more-menu-item" onClick={() => { setProfileOwnerUser(null); setActiveTab('profile'); setProfileTab('settings'); setShowMoreMenu(false); }}>
                     <span>⚙️</span> Settings
                   </button>
                   <button className="instagram-more-menu-item" onClick={() => { setAiChatOpen(true); setShowMoreMenu(false); }}>
@@ -3273,11 +3591,11 @@ export default function Home() {
                             <div className="reels-details-left-container">
                               
                               <div className="reel-user-row-new">
-                                <div className="reel-user-avatar-new" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+                                <div className="reel-user-avatar-new" onClick={() => openUserProfile(reel.username)} style={{ cursor: 'pointer' }}>
                                   {renderAvatar(reel.username, 36)}
                                 </div>
                                 <div className="reel-user-name-info">
-                                  <span className="reel-username-new" onClick={() => setActiveTab('profile')} style={{ cursor: 'pointer' }}>
+                                  <span className="reel-username-new" onClick={() => openUserProfile(reel.username)} style={{ cursor: 'pointer' }}>
                                     {reel.username}
                                   </span>
                                   <span className="reel-bullet-separator">•</span>
@@ -5047,18 +5365,86 @@ export default function Home() {
                 
                 {/* 1. Curved Header Profile Container Wrapper */}
                 <div className="profile-header-card-wrapper">
+                  
+                  {/* Premium Landscape Cover Banner Image */}
+                  <div 
+                    className="profile-header-banner" 
+                    style={{ 
+                      backgroundImage: profileOwnerUser 
+                        ? "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80')" 
+                        : "url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80')" 
+                    }} 
+                  />
+
                   <div className="profile-header-container">
                     
-                    {/* Left: Avatar with dynamic gradient ring */}
+                    {/* Left: Avatar with ambient glow and segmented progress ring */}
                     <div className="profile-avatar-column">
+                      
+                      {/* Ambient background glow bleeding from avatar */}
+                      <div className="avatar-ambient-glow" />
+
                       <div className="profile-avatar-gradient-ring">
-                        <div className="profile-avatar-circle-large">
-                          {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt={user.fullName} className="profile-avatar-img" />
+                        
+                        {/* Segmented SVG progress ring reflecting badge completion */}
+                        <svg className="avatar-progress-ring-svg" width="102" height="102" viewBox="0 0 102 102">
+                          <defs>
+                            <linearGradient id="avatarRingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#ec4899" />
+                              <stop offset="50%" stopColor="#a855f7" />
+                              <stop offset="100%" stopColor="#f59e0b" />
+                            </linearGradient>
+                          </defs>
+                          <circle 
+                            className="avatar-progress-ring-bg" 
+                            cx="51" 
+                            cy="51" 
+                            r="47" 
+                            stroke="rgba(255, 255, 255, 0.08)" 
+                            strokeWidth="3.5" 
+                            fill="none" 
+                          />
+                          <circle 
+                            className="avatar-progress-ring-fill" 
+                            cx="51" 
+                            cy="51" 
+                            r="47" 
+                            stroke="url(#avatarRingGradient)" 
+                            strokeWidth="3.5" 
+                            fill="none" 
+                            strokeDasharray={2 * Math.PI * 47} 
+                            strokeDashoffset={2 * Math.PI * 47 * (1 - (profileOwnerUser ? parseInt(profileOwnerUser.badgesCount) : milestones.filter(m => m.unlocked).length) / milestones.length)}
+                            strokeLinecap="round" 
+                          />
+                        </svg>
+
+                        <div className="profile-avatar-circle-large animate-glow-pulse">
+                          {profileOwnerUser ? (
+                            profileOwnerUser.avatarUrl ? (
+                              <img src={profileOwnerUser.avatarUrl} alt={profileOwnerUser.fullName} className="profile-avatar-img" />
+                            ) : (
+                              <div className="profile-avatar-initials-fallback animate-hue-shift">
+                                {profileOwnerUser.fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )
                           ) : (
-                            user.fullName.charAt(0).toUpperCase()
+                            user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.fullName} className="profile-avatar-img" />
+                            ) : (
+                              <div className="profile-avatar-initials-fallback animate-hue-shift">
+                                {user.fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )
                           )}
                         </div>
+
+                        {/* Verified-traveler checkmark badge on edge */}
+                        <div className="verified-badge-avatar animate-zoom-in" title="Verified Traveler">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+
                       </div>
                     </div>
 
@@ -5067,89 +5453,237 @@ export default function Home() {
                       
                       {/* User Action Row */}
                       <div className="profile-action-row">
-                        <h2 className="profile-username-header">@{editUsername || user.username}</h2>
+                        <div className="profile-username-level-row">
+                          <h2 className="profile-username-header">@{profileOwnerUser ? profileOwnerUser.username.replace('@', '') : (editUsername || user.username)}</h2>
+                          <div className="profile-rank-badge-header">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b">
+                              <path d="M12 2L3 5v6c0 5.5 4.5 10 9 12 4.5-2 9-6.5 9-12V5l-9-3z" />
+                            </svg>
+                            <span>Lvl 4</span>
+                          </div>
+                        </div>
+
                         <div className="profile-action-buttons-group">
-                          <button 
-                            className="profile-primary-action-btn"
-                            onClick={() => setProfileTab('settings')}
-                          >
-                            Edit Profile
-                          </button>
-                          <button 
-                            className="profile-icon-action-btn"
-                            onClick={() => setProfileTab('settings')}
-                            title="Settings"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="3" />
-                              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                            </svg>
-                          </button>
-                          <button 
-                            className="profile-icon-action-btn logout-btn-red"
-                            onClick={logout}
-                            title="Log Out"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                              <polyline points="16 17 21 12 16 7" />
-                              <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                          </button>
+                          {!profileOwnerUser ? (
+                            /* OWNER VIEW ACTION BUTTONS */
+                            <>
+                              <motion.button 
+                                whileHover={{ scale: 1.03, boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
+                                whileTap={{ scale: 0.97 }}
+                                className="profile-primary-action-btn shimmer-sweep"
+                                onClick={() => setProfileTab('settings')}
+                              >
+                                Edit Profile
+                              </motion.button>
+                              
+                              <motion.button 
+                                whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
+                                whileTap={{ scale: 0.95 }}
+                                className="profile-icon-action-btn"
+                                onClick={() => setProfileTab('settings')}
+                                title="Settings"
+                              >
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                  <circle cx="12" cy="12" r="3" />
+                                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg>
+                              </motion.button>
+                              
+                              <motion.button 
+                                whileHover={{ scale: 1.05, background: 'rgba(239,68,68,0.1)' }}
+                                whileTap={{ scale: 0.95 }}
+                                className="profile-icon-action-btn logout-btn-red"
+                                onClick={logout}
+                                title="Log Out"
+                              >
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                  <polyline points="16 17 21 12 16 7" />
+                                  <line x1="21" y1="12" x2="9" y2="12" />
+                                </svg>
+                              </motion.button>
+                            </>
+                          ) : (
+                            /* GUEST VIEW ADAPTIVE ACTION BUTTONS */
+                            <>
+                              <motion.button 
+                                whileHover={{ scale: 1.03, boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
+                                whileTap={{ scale: 0.97 }}
+                                className="profile-primary-action-btn shimmer-sweep"
+                                onClick={() => showToast(`Following @${profileOwnerUser.username.replace('@','')}`)}
+                              >
+                                Follow
+                              </motion.button>
+                              
+                              <motion.button 
+                                whileHover={{ scale: 1.03, background: 'rgba(255,255,255,0.06)' }}
+                                whileTap={{ scale: 0.97 }}
+                                className="profile-primary-action-btn btn-ghost-nomad"
+                                onClick={() => showToast(`Opening chat with @${profileOwnerUser.username.replace('@','')}`)}
+                              >
+                                Message
+                              </motion.button>
+
+                              <motion.button 
+                                whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
+                                whileTap={{ scale: 0.95 }}
+                                className="profile-icon-action-btn"
+                                onClick={() => showToast('Profile link copied to clipboard! 📋')}
+                                title="Share Profile"
+                              >
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                                  <circle cx="18" cy="5" r="3" />
+                                  <circle cx="6" cy="12" r="3" />
+                                  <circle cx="18" cy="19" r="3" />
+                                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                </svg>
+                              </motion.button>
+                            </>
+                          )}
                         </div>
                       </div>
 
-                      {/* Stats Summary Row */}
+                      {/* Upgraded Stats Summary Row (Uniform layout, uniform custom iconography) */}
                       <div className="profile-stats-row-new">
-                        <div className="profile-stat-item-new">
-                          <span className="profile-stat-number">{userPosts.length}</span>
+                        
+                        {/* Posts */}
+                        <div className="profile-stat-item-new clickable">
+                          <svg className="stat-icon-svg" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
+                            <circle cx="12" cy="12" r="4" />
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                          </svg>
+                          <span className="profile-stat-number">{animatedPosts}</span>
                           <span className="profile-stat-label">posts</span>
                         </div>
-                        <div className="profile-stat-item-new">
-                          <span className="profile-stat-number">12.5K</span>
+
+                        {/* Followers */}
+                        <div className="profile-stat-item-new clickable">
+                          <svg className="stat-icon-svg" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                          <span className="profile-stat-number">
+                            {animatedFollowers >= 1000 ? `${(animatedFollowers / 1000).toFixed(1)}K` : animatedFollowers}
+                          </span>
                           <span className="profile-stat-label">followers</span>
                         </div>
-                        <div className="profile-stat-item-new">
-                          <span className="profile-stat-number">595</span>
+
+                        {/* Following */}
+                        <div className="profile-stat-item-new clickable">
+                          <svg className="stat-icon-svg" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="8.5" cy="7" r="4" />
+                            <line x1="20" y1="8" x2="20" y2="14" />
+                            <line x1="23" y1="11" x2="17" y2="11" />
+                          </svg>
+                          <span className="profile-stat-number">{animatedFollowing}</span>
                           <span className="profile-stat-label">following</span>
                         </div>
-                        <div className="profile-stat-item-new">
-                          <span className="profile-stat-number">6</span>
-                          <span className="profile-stat-label">countries</span>
+
+                        {/* Visited Countries (Tappable: opens Visited Countries popover) */}
+                        <div 
+                          className="profile-stat-item-new clickable countries-trigger" 
+                          onClick={() => setShowCountriesPopover(!showCountriesPopover)}
+                          title="Click to view visited countries"
+                        >
+                          <svg className="stat-icon-svg" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                            <path d="M2 12h20" />
+                          </svg>
+                          <span className="profile-stat-number">{animatedCountries}</span>
+                          <span className="profile-stat-label" style={{ borderBottom: '1px dashed rgba(255,255,255,0.3)' }}>countries</span>
+
+                          {/* Visited countries popover list */}
+                          {showCountriesPopover && (
+                            <div className="countries-popover-card animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+                              <div className="popover-countries-header">
+                                <span>Visited Countries</span>
+                                <button type="button" className="close-countries-popover-btn" onClick={() => setShowCountriesPopover(false)}>&times;</button>
+                              </div>
+                              <div className="countries-popover-list">
+                                {[
+                                  { code: 'AT', name: 'Austria', flag: '🇦🇹', date: 'March 2025' },
+                                  { code: 'CH', name: 'Switzerland', flag: '🇨🇭', date: 'June 2025' },
+                                  { code: 'DE', name: 'Germany', flag: '🇩🇪', date: 'July 2025' },
+                                  { code: 'FR', name: 'France', flag: '🇫🇷', date: 'September 2025' },
+                                  { code: 'IT', name: 'Italy', flag: '🇮🇹', date: 'December 2025' },
+                                  { code: 'JP', name: 'Japan', flag: '🇯🇵', date: 'April 2026' }
+                                ].map(c => (
+                                  <div key={c.code} className="country-popover-item">
+                                    <span>{c.flag} {c.name}</span>
+                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{c.date}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="profile-stat-item-new" onClick={() => setProfileTab('milestones')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" style={{ display: 'inline-block' }}>
+
+                        {/* Badges (Tappable: switches to Milestones tab) */}
+                        <div 
+                          className="profile-stat-item-new clickable badges-trigger" 
+                          onClick={() => { setProfileTab('milestones'); }}
+                          title="Click to view Milestones Achievements"
+                        >
+                          <svg className="stat-icon-svg text-amber-500" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                             <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
                             <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
                             <path d="M4 22h16" />
                             <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
                             <path d="M12 2a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
                           </svg>
-                          <span className="profile-stat-number" style={{ color: '#f59e0b', marginLeft: '2px' }}>5</span>
-                          <span className="profile-stat-label">badges</span>
+                          <span className="profile-stat-number" style={{ color: '#f59e0b' }}>{animatedBadges}</span>
+                          <span className="profile-stat-label" style={{ color: '#f59e0b' }}>badges</span>
                         </div>
+
                       </div>
 
-                      {/* Biography details */}
+                      {/* Upgraded Biography details */}
                       <div className="profile-bio-details-new">
-                        <h3 className="profile-display-name-new">{editFullName || user.fullName}</h3>
-                        <span className="profile-tag-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
-                          </svg>
-                          Professional Nomad
-                        </span>
-                        <p className="profile-bio-paragraph">{editBio}</p>
-                        {editWebsite && (
+                        <div className="profile-name-title-row">
+                          <h3 className="profile-display-name-new">{profileOwnerUser ? profileOwnerUser.fullName : (editFullName || user.fullName)}</h3>
+                          
+                          {/* Restyled rare-tier rank title tag badge */}
+                          <span className="profile-tag-badge rare-tier-shimmer animate-pulse-slow">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+                            </svg>
+                            Professional Nomad
+                          </span>
+                        </div>
+                        
+                        {/* Bio rendered asSmall parsed keywords/chips */}
+                        <div className="profile-bio-chips-row">
+                          {(profileOwnerUser ? profileOwnerUser.bio : editBio).split('|').map((part: string, pIdx: number) => (
+                            <span className="bio-chip animate-zoom-in" key={pIdx} style={{ animationDelay: `${pIdx * 50}ms` }}>
+                              {part.trim()}
+                            </span>
+                          ))}
+                        </div>
+
+                        {profileOwnerUser && (
+                          <div className="profile-mutual-followers-row animate-fade-in">
+                            <span className="mutual-icon">👥</span>
+                            <span>Followed by samantha_sky, alex_explorer and 12 others</span>
+                          </div>
+                        )}
+
+                        {!profileOwnerUser && editWebsite && (
                           <a 
                             href={`https://${editWebsite}`} 
                             target="_blank" 
                             rel="noreferrer" 
-                            className="profile-bio-website-link"
+                            className="profile-bio-website-link hover-underline-anim"
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '4px' }}>
-                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '5px' }}>
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="2" y1="12" x2="22" y2="12" />
+                              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                             </svg>
                             {editWebsite}
                           </a>
@@ -5852,68 +6386,23 @@ export default function Home() {
 
                 </div>
 
-                {/* --- MODAL 1: TRAVEL STORIES STORY HIGHLIGHT VIEWER CAROUSEL --- */}
-                {selectedHighlight && (() => {
-                  const hl = highlights.find(h => h.id === selectedHighlight);
-                  if (!hl) return null;
-                  const currentStory = hl.stories[activeStoryIdx % hl.stories.length];
-                  
-                  return (
-                    <div className="highlight-stories-modal-overlay">
-                      <div className="highlight-stories-modal-container">
-                        
-                        <div className="story-progress-segments-bar">
-                          {hl.stories.map((s, idx) => (
-                            <div key={idx} className="story-progress-bar-track">
-                              <div 
-                                className={`story-progress-bar-fill-indicator ${idx < activeStoryIdx ? 'completed' : idx === activeStoryIdx ? 'active-loading' : ''}`} 
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="story-viewer-top-row">
-                          <div className="story-creator-avatar">
-                            {renderAvatar(user.username, 30)}
-                          </div>
-                          <span className="story-creator-username">{user.username}</span>
-                          <span className="story-topic-badge">{hl.title}</span>
-                          <button 
-                            className="story-viewer-close-btn"
-                            onClick={() => setSelectedHighlight(null)}
-                          >
-                            &times;
-                          </button>
-                        </div>
-
-                        <div className="story-viewer-image-pane">
-                          <img src={currentStory.img} alt={currentStory.caption} className="story-viewer-img" />
-                          <div className="story-viewer-caption-badge">
-                            {currentStory.caption}
-                          </div>
-                        </div>
-
-                        {hl.stories.length > 1 && (
-                          <>
-                            <button 
-                              className="story-nav-btn prev"
-                              onClick={() => setActiveStoryIdx(prev => (prev - 1 + hl.stories.length) % hl.stories.length)}
-                            >
-                              &#10094;
-                            </button>
-                            <button 
-                              className="story-nav-btn next"
-                              onClick={() => setActiveStoryIdx(prev => (prev + 1) % hl.stories.length)}
-                            >
-                              &#10095;
-                            </button>
-                          </>
-                        )}
-
-                      </div>
-                    </div>
-                  );
-                })()}
+                {/* --- MODAL 1: TRAVEL STORIES STORY HIGHLIGHT VIEWER CAROUSEL (Fixed AnimatePresence) --- */}
+                <AnimatePresence>
+                  {selectedHighlight && (
+                    <HighlightStoryModal
+                      selectedHighlight={selectedHighlight}
+                      setSelectedHighlight={setSelectedHighlight}
+                      activeStoryIdx={activeStoryIdx}
+                      setActiveStoryIdx={setActiveStoryIdx}
+                      storyTimerProgress={storyTimerProgress}
+                      storyImageLoaded={storyImageLoaded}
+                      setStoryImageLoaded={setStoryImageLoaded}
+                      highlights={highlights}
+                      user={user}
+                      renderAvatar={renderAvatar}
+                    />
+                  )}
+                </AnimatePresence>
 
 
 
