@@ -502,7 +502,123 @@ export default function Home() {
   // ==========================================
   // Premium Social Feed States
   // ==========================================
-  const [activeTab, setActiveTab] = useState<'home' | 'reels' | 'search' | 'create' | 'messages' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'reels' | 'search' | 'create' | 'messages' | 'profile' | 'live' | 'live-studio' | 'live-dashboard'>('home');
+
+  // ==========================================
+  // ==========================================
+  // Live Streaming (Discovery + Studio) States
+  // ==========================================
+  const [liveCategory, setLiveCategory] = useState('All');
+  const [liveGridCategory, setLiveGridCategory] = useState('All');
+  const [liveSearchQuery, setLiveSearchQuery] = useState('');
+  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
+  const [isLiveSwitchingCategory, setIsLiveSwitchingCategory] = useState(false);
+  const [hasEverSwitchedLiveCategory, setHasEverSwitchedLiveCategory] = useState(false);
+  const [hasLiveCreators, setHasLiveCreators] = useState(true);
+  const [activeStreams, setActiveStreams] = useState([
+    {
+      id: 'stream-1',
+      username: 'nomad_vlogs',
+      fullName: 'Alex Nomad',
+      avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
+      title: 'Live Trekking to Hidden Waterfalls in Bali! 🎒💦',
+      category: 'IRL',
+      viewers: 21500,
+      likes: 12400,
+      isMuted: true,
+      isVerified: true,
+      isFollowed: true,
+      thumbnail: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
+      isHovered: false
+    },
+    {
+      id: 'stream-2',
+      username: 'backpack_sam',
+      fullName: 'Sam Backpacker',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      title: 'Manali Cold Campfire Q&A! Ask me anything 🏔️🔥',
+      category: 'Q&A',
+      viewers: 8900,
+      likes: 4500,
+      isMuted: true,
+      isVerified: false,
+      isFollowed: false,
+      thumbnail: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&auto=format&fit=crop&q=80',
+      isHovered: false
+    },
+    {
+      id: 'stream-3',
+      username: 'wanderlust_jenny',
+      fullName: 'Jenny Wanderlust',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+      title: 'Exploring Kyoto Bamboo Forest at Dawn! ⛩️🎋',
+      category: 'Adventure',
+      viewers: 14200,
+      likes: 8200,
+      isMuted: true,
+      isVerified: true,
+      isFollowed: true,
+      thumbnail: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600&auto=format&fit=crop&q=80',
+      isHovered: false
+    },
+    {
+      id: 'stream-4',
+      username: 'culture_seeker',
+      fullName: 'Elena Rostova',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      title: 'Behind the Scenes at Rome Colosseum! 🏛️🇮🇹',
+      category: 'Behind the Scenes',
+      viewers: 6400,
+      likes: 3100,
+      isMuted: true,
+      isVerified: false,
+      isFollowed: false,
+      thumbnail: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&auto=format&fit=crop&q=80',
+      isHovered: false
+    }
+  ]);
+
+  // Go Live Studio wizard states
+  const [createChoice, setCreateChoice] = useState<'none' | 'post' | 'live'>('none');
+  const [liveStep, setLiveStep] = useState(1);
+  
+  // Step 1
+  const [liveTitle, setLiveTitle] = useState('');
+  const [liveDescription, setLiveDescription] = useState('');
+  const [liveSelectedCategories, setLiveSelectedCategories] = useState<string[]>(['IRL']);
+  
+  // Step 2
+  const [liveThumbnail, setLiveThumbnail] = useState<string>('');
+  const [liveSource, setLiveSource] = useState<'webcam' | 'encoder'>('webcam');
+  const [streamUrl, setStreamUrl] = useState('rtmp://live.travora.com/app');
+  const [streamKey, setStreamKey] = useState('live_usr_7392a8e10c7b41e9b283d7265');
+  const [isKeyRevealed, setIsKeyRevealed] = useState(false);
+  
+  // Step 3
+  const [liveVisibility, setLiveVisibility] = useState<'public' | 'followers' | 'private'>('public');
+  const [allowLiveComments, setAllowLiveComments] = useState(true);
+  const [liveChatModeration, setLiveChatModeration] = useState(true);
+  const [notifyFollowers, setNotifyFollowers] = useState(true);
+  const [saveRecording, setSaveRecording] = useState(true);
+  const [liveCoppaToggle, setLiveCoppaToggle] = useState(false);
+
+  // Live Stream Dashboard States
+  const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'nodata'>('connecting');
+  const [dashboardTab, setDashboardTab] = useState<'settings' | 'analytics' | 'health'>('settings');
+  const [liveChatInput, setLiveChatInput] = useState('');
+  const [liveChatMessages, setLiveChatMessages] = useState([
+    { id: '1', username: 'adventure_mike', text: 'Stunning view, where is this exactly?', timestamp: '20:46' },
+    { id: '2', username: 'flora_explores', text: 'Can you show the camera gear you are using?', timestamp: '20:46' },
+    { id: '3', username: 'nomad_vlogs', text: 'This looks so smooth! High quality stream.', timestamp: '20:47' },
+    { id: '4', username: 'backpacker_sam', text: 'Awesome connection speed.', timestamp: '20:47' }
+  ]);
+  const [liveModerationMenuOpen, setLiveModerationMenuOpen] = useState(false);
+  const [liveShowTipBanner, setLiveShowTipBanner] = useState(true);
+  
+  // Count-up states for active dashboard
+  const [dashboardViewers, setDashboardViewers] = useState(0);
+  const [dashboardLikes, setDashboardLikes] = useState(0);
+  const [dashboardChatRate, setDashboardChatRate] = useState(0);
   const [isMiniInboxOpen, setIsMiniInboxOpen] = useState(false);
   const [isExpandingFullscreen, setIsExpandingFullscreen] = useState(false);
   const [miniSlideActive, setMiniSlideActive] = useState(false);
@@ -1316,6 +1432,44 @@ export default function Home() {
       });
     }
   }, [activeTab]);
+
+  // Simulated stats tick updates for live stream dashboard
+  useEffect(() => {
+    if (activeTab !== 'live-dashboard') return;
+    
+    // Set initial values
+    setDashboardViewers(840);
+    setDashboardLikes(1220);
+    setDashboardChatRate(12);
+
+    const interval = setInterval(() => {
+      setDashboardViewers(prev => {
+        const delta = Math.floor(Math.random() * 11) - 5; // ±5
+        return Math.max(10, prev + delta);
+      });
+      setDashboardLikes(prev => {
+        const delta = Math.floor(Math.random() * 8) + 2; // +2 to +9
+        return prev + delta;
+      });
+      setDashboardChatRate(prev => {
+        const delta = Math.floor(Math.random() * 5) - 2; // ±2
+        return Math.max(1, prev + delta);
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
+  // Handle stream state connecting -> live transition
+  useEffect(() => {
+    if (activeTab === 'live-dashboard' && streamStatus === 'connecting') {
+      const timer = setTimeout(() => {
+        setStreamStatus('live');
+        showToast('Live stream successfully established! 🎥');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, streamStatus]);
 
   // --- DESTINATION DISCOVERY REDESIGN HELPERS & EFFECTS ---
   const heroDestinations = [
@@ -2721,6 +2875,28 @@ export default function Home() {
                   </svg>
                 </span>
                 <span className="instagram-sidebar-item-label">Reels</span>
+              </button>
+
+              {/* Live */}
+              <button 
+                className={`instagram-sidebar-item ${activeTab === 'live' && !showSearchDrawer && !showNotificationsDrawer ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('live');
+                  setShowSearchDrawer(false);
+                  setShowNotificationsDrawer(false);
+                  setShowMoreMenu(false);
+                }}
+              >
+                <span className="instagram-sidebar-item-icon" style={{ position: 'relative' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="2" fill="currentColor" />
+                    <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
+                  </svg>
+                  {hasLiveCreators && (
+                    <span className="instagram-sidebar-badge-live-pulse" />
+                  )}
+                </span>
+                <span className="instagram-sidebar-item-label">Live</span>
               </button>
 
               {/* Messages */}
@@ -4364,10 +4540,68 @@ export default function Home() {
             )}
 
             {/* VIEW 5: CREATE POST (REDESIGNED 3-COLUMN SOCIAL SCHEDULING DASHBOARD) */}
-            {activeTab === 'create' && (
+            {activeTab === 'create' && createChoice === 'none' && (
+              <div className="creator-choice-container animate-fade-in" style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '500px' }}>
+                <h2 className="form-title" style={{ marginBottom: '8px', fontSize: '24px', fontWeight: 800, textAlign: 'center', color: 'var(--text-primary)' }}>Start Creating</h2>
+                <p className="form-subtitle" style={{ marginBottom: '32px', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '400px' }}>Choose the type of travel update you want to share with your audience.</p>
+                
+                <div className="creator-choice-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%', maxWidth: '640px' }}>
+                  {/* Option 1: Create Post */}
+                  <div 
+                    className="creation-choice-card discover-premium-card hover-glow"
+                    onClick={() => setCreateChoice('post')}
+                    style={{ cursor: 'pointer', padding: '32px 24px', borderRadius: '16px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', transition: 'all 0.3s ease' }}
+                  >
+                    <div className="choice-icon-wrapper" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(236,72,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                      </svg>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>Create Travel Post</h3>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Upload photos or videos, write descriptions, and schedule posts.</p>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Go Live */}
+                  <div 
+                    className="creation-choice-card discover-premium-card hover-glow"
+                    onClick={() => {
+                      setActiveTab('live-studio');
+                      setCreateChoice('none');
+                      setLiveStep(1);
+                      setLiveTitle('');
+                      setLiveDescription('');
+                      setLiveThumbnail('');
+                      setLiveSource('webcam');
+                      setStreamStatus('connecting');
+                    }}
+                    style={{ cursor: 'pointer', padding: '32px 24px', borderRadius: '16px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', transition: 'all 0.3s ease' }}
+                  >
+                    <div className="choice-icon-wrapper animate-pulse-slow" style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f59e0b' }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
+                      </svg>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>Go Live Studio</h3>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Start a live broadcast or configure an encoder to stream to followers.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'create' && createChoice === 'post' && (
               <div className="creator-dashboard-wrapper">
                 <header className="creator-dashboard-header">
                   <div className="header-left">
+                    <button onClick={() => setCreateChoice('none')} className="creator-change-choice-btn" style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px', padding: 0 }}>
+                      ← Change creation type
+                    </button>
                     <h2 className="creator-dashboard-title">Create Travel Post</h2>
                     <p className="creator-dashboard-subtitle">Craft, organize, and schedule your next travel story effortlessly.</p>
                   </div>
@@ -5355,6 +5589,1128 @@ export default function Home() {
                       </div>
                     </div>
                   </aside>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 7: LIVE DISCOVERY PAGE */}
+            {activeTab === 'live' && (
+              <div className="live-discovery-wrapper animate-fade-in" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <header className="live-discovery-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h2 className="explore-popular-hero-title" style={{ fontSize: '24px', fontWeight: 800, margin: 0, background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Live Streams</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>Watch your favorite travel creators stream active adventures live.</p>
+                  </div>
+                  <button 
+                    className="explore-hero-cta-btn btn-shimmer-sweep" 
+                    onClick={() => { setActiveTab('live-studio'); setLiveStep(1); }}
+                    style={{ background: 'var(--brand-gradient)', color: 'white', padding: '10px 18px', borderRadius: '12px', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="2" fill="currentColor" />
+                      <path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M20.49 3.51a10 10 0 0 1 0 14.14M3.51 17.66a10 10 0 0 1 0-14.14" />
+                    </svg>
+                    Go Live Studio
+                  </button>
+                </header>
+
+                {/* Filter/Category chips row */}
+                <div className="explore-categories-scroll-wrapper" style={{ margin: 0 }}>
+                  <div className="explore-categories-container">
+                    {['All', 'IRL', 'Adventure', 'Culture', 'Q&A', 'Behind the Scenes', 'Special Events'].map((cat) => {
+                      const isActive = liveCategory === cat;
+                      return (
+                        <motion.button
+                          key={cat}
+                          className={`explore-category-btn ${isActive ? 'active' : ''}`}
+                          onClick={() => {
+                            setHasEverSwitchedLiveCategory(true);
+                            setIsLiveSwitchingCategory(true);
+                            setLiveCategory(cat); // Update active category state instantly for responsive motion feedback
+                            setTimeout(() => {
+                              setLiveGridCategory(cat); // Update content filtering after grid fade-out
+                              setIsLiveSwitchingCategory(false);
+                            }, 220);
+                          }}
+                          animate={isActive ? { scale: [1, 1.03, 1] } : { scale: 1 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ 
+                            scale: {
+                              duration: 0.32,
+                              times: [0, 0.4, 1],
+                              ease: "easeOut"
+                            }
+                          }}
+                          style={{ 
+                            padding: '8px 18px', 
+                            borderRadius: '24px', 
+                            border: isActive ? '1px solid transparent' : '1px solid rgba(255, 255, 255, 0.08)', 
+                            background: isActive ? 'transparent' : 'rgba(255, 255, 255, 0.02)', 
+                            color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)', 
+                            fontSize: '13px', 
+                            fontWeight: 700, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '6px',
+                            position: 'relative',
+                            overflow: 'visible',
+                            zIndex: 1
+                          }}
+                        >
+                          {isActive && (
+                            <>
+                              {/* Faint Bloom / Glow behind the button */}
+                              <motion.div
+                                layoutId="liveCategoryActiveGlow"
+                                className="absolute inset-0"
+                                transition={{
+                                  type: 'spring',
+                                  stiffness: 350,
+                                  damping: 28,
+                                  mass: 0.9
+                                }}
+                                style={{
+                                  borderRadius: '24px',
+                                  background: 'var(--brand-gradient)',
+                                  filter: 'blur(12px)',
+                                  opacity: 0.35,
+                                  zIndex: -2,
+                                  pointerEvents: 'none',
+                                  transform: 'translate3d(0, 2px, 0)'
+                                }}
+                              />
+                              {/* Main Glassy Active Bubble */}
+                              <motion.div
+                                layoutId="liveCategoryActiveBubble"
+                                className="absolute inset-0"
+                                transition={{
+                                  type: 'spring',
+                                  stiffness: 350,
+                                  damping: 28,
+                                  mass: 0.9
+                                }}
+                                style={{
+                                  borderRadius: '24px',
+                                  background: 'var(--brand-gradient)',
+                                  boxShadow: 'inset 0 1px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.5px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(236, 72, 153, 0.3), 0 2px 6px rgba(139, 92, 246, 0.2)',
+                                  zIndex: -1,
+                                  overflow: 'hidden'
+                                }}
+                              >
+                                {/* Diagonal glass reflection shine */}
+                                <div 
+                                  style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    background: 'linear-gradient(115deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100%)',
+                                    borderRadius: '24px',
+                                    pointerEvents: 'none'
+                                  }}
+                                />
+                              </motion.div>
+                            </>
+                          )}
+                          <span style={{ position: 'relative', zIndex: 2 }}>{cat}</span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Control Row: Search bar and Followed Only filter grouped side-by-side on the left */}
+                <div className="live-filters-control-row" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                  {/* Search Bar */}
+                  <div className="search-input-wrapper explore-search-input-wrapper" style={{ margin: 0, flex: 1, maxWidth: '400px', height: '42px', padding: '0 14px', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+                    <svg 
+                      width="15" 
+                      height="15" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      className="explore-search-svg-icon"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input 
+                      type="text" 
+                      className="comment-input explore-search-field"
+                      placeholder="Search streams or creators..."
+                      value={liveSearchQuery}
+                      onChange={(e) => setLiveSearchQuery(e.target.value)}
+                      style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '13px', marginLeft: '10px', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+
+                  {/* Right Side: Followed Toggle Button */}
+                  <button
+                    type="button"
+                    className={`explore-category-btn ${showFollowedOnly ? 'active' : ''}`}
+                    onClick={() => setShowFollowedOnly(!showFollowedOnly)}
+                    style={{ 
+                      padding: '10px 18px', 
+                      borderRadius: '10px', 
+                      border: '1px solid var(--card-border)', 
+                      background: showFollowedOnly ? 'var(--brand-gradient)' : 'var(--card-bg)', 
+                      color: 'white', 
+                      fontSize: '13px', 
+                      fontWeight: 600, 
+                      cursor: 'pointer', 
+                      transition: 'all 0.2s ease', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px',
+                      height: '42px'
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={showFollowedOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    Followed Only
+                  </button>
+                </div>
+
+                {/* Stream Cards Grid */}
+                {activeStreams.filter(s => {
+                  const matchesCategory = liveGridCategory === 'All' || s.category === liveGridCategory;
+                  const matchesSearch = s.title.toLowerCase().includes(liveSearchQuery.toLowerCase()) || s.username.toLowerCase().includes(liveSearchQuery.toLowerCase());
+                  const matchesFollowed = !showFollowedOnly || s.isFollowed;
+                  return matchesCategory && matchesSearch && matchesFollowed;
+                }).length > 0 ? (
+                  <div 
+                    className={`instagram-explore-grid ${isLiveSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedLiveCategory ? 'no-animate' : ''}`} 
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '24px 20px' }}
+                  >
+                    {activeStreams
+                      .filter(s => {
+                        const matchesCategory = liveGridCategory === 'All' || s.category === liveGridCategory;
+                        const matchesSearch = s.title.toLowerCase().includes(liveSearchQuery.toLowerCase()) || s.username.toLowerCase().includes(liveSearchQuery.toLowerCase());
+                        const matchesFollowed = !showFollowedOnly || s.isFollowed;
+                        return matchesCategory && matchesSearch && matchesFollowed;
+                      })
+                      .map((stream, idx) => (
+                        <div 
+                          key={stream.id}
+                          className="instagram-explore-item-card"
+                          style={{
+                            overflow: 'hidden',
+                            background: 'none',
+                            border: 'none',
+                            aspectRatio: 'auto',
+                            position: 'relative',
+                            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column'
+                          }}
+                          onMouseEnter={() => {
+                            setActiveStreams(prev => prev.map(s => s.id === stream.id ? { ...s, isHovered: true } : s));
+                          }}
+                          onMouseLeave={() => {
+                            setActiveStreams(prev => prev.map(s => s.id === stream.id ? { ...s, isHovered: false } : s));
+                          }}
+                          onClick={() => {
+                            showToast(`Connecting to ${stream.username}'s stream...`);
+                          }}
+                        >
+                          {/* Thumbnail / Widescreen Preview Area */}
+                          <div style={{ 
+                            position: 'relative', 
+                            width: '100%', 
+                            aspectRatio: '16 / 9', 
+                            overflow: 'hidden',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: stream.isHovered ? '0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(236,72,153,0.15)' : '0 4px 10px rgba(0,0,0,0.2)',
+                            transition: 'all 0.3s ease'
+                          }}>
+                            <img 
+                              src={stream.thumbnail} 
+                              alt={stream.title} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: stream.isHovered ? 'scale(1.03)' : 'scale(1)' }} 
+                            />
+                            
+                            {/* YouTube style LIVE Badge bottom right */}
+                            <div style={{ position: 'absolute', bottom: '10px', right: '10px', backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.5px', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', zIndex: 5 }}>
+                              <span className="live-status-dot-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'white', display: 'inline-block' }} />
+                              LIVE
+                            </div>
+
+                            {/* Mute/unmute overlay top right on hover */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveStreams(prev => prev.map(s => s.id === stream.id ? { ...s, isMuted: !s.isMuted } : s));
+                                showToast(stream.isMuted ? 'Audio Unmuted' : 'Audio Muted');
+                              }}
+                              style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer', opacity: stream.isHovered ? 1 : 0, transition: 'opacity 0.2s ease', zIndex: 10 }}
+                              title={stream.isMuted ? 'Unmute preview' : 'Mute preview'}
+                            >
+                              {stream.isMuted ? (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                  <line x1="23" y1="9" x2="17" y2="15"></line>
+                                  <line x1="17" y1="9" x2="23" y2="15"></line>
+                                </svg>
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                </svg>
+                              )}
+                            </button>
+
+                            {/* Simulated moving stream line on hover */}
+                            {stream.isHovered && (
+                              <div style={{ position: 'absolute', bottom: 0, left: 0, height: '3px', background: 'var(--brand-gradient)', width: '100%' }} />
+                            )}
+                          </div>
+
+                          {/* Footer details - YouTube Live style layout */}
+                          <div style={{ padding: '12px 0px 8px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            {/* Avatar on the left */}
+                            <div className="story-ring" style={{ width: '36px', height: '36px', padding: '2px', background: 'var(--brand-gradient)', flexShrink: 0, borderRadius: '50%' }}>
+                              <img src={stream.avatar} alt={stream.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #07090e' }} />
+                            </div>
+                            
+                            {/* Metadata on the right */}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              {/* Title (2 lines max, bold, ellipsis) */}
+                              <h4 style={{ 
+                                fontSize: '14px', 
+                                fontWeight: 700, 
+                                color: 'var(--text-primary)', 
+                                margin: 0,
+                                lineHeight: '1.4',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical'
+                              }}>
+                                {stream.title}
+                              </h4>
+                              
+                              {/* Username + Verified Badge */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{stream.username}</span>
+                                {stream.isVerified && (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#3b82f6" style={{ color: 'white', flexShrink: 0 }}>
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                  </svg>
+                                )}
+                              </div>
+                              
+                              {/* Watching Count */}
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {formatCount(stream.viewers)} watching
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  /* Empty state illustrated */
+                  <div className="explore-empty-state-glass" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', borderRadius: '16px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', textAlign: 'center', minHeight: '350px' }}>
+                    <div style={{ position: 'relative', marginBottom: '24px' }}>
+                      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse-slow">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        <path d="M2 12h20" />
+                        <circle cx="12" cy="12" r="3" fill="#ec4899" opacity="0.3" />
+                      </svg>
+                    </div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>No Live Streams Active</h3>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px', maxWidth: '380px', lineHeight: 1.5 }}>
+                      There are currently no active creators streaming in the "{liveGridCategory}" category. Try switching filters or start your own stream!
+                    </p>
+                    <button 
+                      onClick={() => { setActiveTab('live-studio'); setLiveStep(1); }}
+                      style={{ marginTop: '20px', background: 'var(--brand-gradient)', color: 'white', padding: '10px 20px', borderRadius: '12px', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      Start Your Broadcast
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VIEW 8: GO LIVE STUDIO */}
+            {activeTab === 'live-studio' && (
+              <div className="creator-dashboard-wrapper animate-fade-in" style={{ padding: '24px' }}>
+                <header className="creator-dashboard-header">
+                  <div className="header-left">
+                    <button onClick={() => { setActiveTab('live'); }} className="creator-change-choice-btn" style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px', padding: 0 }}>
+                      &larr; Back to Streams
+                    </button>
+                    <h2 className="creator-dashboard-title">Go Live Studio</h2>
+                    <p className="creator-dashboard-subtitle">Configure your details, customize stream sources, and start broadcasting.</p>
+                  </div>
+                  <div className="header-right">
+                    <div className="breadcrumb-nav">
+                      <span className="breadcrumb-item">Live Studio</span>
+                      <span className="breadcrumb-arrow">/</span>
+                      <span className="breadcrumb-item active">Step {liveStep}</span>
+                    </div>
+                  </div>
+                </header>
+
+                {/* Wizard Stepper Progress Bar */}
+                <div className="creator-stepper-container" style={{ maxWidth: '600px', margin: '0 auto 32px' }}>
+                  {[
+                    { number: 1, label: 'Details' },
+                    { number: 2, label: 'Customization' },
+                    { number: 3, label: 'Visibility & Settings' }
+                  ].map((step, idx) => {
+                    const isCompleted = liveStep > step.number;
+                    const isActive = liveStep === step.number;
+                    return (
+                      <React.Fragment key={step.number}>
+                        <div 
+                          className={`stepper-node ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                          onClick={() => {
+                            if (isCompleted || step.number < liveStep) {
+                              setLiveStep(step.number);
+                            }
+                          }}
+                        >
+                          <div className="stepper-circle">
+                            {isCompleted ? '✓' : step.number}
+                          </div>
+                          <span className="stepper-label">{step.label}</span>
+                        </div>
+                        {idx < 2 && (
+                          <div className={`stepper-line ${liveStep > step.number ? 'completed' : ''}`} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                <div className="creator-dashboard-layout" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                  <div className="creator-step-main-column" style={{ flex: 1, width: '100%' }}>
+                    
+                    {/* STEP 1: DETAILS */}
+                    {liveStep === 1 && (
+                      <div className="creator-glass-card editor-form-card">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Stream Details</h3>
+                          <p className="panel-desc">Set the public name, description, and categories for your stream.</p>
+                        </div>
+
+                        <div className="editor-form">
+                          {/* Title (Required) */}
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="live-title-input">Stream Title *</label>
+                            <input 
+                              type="text" 
+                              id="live-title-input" 
+                              className="form-input-premium" 
+                              placeholder="e.g., Live Sunset Hike in Chamonix!"
+                              value={liveTitle}
+                              onChange={(e) => setLiveTitle(e.target.value)}
+                              required
+                            />
+                          </div>
+
+                          {/* Description */}
+                          <div className="form-group">
+                            <label className="form-label" htmlFor="live-desc-input">Stream Description</label>
+                            <textarea 
+                              id="live-desc-input" 
+                              className="form-input-premium form-textarea-premium" 
+                              placeholder="Tell viewers what your live stream is about..."
+                              value={liveDescription}
+                              onChange={(e) => setLiveDescription(e.target.value)}
+                              rows={4}
+                            />
+                          </div>
+
+                          {/* Category Tag Selection */}
+                          <div className="form-group">
+                            <label className="form-label">Stream Category tags</label>
+                            <div className="categories-selection">
+                              {['IRL', 'Adventure', 'Culture', 'Q&A', 'Behind the Scenes'].map((cat) => {
+                                const isSelected = liveSelectedCategories.includes(cat);
+                                return (
+                                  <button
+                                    key={cat}
+                                    type="button"
+                                    className={`category-pill ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => {
+                                      setLiveSelectedCategories(prev => {
+                                        if (prev.includes(cat)) {
+                                          return prev.filter(c => c !== cat);
+                                        } else {
+                                          return [...prev, cat];
+                                        }
+                                      });
+                                    }}
+                                  >
+                                    {isSelected && <span style={{ marginRight: '4px' }}>✓</span>}
+                                    {cat}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Navigation row */}
+                          <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-publish"
+                              disabled={!liveTitle.trim()}
+                              onClick={() => setLiveStep(2)}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                            >
+                              Next: Customization
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 2: CUSTOMIZATION */}
+                    {liveStep === 2 && (
+                      <div className="creator-glass-card editor-form-card">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Customization & Source</h3>
+                          <p className="panel-desc">Upload a poster thumbnail and choose your streaming source setup.</p>
+                        </div>
+
+                        <div className="editor-form">
+                          {/* Thumbnail Upload Drag & Drop */}
+                          <div className="form-section">
+                            <label className="section-label">Stream Thumbnail Cover</label>
+                            <div 
+                              className="upload-dropzone"
+                              style={{ border: '2px dashed var(--card-border)', background: 'var(--input-bg)', padding: '24px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer' }}
+                              onClick={() => {
+                                setLiveThumbnail('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80');
+                                showToast('Thumbnail uploaded successfully!');
+                              }}
+                            >
+                              {liveThumbnail ? (
+                                <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden' }}>
+                                  <img src={liveThumbnail} alt="Thumbnail preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '13px', fontWeight: 600 }}>
+                                    Click to replace thumbnail cover
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>Click to upload stream cover</span>
+                                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Drag & drop high-res JPEG/PNG (16:9 recommended)</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Stream Source Choose cards */}
+                          <div className="form-group" style={{ marginTop: '24px' }}>
+                            <label className="form-label">Stream Connection Source</label>
+                            <div className="creator-choice-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                              {/* Built-in webcam card */}
+                              <div 
+                                className={`creation-choice-card discover-premium-card ${liveSource === 'webcam' ? 'active' : ''}`}
+                                onClick={() => setLiveSource('webcam')}
+                                style={{ padding: '20px', borderRadius: '12px', border: liveSource === 'webcam' ? '1.5px solid var(--primary)' : '1px solid var(--card-border)', background: 'var(--card-bg)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: liveSource === 'webcam' ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                  <span style={{ fontWeight: 700, fontSize: '14px' }}>Built-in Camera</span>
+                                </div>
+                                <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Quick and easy stream directly using your laptop or device webcam.</p>
+                              </div>
+
+                              {/* Streaming software (encoder) card */}
+                              <div 
+                                className={`creation-choice-card discover-premium-card ${liveSource === 'encoder' ? 'active' : ''}`}
+                                onClick={() => setLiveSource('encoder')}
+                                style={{ padding: '20px', borderRadius: '12px', border: liveSource === 'encoder' ? '1.5px solid var(--primary)' : '1px solid var(--card-border)', background: 'var(--card-bg)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '10px' }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: liveSource === 'encoder' ? 'var(--primary)' : 'var(--text-secondary)' }}>
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                  <span style={{ fontWeight: 700, fontSize: '14px' }}>Streaming Software</span>
+                                </div>
+                                <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Use encoder software like OBS Studio or Streamlabs for custom overlays.</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Encoder Fields Section if streaming software chosen */}
+                          {liveSource === 'encoder' && (
+                            <div className="creator-inner-glass-card animate-fade-in" style={{ marginTop: '20px', padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: '12px' }}>
+                              <h4 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Encoder Configuration Settings</h4>
+                              
+                              {/* Stream URL */}
+                              <div className="form-group">
+                                <label className="form-label" style={{ fontSize: '11px' }}>Stream Server URL</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <input type="text" className="form-input-premium" style={{ flex: 1, fontSize: '12px' }} readOnly value={streamUrl} />
+                                  <button 
+                                    type="button" 
+                                    onClick={() => { navigator.clipboard.writeText(streamUrl); showToast('Server URL copied!'); }}
+                                    style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'white', width: '38px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    title="Copy Server URL"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Stream Key */}
+                              <div className="form-group" style={{ marginTop: '14px' }}>
+                                <label className="form-label" style={{ fontSize: '11px' }}>Stream Connection Key</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <input 
+                                    type={isKeyRevealed ? 'text' : 'password'} 
+                                    className="form-input-premium" 
+                                    style={{ flex: 1, fontSize: '12px', letterSpacing: isKeyRevealed ? '0px' : '4px' }} 
+                                    readOnly 
+                                    value={streamKey} 
+                                  />
+                                  <button 
+                                    type="button" 
+                                    onClick={() => setIsKeyRevealed(!isKeyRevealed)}
+                                    style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'white', width: '38px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    title={isKeyRevealed ? 'Hide Stream Key' : 'Reveal Stream Key'}
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                  </button>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => { navigator.clipboard.writeText(streamKey); showToast('Stream Key copied!'); }}
+                                    style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'white', width: '38px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    title="Copy Stream Key"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                  </button>
+                                </div>
+                              </div>
+
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const generated = 'live_usr_' + Math.random().toString(36).substring(2, 15);
+                                  setStreamKey(generated);
+                                  showToast('Stream key regenerated!');
+                                }}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', marginTop: '10px', padding: 0 }}
+                              >
+                                &orarr; Regenerate Stream Key
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Navigation row */}
+                          <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-draft"
+                              onClick={() => setLiveStep(1)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                              </svg>
+                              Back
+                            </button>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-publish"
+                              onClick={() => setLiveStep(3)}
+                              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                            >
+                              Next: Settings
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 3: VISIBILITY & SETTINGS */}
+                    {liveStep === 3 && (
+                      <div className="creator-glass-card editor-form-card">
+                        <div className="panel-header">
+                          <h3 className="panel-title">Visibility & Permissions</h3>
+                          <p className="panel-desc">Manage stream privacy settings, age restrictions, and chat controls.</p>
+                        </div>
+
+                        <div className="editor-form">
+                          {/* Live Visibility Cards */}
+                          <div className="form-group">
+                            <label className="form-label">Stream Visibility</label>
+                            <div className="visibility-options-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                              {[
+                                { key: 'public', title: 'Public', desc: 'Anyone on Travora can watch' },
+                                { key: 'followers', title: 'Followers Only', desc: 'Only followers can watch' },
+                                { key: 'private', title: 'Private', desc: 'Test stream only visible to you' }
+                              ].map(option => (
+                                <label key={option.key} className={`visibility-radio-card ${liveVisibility === option.key ? 'active' : ''}`} style={{ cursor: 'pointer', padding: '16px', borderRadius: '12px', border: liveVisibility === option.key ? '1.5px solid var(--primary)' : '1px solid var(--card-border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  <input
+                                    type="radio"
+                                    name="live-visibility-selection"
+                                    value={option.key}
+                                    checked={liveVisibility === option.key}
+                                    onChange={() => setLiveVisibility(option.key as any)}
+                                    className="sr-only"
+                                  />
+                                  <span className="radio-title" style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{option.title}</span>
+                                  <span className="radio-description" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{option.desc}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Toggle switches */}
+                          <div className="toggles-list-section" style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {/* Allow Comments */}
+                            <div className="toggle-switch-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title" style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Allow Chat Comments</span>
+                                  <span className="toggle-label-desc" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Let viewers write live messages in chat stream</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input type="checkbox" checked={allowLiveComments} onChange={(e) => setAllowLiveComments(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Chat Moderation */}
+                            <div className="toggle-switch-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title" style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Chat Moderation Filter</span>
+                                  <span className="toggle-label-desc" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Auto-block spam comments, bots, and offensive language</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input type="checkbox" checked={liveChatModeration} onChange={(e) => setLiveChatModeration(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Notify Followers */}
+                            <div className="toggle-switch-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title" style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Notify Followers</span>
+                                  <span className="toggle-label-desc" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Send push alert notifications when you start broadcasting</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input type="checkbox" checked={notifyFollowers} onChange={(e) => setNotifyFollowers(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* Save Recording */}
+                            <div className="toggle-switch-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title" style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Save Recording to Profile</span>
+                                  <span className="toggle-label-desc" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Convert live stream into a Profile Postcard record when finished</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input type="checkbox" checked={saveRecording} onChange={(e) => setSaveRecording(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+
+                            {/* COPPA compliance style age-appropriate toggle */}
+                            <div className="toggle-switch-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '16px', marginTop: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <div className="toggle-info">
+                                  <span className="toggle-label-title" style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Restrict to 18+ Audience Only</span>
+                                  <span className="toggle-label-desc" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Mark stream as mature content for adult audiences (COPPA compliance)</span>
+                                </div>
+                              </div>
+                              <label className="switch">
+                                <input type="checkbox" checked={liveCoppaToggle} onChange={(e) => setLiveCoppaToggle(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Final Action buttons row */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '28px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-publish"
+                              onClick={() => {
+                                showToast('Live stream launching...');
+                                setActiveTab('live-dashboard');
+                                setStreamStatus('connecting');
+                                setDashboardViewers(0);
+                                setDashboardLikes(0);
+                                setDashboardChatRate(0);
+                              }}
+                              style={{ width: '100%', height: '46px', fontSize: '15px', background: 'var(--brand-gradient)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 15px rgba(236,72,153,0.4)' }}
+                            >
+                              Go Live Now
+                            </button>
+                            
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                              <button 
+                                type="button" 
+                                className="creator-action-btn btn-schedule"
+                                onClick={() => {
+                                  showToast('Live stream scheduled!');
+                                  setActiveTab('live');
+                                }}
+                                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'white', padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                              >
+                                Schedule Stream
+                              </button>
+                              <button 
+                                type="button" 
+                                className="creator-action-btn btn-draft"
+                                onClick={() => {
+                                  showToast('Live stream draft saved!');
+                                  setActiveTab('live');
+                                }}
+                                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', color: 'white', padding: '10px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                              >
+                                Save Draft
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="step-navigation-buttons" style={{ display: 'flex', gap: '12px', marginTop: '24px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '16px' }}>
+                            <button 
+                              type="button" 
+                              className="creator-action-btn btn-draft" 
+                              onClick={() => setLiveStep(2)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                              </svg>
+                              Back
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 9: LIVE STREAM DASHBOARD */}
+            {activeTab === 'live-dashboard' && (
+              <div className="live-dashboard-wrapper animate-fade-in" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: streamStatus === 'live' ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)', border: streamStatus === 'live' ? '1px solid #ef4444' : '1px solid var(--card-border)', padding: '4px 10px', borderRadius: '20px' }}>
+                      <span className={streamStatus === 'live' ? 'live-status-dot-pulse' : ''} style={{ width: '8px', height: '8px', borderRadius: '50%', background: streamStatus === 'live' ? '#ef4444' : '#64748b', display: 'inline-block' }} />
+                      <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: streamStatus === 'live' ? '#ef4444' : '#cbd5e1' }}>
+                        {streamStatus === 'connecting' ? 'Connecting...' : streamStatus === 'live' ? 'Live' : 'No Data'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{liveTitle || 'Untitled Live Stream'}</h3>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Stream Dashboard &bull; {liveSelectedCategories.join(', ') || 'No Category'}</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => {
+                      if (confirm('Are you sure you want to end this live stream?')) {
+                        setStreamStatus('connecting');
+                        setActiveTab('live');
+                        showToast('Live stream ended successfully!');
+                      }
+                    }}
+                    style={{ background: '#ef4444', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
+                  >
+                    End Stream
+                  </button>
+                </header>
+
+                {/* Dismissible Tip Banner */}
+                {liveShowTipBanner && (
+                  <div className="tip-banner-card discover-premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><line x1="9" y1="18" x2="15" y2="18"></line><line x1="10" y1="22" x2="14" y2="22"></line></svg>
+                      <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 500 }}>
+                        Managing chat moderators or pinning comments can help support your channel community during streaming.
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => setLiveShowTipBanner(false)}
+                      style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: '18px', cursor: 'pointer', opacity: 0.7 }}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                )}
+
+                {/* Main Dashboard Layout */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '20px', minHeight: '520px' }}>
+                  
+                  {/* Left Column: Stream preview, stats, and settings/analytics tabs */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    
+                    {/* Preview Screen */}
+                    <div style={{ position: 'relative', width: '100%', height: '320px', borderRadius: '16px', background: '#0a0d14', border: '1px solid var(--card-border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {streamStatus === 'connecting' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                          <div className="accent-loader-circle" style={{ width: '36px', height: '36px', border: '3.5px solid rgba(255,255,255,0.05)', borderTop: '3.5px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s infinite linear' }}></div>
+                          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Establishing connection, waiting for stream data...</span>
+                        </div>
+                      ) : (
+                        /* Simulated stream preview or webcam stream image placeholder */
+                        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                          {liveSource === 'webcam' ? (
+                            /* Simulated webcam view with gradient moving patterns */
+                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, #1e1b4b 0%, #311042 50%, #0f172a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.15, color: 'white' }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                              <div style={{ position: 'absolute', bottom: '20px', left: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '20px' }}>
+                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>Webcam active</span>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Encoder feed simulation */
+                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(-45deg, #090d16 0%, #1e1b4b 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.15, color: 'white' }}><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                              <div style={{ position: 'absolute', bottom: '20px', left: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '20px' }}>
+                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>Encoder streaming active</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Stats Summary strip */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                      <div className="discover-premium-card" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Concurrent Viewers</span>
+                        <span style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', display: 'block', color: 'var(--text-primary)' }}>
+                          {formatCount(dashboardViewers)}
+                        </span>
+                      </div>
+                      <div className="discover-premium-card" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Likes Count</span>
+                        <span style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', display: 'block', color: '#ec4899' }}>
+                          {formatCount(dashboardLikes)}
+                        </span>
+                      </div>
+                      <div className="discover-premium-card" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Chat Rate</span>
+                        <span style={{ fontSize: '20px', fontWeight: 800, marginTop: '4px', display: 'block', color: '#3b82f6' }}>
+                          {dashboardChatRate} msgs/min
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Tab Navigation Menu */}
+                    <div className="profile-tabs-nav" style={{ margin: 0 }}>
+                      {['settings', 'analytics', 'health'].map((tab) => (
+                        <button 
+                          key={tab}
+                          className={`profile-tab-btn ${dashboardTab === tab ? 'active' : ''}`}
+                          onClick={() => setDashboardTab(tab as any)}
+                        >
+                          <span style={{ textTransform: 'uppercase', fontWeight: 600 }}>{tab}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Tab Content Panels */}
+                    <div className="discover-premium-card" style={{ padding: '20px', borderRadius: '12px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', minHeight: '180px' }}>
+                      
+                      {/* Settings Tab */}
+                      {dashboardTab === 'settings' && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>Quick Stream Adjustments</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Allow Chat Comments</span>
+                              <label className="switch">
+                                <input type="checkbox" checked={allowLiveComments} onChange={(e) => setAllowLiveComments(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Chat moderation filters</span>
+                              <label className="switch">
+                                <input type="checkbox" checked={liveChatModeration} onChange={(e) => setLiveChatModeration(e.target.checked)} />
+                                <span className="slider round"></span>
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Analytics Tab (Gradient area chart plotted cleanly using SVG) */}
+                      {dashboardTab === 'analytics' && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-primary)' }}>Viewer Engagement Rate (Real-time)</h4>
+                          <div style={{ height: '140px', width: '100%', position: 'relative' }}>
+                            <svg viewBox="0 0 400 120" style={{ width: '100%', height: '100%' }}>
+                              <defs>
+                                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor="#ec4899" stopOpacity="0.4" />
+                                  <stop offset="100%" stopColor="#ec4899" stopOpacity="0" />
+                                </linearGradient>
+                              </defs>
+                              <line x1="0" y1="30" x2="400" y2="30" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                              <line x1="0" y1="60" x2="400" y2="60" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                              <line x1="0" y1="90" x2="400" y2="90" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+                              
+                              <path 
+                                d="M 0,110 L 40,80 L 80,95 L 120,60 L 160,40 L 200,45 L 240,30 L 280,50 L 320,25 L 360,15 L 400,10 L 400,120 L 0,120 Z" 
+                                fill="url(#chartGradient)" 
+                              />
+                              <path 
+                                d="M 0,110 L 40,80 L 80,95 L 120,60 L 160,40 L 200,45 L 240,30 L 280,50 L 320,25 L 360,15 L 400,10" 
+                                fill="none" 
+                                stroke="#ec4899" 
+                                strokeWidth="2.5" 
+                                strokeLinecap="round" 
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stream Health Tab */}
+                      {dashboardTab === 'health' && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: 700, marginBottom: '16px', color: 'var(--text-primary)' }}>Network Connection Diagnostics</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Connection Bitrate</span>
+                              <span style={{ color: '#10b981', fontWeight: 600 }}>4500 kbps (Excellent)</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Frame Rate Stability</span>
+                              <span style={{ color: '#10b981', fontWeight: 600 }}>60 fps (Stable)</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Stream Latency Delay</span>
+                              <span style={{ color: '#f59e0b', fontWeight: 600 }}>1.2 seconds (Low Latency)</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                              <span style={{ color: 'var(--text-secondary)' }}>Frame Dropped Rate</span>
+                              <span style={{ color: '#10b981', fontWeight: 600 }}>0% (Healthy)</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+
+                  {/* Right Column: Live Chat stream and inputs */}
+                  <div className="discover-premium-card" style={{ padding: '16px', borderRadius: '16px', border: '1px solid var(--card-border)', background: 'var(--card-bg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                    
+                    {/* Chat Header details */}
+                    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>Live Chat</span>
+                      
+                      {/* Moderation Dropdown */}
+                      <div style={{ position: 'relative' }}>
+                        <button 
+                          onClick={() => setLiveModerationMenuOpen(!liveModerationMenuOpen)}
+                          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Moderation Settings"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                        {liveModerationMenuOpen && (
+                          <div className="instagram-more-menu-dropdown animate-slide-up" style={{ right: 0, top: '24px', width: '200px', zIndex: 30 }}>
+                            <div style={{ padding: '8px 12px', fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', borderBottom: '1px solid var(--card-border)' }}>Moderation</div>
+                            <button className="instagram-more-menu-item" type="button" onClick={() => { showToast('Moderator filters toggled'); setLiveModerationMenuOpen(false); }}>
+                              🛡️ Community Rules
+                            </button>
+                            <button className="instagram-more-menu-item" type="button" onClick={() => { showToast('Viewing participant list'); setLiveModerationMenuOpen(false); }}>
+                              👥 Participants
+                            </button>
+                            <button className="instagram-more-menu-item" type="button" onClick={() => { showToast('Reactions toggled'); setLiveModerationMenuOpen(false); }}>
+                              ❤️ Toggle Reactions
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Messages Container list */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px' }}>
+                      {liveChatMessages.map((msg) => (
+                        <div key={msg.id} style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                          <span style={{ fontWeight: 700, color: msg.username === 'Suvarnatest' ? 'var(--primary)' : 'var(--text-secondary)' }}>@{msg.username}</span>{' '}
+                          <span style={{ color: 'var(--text-primary)' }}>{msg.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Chat input form */}
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!liveChatInput.trim()) return;
+                        const newMsg = {
+                          id: Date.now().toString(),
+                          username: 'Suvarnatest',
+                          text: liveChatInput,
+                          timestamp: '20:47'
+                        };
+                        setLiveChatMessages(prev => [...prev, newMsg]);
+                        setLiveChatInput('');
+                        setDashboardChatRate(prev => prev + 1);
+                      }}
+                      style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', display: 'flex', gap: '8px' }}
+                    >
+                      <input 
+                        type="text" 
+                        placeholder="Say something in chat..." 
+                        value={liveChatInput} 
+                        onChange={(e) => setLiveChatInput(e.target.value)} 
+                        className="comment-input"
+                        style={{ flex: 1, padding: '8px 12px', fontSize: '12px' }}
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={!liveChatInput.trim()}
+                        style={{ background: 'var(--brand-gradient)', color: 'white', border: 'none', borderRadius: '8px', padding: '0 16px', fontWeight: 600, cursor: 'pointer', fontSize: '12px' }}
+                      >
+                        Send
+                      </button>
+                    </form>
+
+                  </div>
                 </div>
               </div>
             )}
