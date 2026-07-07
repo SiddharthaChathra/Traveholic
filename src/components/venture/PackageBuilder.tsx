@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import ToggleSwitch from '../shared/ToggleSwitch';
 import TagPill from '../shared/TagPill';
+import { motion } from 'framer-motion';
 
 interface PackageBuilderProps {
   onSave: (data: any) => void;
@@ -179,13 +180,15 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
         </div>
       </div>
 
-      <button 
+      <motion.button 
+        whileHover={{ scale: 1.02, filter: 'brightness(1.1)' }}
+        whileTap={{ scale: 0.98 }}
         type="submit" 
         style={{ width: '100%', padding: '14px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '14px', marginTop: '10px', boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
         className="btn-shimmer-sweep"
       >
         Save Bundle Package
-      </button>
+      </motion.button>
     </form>
   );
 }

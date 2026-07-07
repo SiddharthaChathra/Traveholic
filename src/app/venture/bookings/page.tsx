@@ -5,6 +5,7 @@ import BookingCalendar from '@/components/venture/BookingCalendar';
 import TabBar from '@/components/shared/TabBar';
 import ToggleSwitch from '@/components/shared/ToggleSwitch';
 import ThreeTierButtonGroup from '@/components/shared/ThreeTierButtonGroup';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface BookingItem {
   id: string;
@@ -22,7 +23,7 @@ interface BookingItem {
 export default function VentureBookingsPage() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
-  const [selectedBooking, setSelectedBooking] = useState<BookingItem | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [bookings, setBookings] = useState<BookingItem[]>([
     {
@@ -75,16 +76,10 @@ export default function VentureBookingsPage() {
 
   const handleUpdateStatus = (id: string, nextStatus: BookingItem['status']) => {
     setBookings(bookings.map(b => b.id === id ? { ...b, status: nextStatus } : b));
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking({ ...selectedBooking, status: nextStatus });
-    }
   };
 
   const handleToggleCheckin = (id: string, currentVal: boolean) => {
     setBookings(bookings.map(b => b.id === id ? { ...b, checkedIn: !currentVal } : b));
-    if (selectedBooking && selectedBooking.id === id) {
-      setSelectedBooking({ ...selectedBooking, checkedIn: !currentVal });
-    }
   };
 
   const filteredBookings = bookings.filter(b => b.status === activeTab);
@@ -111,17 +106,23 @@ export default function VentureBookingsPage() {
         </div>
 
         {/* View Mode Toggle */}
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '2px' }}>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '2px', position: 'relative', zIndex: 1 }}>
           <button 
             onClick={() => setViewMode('calendar')}
-            style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, border: 'none', background: viewMode === 'calendar' ? 'rgba(255,255,255,0.06)' : 'transparent', color: viewMode === 'calendar' ? 'white' : 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer' }}
+            style={{ position: 'relative', padding: '6px 12px', fontSize: '11px', fontWeight: 600, border: 'none', background: 'transparent', color: viewMode === 'calendar' ? 'white' : 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer' }}
           >
+            {viewMode === 'calendar' && (
+              <motion.div layoutId="viewModeToggle" style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.08)', borderRadius: '6px', zIndex: -1 }} />
+            )}
             Calendar
           </button>
           <button 
             onClick={() => setViewMode('list')}
-            style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, border: 'none', background: viewMode === 'list' ? 'rgba(255,255,255,0.06)' : 'transparent', color: viewMode === 'list' ? 'white' : 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer' }}
+            style={{ position: 'relative', padding: '6px 12px', fontSize: '11px', fontWeight: 600, border: 'none', background: 'transparent', color: viewMode === 'list' ? 'white' : 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer' }}
           >
+            {viewMode === 'list' && (
+              <motion.div layoutId="viewModeToggle" style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.08)', borderRadius: '6px', zIndex: -1 }} />
+            )}
             List Table
           </button>
         </div>
@@ -131,8 +132,7 @@ export default function VentureBookingsPage() {
         <BookingCalendar 
           bookings={bookings} 
           onSelectDate={(dateStr) => {
-            const booking = bookings.find(b => b.checkIn === dateStr);
-            if (booking) setSelectedBooking(booking);
+            setSelectedDate(dateStr);
           }}
         />
       ) : (
@@ -165,7 +165,7 @@ export default function VentureBookingsPage() {
                     )}
                     <td style={{ padding: '16px 20px' }}>
                       <button 
-                        onClick={() => setSelectedBooking(b)}
+                        onClick={() => setSelectedDate(b.checkIn)}
                         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '6px 12px', fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}
                       >
                         Details
@@ -186,102 +186,150 @@ export default function VentureBookingsPage() {
       )}
 
       {/* Slide-over Detail Drawer */}
-      {selectedBooking && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
-          <div className="discover-premium-card" style={{ width: '400px', height: '100%', background: 'var(--bg-gradient)', borderLeft: '1px solid var(--card-border)', padding: '32px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div>
-              <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Reservation Details</h3>
-                <button 
-                  onClick={() => setSelectedBooking(null)}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '20px' }}
-                >
-                  &times;
-                </button>
-              </header>
+      <AnimatePresence>
+        {selectedDate && (() => {
+          const dayBookings = bookings.filter(b => selectedDate >= b.checkIn && selectedDate < b.checkOut);
+          const hasBooking = dayBookings.length > 0;
+          const selectedBooking = dayBookings[0];
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '13px' }}>
+          return (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedDate(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}
+            >
+              <motion.div 
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                onClick={(e) => e.stopPropagation()}
+                className="discover-premium-card" 
+                style={{ width: '400px', height: '100%', background: 'var(--bg-gradient)', borderLeft: '1px solid var(--card-border)', padding: '32px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+              >
                 <div>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>GUEST NAME</span>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedBooking.guestName}</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block' }}>{selectedBooking.guestEmail}</span>
-                </div>
+                  <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-title)' }}>
+                      {hasBooking ? 'Reservation Details' : 'Date Availability'}
+                    </h3>
+                    <button 
+                      onClick={() => setSelectedDate(null)}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '20px' }}
+                    >
+                      &times;
+                    </button>
+                  </header>
 
-                <div>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>PROPERTY / SUITE</span>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.listingName}</span>
-                </div>
+                  {hasBooking ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '13px' }}>
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>GUEST NAME</span>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedBooking.guestName}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block' }}>{selectedBooking.guestEmail}</span>
+                      </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>CHECK IN</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.checkIn}</span>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>CHECK OUT</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.checkOut}</span>
-                  </div>
-                </div>
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>PROPERTY / SUITE</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.listingName}</span>
+                      </div>
 
-                <div>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>TOTAL AMOUNT PAID</span>
-                  <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>${selectedBooking.pricePaid}</span>
-                </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>CHECK IN</span>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.checkIn}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>CHECK OUT</span>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBooking.checkOut}</span>
+                        </div>
+                      </div>
 
-                {selectedBooking.specialRequests && (
-                  <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>SPECIAL REQUESTS</span>
-                    <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: '1.4' }}>
-                      “{selectedBooking.specialRequests}”
-                    </p>
-                  </div>
-                )}
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>TOTAL AMOUNT PAID</span>
+                        <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>${selectedBooking.pricePaid}</span>
+                      </div>
 
-                {selectedBooking.status === 'ongoing' && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
-                    <div>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Guest Check-in Status</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Mark guest as present in room</span>
+                      {selectedBooking.specialRequests && (
+                        <div>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>SPECIAL REQUESTS</span>
+                          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontStyle: 'italic', lineHeight: '1.4' }}>
+                            “{selectedBooking.specialRequests}”
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedBooking.status === 'ongoing' && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                          <div>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Guest Check-in Status</span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Mark guest as present in room</span>
+                          </div>
+                          <ToggleSwitch checked={!!selectedBooking.checkedIn} onChange={() => handleToggleCheckin(selectedBooking.id, !!selectedBooking.checkedIn)} />
+                        </div>
+                      )}
                     </div>
-                    <ToggleSwitch checked={!!selectedBooking.checkedIn} onChange={() => handleToggleCheckin(selectedBooking.id, !!selectedBooking.checkedIn)} />
-                  </div>
-                )}
-              </div>
-            </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '13px' }}>
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>SELECTED DATE</span>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedDate}</span>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>AVAILABILITY STATUS</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#34d399' }}>Available (3 Rooms Free)</span>
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.5' }}>
+                        There are no bookings registered for this date. You can add a new booking for this date range below.
+                      </p>
+                    </div>
+                  )}
+                </div>
 
-            <div>
-              {selectedBooking.status === 'pending' ? (
-                <ThreeTierButtonGroup 
-                  buttons={[
-                    {
-                      label: 'Decline',
-                      onClick: () => handleUpdateStatus(selectedBooking.id, 'cancelled'),
-                      variant: 'outline'
-                    },
-                    {
-                      label: 'Reschedule',
-                      onClick: () => alert('Simulating Reschedule calendar window...'),
-                      variant: 'secondary'
-                    },
-                    {
-                      label: 'Approve Stay',
-                      onClick: () => handleUpdateStatus(selectedBooking.id, 'upcoming'),
-                      variant: 'primary'
-                    }
-                  ]}
-                />
-              ) : (
-                <button 
-                  onClick={() => setSelectedBooking(null)}
-                  style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
-                >
-                  Close Details
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                <div>
+                  {hasBooking && selectedBooking.status === 'pending' ? (
+                    <ThreeTierButtonGroup 
+                      buttons={[
+                        {
+                          label: 'Decline',
+                          onClick: () => handleUpdateStatus(selectedBooking.id, 'cancelled'),
+                          variant: 'outline'
+                        },
+                        {
+                          label: 'Reschedule',
+                          onClick: () => alert('Simulating Reschedule calendar window...'),
+                          variant: 'secondary'
+                        },
+                        {
+                          label: 'Approve Stay',
+                          onClick: () => handleUpdateStatus(selectedBooking.id, 'upcoming'),
+                          variant: 'primary'
+                        }
+                      ]}
+                    />
+                  ) : !hasBooking ? (
+                    <button 
+                      onClick={() => alert(`Simulating Add Booking wizard for date: ${selectedDate}`)}
+                      className="btn-shimmer-sweep"
+                      style={{ width: '100%', padding: '12px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '10px', color: 'white', fontWeight: 700, cursor: 'pointer', fontSize: '13px', boxShadow: '0 4px 10px rgba(236,72,153,0.2)' }}
+                    >
+                      Add Booking
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setSelectedDate(null)}
+                      style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}
+                    >
+                      Close Details
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 }

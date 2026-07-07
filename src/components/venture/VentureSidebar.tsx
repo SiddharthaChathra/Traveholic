@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Logo from '@/components/Logo';
+import { motion } from 'framer-motion';
 
 interface SidebarItem {
   id: string;
@@ -151,10 +152,38 @@ export default function VentureSidebar() {
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href) || pathname === item.href;
           return (
-            <Link key={item.id} href={item.href} className={`instagram-sidebar-item ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-              <span className="instagram-sidebar-item-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Link 
+              key={item.id} 
+              href={item.href} 
+              className="instagram-sidebar-item" 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                textDecoration: 'none',
+                position: 'relative',
+                color: isActive ? 'var(--primary)' : 'var(--text-primary)',
+              }}
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="active-indicator-venture"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundColor: 'rgba(236, 72, 153, 0.08)',
+                    borderRadius: '8px',
+                    zIndex: -1
+                  }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+              <motion.span 
+                className="instagram-sidebar-item-icon" 
+                whileHover={{ scale: 1.15 }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
                 {item.icon}
-              </span>
+              </motion.span>
               <span className="instagram-sidebar-item-label" style={{ fontWeight: isActive ? 700 : 500 }}>
                 {item.label}
               </span>

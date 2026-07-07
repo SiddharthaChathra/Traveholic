@@ -2526,6 +2526,14 @@ export default function Home() {
 
   // Current slide index for highlight stories popup viewer
   const [activeStoryIdx, setActiveStoryIdx] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Search Filters and Map View States
+  const [showFilters, setShowFilters] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const [filterPriceMax, setFilterPriceMax] = useState(500);
+  const [filterRating, setFilterRating] = useState<number | null>(null);
+  const [filterAmenities, setFilterAmenities] = useState<string[]>([]);
 
   // Lock body background scroll when highlights modal is open
   useEffect(() => {
@@ -2544,6 +2552,7 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedHighlight(null);
+        setLightboxImage(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -3418,7 +3427,7 @@ export default function Home() {
                                 {(post.images || [post.image]).map((imgUrl, imgIdx) => {
                                   const isImgLoaded = loadedFeedImages[`${post.id}-${imgIdx}`];
                                   return (
-                                    <div key={imgIdx} style={{ minWidth: '100%', position: 'relative' }}>
+                                    <div key={imgIdx} style={{ minWidth: '100%', height: '100%', flexShrink: 0, position: 'relative' }}>
                                       {!isImgLoaded && (
                                         <div className="skeleton-loader-shimmer" style={{ position: 'absolute', inset: 0 }} />
                                       )}
@@ -3427,12 +3436,14 @@ export default function Home() {
                                         alt={`post-${imgIdx}`} 
                                         className={`post-card-img ${isImgLoaded ? 'sharpen' : 'blur-placeholder'}`} 
                                         onLoad={() => setLoadedFeedImages(prev => ({ ...prev, [`${post.id}-${imgIdx}`]: true }))}
+                                        onClick={() => setLightboxImage(imgUrl)}
                                         style={{ 
                                           width: '100%', 
                                           height: '100%', 
                                           objectFit: 'cover',
                                           filter: isImgLoaded ? 'none' : 'blur(15px)',
-                                          transition: 'filter 0.4s ease'
+                                          transition: 'filter 0.4s ease',
+                                          cursor: 'pointer'
                                         }}
                                       />
                                     </div>
@@ -3670,9 +3681,7 @@ export default function Home() {
                         <div key={sUser.username} className="instagram-suggested-user-row">
                           <div style={{ position: 'relative', width: '32px', height: '32px' }}>
                             <img src={sUser.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                            {sUser.active && (
-                              <span className="suggested-presence-indicator"></span>
-                            )}
+                            <span className={`suggested-presence-indicator ${sUser.active ? 'online' : 'offline'}`}></span>
                           </div>
                           <div className="instagram-suggested-user-info">
                             <span className="instagram-suggested-username">{sUser.username}</span>
@@ -3704,7 +3713,7 @@ export default function Home() {
                   {/* Vlogs Scrollable Feed Section */}
                   <div className="vlogs-section-header">
                     <span className="vlogs-section-title">Explore Travel Vlogs</span>
-                    <span className="vlogs-section-badge-pulsing">LIVE FEED</span>
+                    <span className="vlogs-section-badge-pulsing">VLOGS</span>
                   </div>
 
                   <div className="vlogs-scroll-container">
@@ -4303,8 +4312,8 @@ export default function Home() {
                     </button>
 
                     <button 
-                      className="explore-action-btn" 
-                      onClick={() => { playUISound('click'); alert('Opening advanced travel filters...'); }} 
+                      className={`explore-action-btn ${showFilters ? 'active' : ''}`}
+                      onClick={() => { playUISound('click'); setShowFilters(!showFilters); }} 
                       title="Advanced Filters"
                       onMouseEnter={() => playUISound('hover')}
                     >
@@ -4322,8 +4331,8 @@ export default function Home() {
                       <span>Filters</span>
                     </button>
                     <button 
-                      className="explore-action-btn active" 
-                      onClick={() => { playUISound('click'); alert('Travora interactive Map coming soon!'); }} 
+                      className={`explore-action-btn ${showMapView ? 'active' : ''}`}
+                      onClick={() => { playUISound('click'); setShowMapView(!showMapView); }} 
                       title="Map View"
                       onMouseEnter={() => playUISound('hover')}
                     >
@@ -4368,6 +4377,97 @@ export default function Home() {
                     ))}
                   </div>
                 </div>
+
+                {/* Advanced Filters Expandable Card */}
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      style={{ overflow: 'hidden', marginBottom: '20px' }}
+                    >
+                      <div className="discover-premium-card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                        {/* Price Range Filter */}
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>MAX NIGHTLY PRICE: ${filterPriceMax}</label>
+                          <input 
+                            type="range" 
+                            min="100" 
+                            max="500" 
+                            step="20"
+                            value={filterPriceMax} 
+                            onChange={(e) => setFilterPriceMax(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--primary)' }}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            <span>$100</span>
+                            <span>$500</span>
+                          </div>
+                        </div>
+
+                        {/* Minimum Rating Filter */}
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>MINIMUM RATING</label>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {[null, 4.0, 4.5, 4.8].map((stars) => (
+                              <button
+                                key={stars === null ? 'any' : stars}
+                                onClick={() => setFilterRating(stars)}
+                                style={{
+                                  flex: 1,
+                                  padding: '6px 0',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  background: filterRating === stars ? 'var(--primary)' : 'rgba(255,255,255,0.03)',
+                                  border: '1px solid rgba(255,255,255,0.06)',
+                                  borderRadius: '6px',
+                                  color: 'white',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {stars === null ? 'Any' : `${stars}★`}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Amenities Filter */}
+                        <div>
+                          <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>AMENITIES</label>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {['Free WiFi', 'Swimming Pool', 'Ocean View', 'Kitchen', 'Gym', 'Spa'].map((am) => {
+                              const active = filterAmenities.includes(am);
+                              return (
+                                <button
+                                  key={am}
+                                  onClick={() => {
+                                    setFilterAmenities(prev => 
+                                      prev.includes(am) ? prev.filter(x => x !== am) : [...prev, am]
+                                    );
+                                  }}
+                                  style={{
+                                    padding: '4px 8px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    background: active ? 'rgba(236,72,153,0.15)' : 'rgba(255,255,255,0.02)',
+                                    border: active ? '1px solid var(--primary)' : '1px solid rgba(255,255,255,0.04)',
+                                    borderRadius: '6px',
+                                    color: active ? 'var(--primary)' : 'var(--text-secondary)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {am}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Living Morphing Hero Banner */}
                 <div 
@@ -4438,121 +4538,214 @@ export default function Home() {
 
                 <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '24px 0 16px', fontFamily: 'var(--font-title)', letterSpacing: '-0.3px', background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Trending Destinations</h3>
                 
-                {/* Premium Explore Grid */}
-                <div 
-                  className={`instagram-explore-grid ${isSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedCategory ? 'no-animate' : ''}`}
-                  style={{ transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
-                >
-                  {travelDestinations
+                {(() => {
+                  const processedDestinations = travelDestinations
+                    .map((dest, idx) => {
+                      const mockPrices = [120, 240, 180, 320, 150, 290];
+                      const mockRatings = [4.5, 4.8, 4.2, 4.9, 4.6, 4.7];
+                      const mockAmenities = [
+                        ['Free WiFi', 'Mountain View', 'Kitchen'],
+                        ['Free WiFi', 'Swimming Pool', 'Ocean View', 'Spa'],
+                        ['Free WiFi', 'Swimming Pool', 'Ocean View'],
+                        ['Free WiFi', 'Gym', 'Kitchen'],
+                        ['Free WiFi', 'Gym', 'Spa'],
+                        ['Free WiFi', 'Ocean View', 'Swimming Pool', 'Spa']
+                      ];
+                      return {
+                        ...dest,
+                        price: mockPrices[idx % mockPrices.length],
+                        ratingNum: mockRatings[idx % mockRatings.length],
+                        amenitiesList: mockAmenities[idx % mockAmenities.length],
+                        x: [25, 45, 65, 35, 55, 75][idx % 6],
+                        y: [30, 45, 25, 60, 70, 50][idx % 6]
+                      };
+                    })
                     .filter(dest => {
                       const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
                       const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
-                      return matchesSearch && matchesCategory;
-                    })
-                    .map((dest, idx) => {
-                      const totalLikes = 120 + (liveUpticks[idx] || 0);
-                      return (
-                        <div 
-                          key={idx} 
-                          className="instagram-explore-item-card discover-premium-card"
-                          onMouseMove={(e) => {
-                            const card = e.currentTarget;
-                            const rect = card.getBoundingClientRect();
-                            const x = e.clientX - rect.left;
-                            const y = e.clientY - rect.top;
-                            const xc = rect.width / 2;
-                            const yc = rect.height / 2;
-                            const angleX = (yc - y) / 12; // degree tilt
-                            const angleY = (x - xc) / 12; // degree tilt
-                            card.style.transform = `perspective(800px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.02, 1.02, 1.02)`;
-                            
-                            // Parallax glare spotlight sweep
-                            const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
-                            if (glare) {
-                              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 255, 255, 0.08) 0%, transparent 60%)`;
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            const card = e.currentTarget;
-                            card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-                            const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
-                            if (glare) {
-                              glare.style.background = 'transparent';
-                            }
-                          }}
-                          onClick={() => {
-                            setSearchQuery(dest.name.split(',')[0]);
-                            playUISound('tap');
-                          }}
-                        >
-                          {/* Spotlight Glare */}
-                          <div className="card-glare-overlay"></div>
+                      const matchesPrice = dest.price <= filterPriceMax;
+                      const matchesRating = !filterRating || dest.ratingNum >= filterRating;
+                      const matchesAmenities = filterAmenities.every(am => dest.amenitiesList.includes(am));
+                      return matchesSearch && matchesCategory && matchesPrice && matchesRating && matchesAmenities;
+                    });
 
-                          <div className="explore-item-image-wrapper">
-                            <img src={dest.img} alt={dest.name} className="explore-item-image" />
-                            <div className="explore-item-gradient-overlay" />
-                          </div>
-                          
-                          {/* Top Floating Badges */}
-                          <div className="explore-item-floating-header">
-                            <span className="explore-item-category-badge">{dest.category}</span>
-                            
-                            {/* Live viewers pulse badge */}
-                            <span className="explore-live-pulse-badge">
-                              <span className="pulse-dot-red"></span>
-                              <span>{8 + (idx * 3)} viewing</span>
-                            </span>
-                          </div>
-                          
-                          {/* Floating Info card at bottom */}
-                          <div className="explore-item-footer-glass">
-                            <div className="explore-item-info">
-                              {/* Destination copy handles names correctly without truncations */}
-                              <span className="explore-item-name">{dest.name}</span>
-                              <span className="explore-item-count">{dest.count}</span>
+                  if (showMapView) {
+                    return (
+                      <div style={{ display: 'flex', gap: '20px', height: '550px', marginTop: '16px' }}>
+                        {/* Left List Pane */}
+                        <div style={{ width: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                          {processedDestinations.map((dest, idx) => (
+                            <div 
+                              key={idx} 
+                              className="discover-premium-card" 
+                              style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--card-border)', cursor: 'pointer' }}
+                              onClick={() => setLightboxImage(dest.img)}
+                            >
+                              <img src={dest.img} alt={dest.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{dest.name}</h4>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>${dest.price}/night • {dest.ratingNum}★</span>
+                                <span style={{ fontSize: '9px', color: 'var(--primary)', fontWeight: 600 }}>{dest.category}</span>
+                              </div>
                             </div>
-                            
-                            <div className="explore-item-stats">
-                              {/* Likes indicator counter increments dynamically */}
+                          ))}
+                          {processedDestinations.length === 0 && (
+                            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No matches found. Try clearing filters.</div>
+                          )}
+                        </div>
+
+                        {/* Right Interactive Map Pane */}
+                        <div className="discover-premium-card" style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#09080f', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {/* Grid background */}
+                          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.8 }} />
+                          
+                          {/* Simulated geographic island path */}
+                          <svg width="80%" height="80%" viewBox="0 0 100 100" style={{ fill: 'rgba(255,255,255,0.01)', stroke: 'rgba(255,255,255,0.06)', strokeWidth: '0.5', strokeDasharray: '2,2' }}>
+                            <path d="M20,40 Q35,15 60,30 T85,25 T75,70 T40,80 Z" />
+                            <path d="M75,25 Q82,15 90,30 T85,50 Z" style={{ fill: 'rgba(236,72,153,0.005)' }} />
+                          </svg>
+                          
+                          {/* Pulse indicators */}
+                          {processedDestinations.map((dest, idx) => (
+                            <motion.div
+                              key={idx}
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              whileHover={{ scale: 1.1, zIndex: 100 }}
+                              onClick={() => setLightboxImage(dest.img)}
+                              style={{
+                                position: 'absolute',
+                                left: `${dest.x}%`,
+                                top: `${dest.y}%`,
+                                transform: 'translate(-50%, -50%)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <span className="vlogs-section-badge-pulsing" style={{ display: 'inline-block', position: 'absolute', left: '-10px', top: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(236,72,153,0.15)', pointerEvents: 'none' }} />
                               <div 
-                                className={`explore-item-stat-pill ${liveUpticks[idx] ? 'stat-uptick-pulse' : ''}`} 
-                                title="Likes"
-                                onClick={(e) => { e.stopPropagation(); playUISound('tap'); }}
+                                className="btn-shimmer-sweep"
+                                style={{
+                                  background: 'var(--brand-gradient)',
+                                  color: 'white',
+                                  fontSize: '9px',
+                                  fontWeight: 800,
+                                  padding: '4px 6px',
+                                  borderRadius: '6px',
+                                  boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
+                                  whiteSpace: 'nowrap',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
                               >
-                                <svg width="11" height="11" fill="currentColor" style={{ color: '#ec4899', marginRight: '2px' }} viewBox="0 0 24 24">
-                                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                </svg>
-                                <span className="stat-count-text">{totalLikes}</span>
+                                📍 ${dest.price}
                               </div>
-                              <div className="explore-item-stat-pill" title="Comments">
-                                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '2px' }} viewBox="0 0 24 24">
-                                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                                </svg>
-                                <span>{3 + (idx * 2)}</span>
-                              </div>
-                            </div>
+                            </motion.div>
+                          ))}
+
+                          {/* Map legend overlay */}
+                          <div style={{ position: 'absolute', bottom: '16px', left: '16px', background: 'rgba(5, 4, 10, 0.75)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '6px 10px', fontSize: '10px', color: 'var(--text-muted)' }}>
+                            🗺️ Bali Map Explorer (Simulated Grid)
                           </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    );
                   }
-                  
-                  {travelDestinations.filter(dest => {
-                    const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
-                    const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
-                    return matchesSearch && matchesCategory;
-                  }).length === 0 && (
-                    <div className="explore-empty-state-glass">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        <line x1="8" y1="11" x2="14" y2="11"></line>
-                      </svg>
-                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>No destinations found</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Try searching for a different keyword or category.</div>
+                  return (
+                    <div 
+                      className={`instagram-explore-grid ${isSwitchingCategory ? 'glass-switching' : ''} ${!hasEverSwitchedCategory ? 'no-animate' : ''}`}
+                      style={{ transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
+                    >
+                      {processedDestinations.map((dest, idx) => {
+                        const totalLikes = 120 + (liveUpticks[idx] || 0);
+                        return (
+                          <div 
+                            key={idx} 
+                            className="instagram-explore-item-card discover-premium-card"
+                            onMouseMove={(e) => {
+                              const card = e.currentTarget;
+                              const rect = card.getBoundingClientRect();
+                              const x = e.clientX - rect.left;
+                              const y = e.clientY - rect.top;
+                              const xc = rect.width / 2;
+                              const yc = rect.height / 2;
+                              const angleX = (yc - y) / 12;
+                              const angleY = (x - xc) / 12;
+                              card.style.transform = `perspective(800px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale3d(1.02, 1.02, 1.02)`;
+                              const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
+                              if (glare) {
+                                glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255, 255, 255, 0.08) 0%, transparent 60%)`;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              const card = e.currentTarget;
+                              card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                              const glare = card.querySelector('.card-glare-overlay') as HTMLElement;
+                              if (glare) {
+                                glare.style.background = 'transparent';
+                              }
+                            }}
+                            onClick={() => {
+                              setSearchQuery(dest.name.split(',')[0]);
+                              playUISound('tap');
+                            }}
+                          >
+                            <div className="card-glare-overlay"></div>
+                            <div className="explore-item-image-wrapper">
+                              <img src={dest.img} alt={dest.name} className="explore-item-image" />
+                              <div className="explore-item-gradient-overlay" />
+                            </div>
+                            <div className="explore-item-floating-header">
+                              <span className="explore-item-category-badge">{dest.category}</span>
+                              <span className="explore-live-pulse-badge">
+                                <span className="pulse-dot-red"></span>
+                                <span>{8 + (idx * 3)} viewing</span>
+                              </span>
+                            </div>
+                            <div className="explore-item-footer-glass">
+                              <div className="explore-item-info">
+                                <span className="explore-item-name">{dest.name}</span>
+                                <span className="explore-item-count" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 700 }}>
+                                  ${dest.price}/night • {dest.ratingNum}★
+                                </span>
+                              </div>
+                              <div className="explore-item-stats">
+                                <div 
+                                  className={`explore-item-stat-pill ${liveUpticks[idx] ? 'stat-uptick-pulse' : ''}`} 
+                                  title="Likes"
+                                  onClick={(e) => { e.stopPropagation(); playUISound('tap'); }}
+                                >
+                                  <svg width="11" height="11" fill="currentColor" style={{ color: '#ec4899', marginRight: '2px' }} viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                  </svg>
+                                  <span className="stat-count-text">{totalLikes}</span>
+                                </div>
+                                <div className="explore-item-stat-pill" title="Comments">
+                                  <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '2px' }} viewBox="0 0 24 24">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                                  </svg>
+                                  <span>{3 + (idx * 2)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {processedDestinations.length === 0 && (
+                        <div className="explore-empty-state-glass">
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                          </svg>
+                          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>No destinations found</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Try searching for a different keyword or category.</div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* Command-K style AI Search Palette Overlay Modal */}
                 {showCommandPalette && (
@@ -8738,6 +8931,67 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Post Image Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 4, 10, 0.95)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'zoom-out'
+            }}
+          >
+            <motion.button
+              onClick={() => setLightboxImage(null)}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              &times;
+            </motion.button>
+            <motion.img
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={lightboxImage}
+              alt="Lightbox"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: '16px',
+                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(236, 72, 153, 0.15)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
    </>

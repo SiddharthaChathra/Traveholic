@@ -1,7 +1,6 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 interface ListingItem {
   id: string;
@@ -54,7 +53,12 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
   };
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5, scale: 1.015, boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)' }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.25 }}
       className="discover-premium-card" 
       style={{
         borderRadius: '16px',
@@ -64,7 +68,6 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        transition: 'all 0.3s ease',
         ...style
       }}
     >
@@ -115,26 +118,34 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
             </div>
             
             <div style={{ display: 'flex', gap: '8px' }}>
-              <Link 
-                href={`/venture/listings/${listing.id}/edit`}
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  color: 'var(--text-primary)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  cursor: 'pointer'
-                }}
+              <motion.div
+                whileHover={{ scale: 1.03, filter: 'brightness(1.1)' }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: 'inline-flex' }}
               >
-                Edit
-              </Link>
+                <Link 
+                  href={`/venture/listings/${listing.id}/edit`}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Edit
+                </Link>
+              </motion.div>
               {onToggleStatus && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => onToggleStatus(listing.id, listing.status)}
                   style={{
                     background: 'transparent',
@@ -153,12 +164,12 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
                     <line x1="9" y1="9" x2="15" y2="15" />
                     <line x1="15" y1="9" x2="9" y2="15" />
                   </svg>
-                </button>
+                </motion.button>
               )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

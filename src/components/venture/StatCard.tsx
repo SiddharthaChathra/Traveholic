@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface StatCardProps {
   title: string;
@@ -57,7 +58,12 @@ export default function StatCard({
   const formattedValue = displayValue.toLocaleString();
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, scale: 1.01, boxShadow: '0 12px 30px rgba(0, 0, 0, 0.2)' }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.25 }}
       className="discover-premium-card" 
       style={{
         padding: '20px',
@@ -107,6 +113,6 @@ export default function StatCard({
           <span style={{ color: 'var(--text-muted)' }}>vs last month</span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

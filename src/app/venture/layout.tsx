@@ -4,11 +4,13 @@ import React, { useEffect } from 'react';
 import VentureSidebar from '@/components/venture/VentureSidebar';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function VentureLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname() || '';
 
   useEffect(() => {
     if (!loading) {
@@ -98,47 +100,57 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
           {/* Top Bar Right: Notifications & Traveler Link */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {/* Toggle switch to traveler platform */}
-            <Link 
-              href="/"
-              onClick={() => {
-                localStorage.setItem('user_view_mode', 'traveller');
-              }}
-              style={{
-                textDecoration: 'none',
-                background: 'var(--brand-gradient)',
-                color: 'white',
-                fontSize: '11px',
-                fontWeight: 700,
-                padding: '8px 16px',
-                borderRadius: '8px',
-                boxShadow: '0 4px 10px rgba(236,72,153,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+            <motion.div
+              whileHover={{ scale: 1.03, filter: 'brightness(1.1)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{ display: 'inline-flex' }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              Switch to Traveler View
-            </Link>
+              <Link 
+                href="/"
+                onClick={() => {
+                  localStorage.setItem('user_view_mode', 'traveller');
+                }}
+                style={{
+                  textDecoration: 'none',
+                  background: 'var(--brand-gradient)',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 10px rgba(236,72,153,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                Switch to Traveler View
+              </Link>
+            </motion.div>
 
             {/* Notification triggers */}
-            <button style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '8px',
-              width: '34px',
-              height: '34px',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative'
-            }}>
+            <motion.button 
+              whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.06)' }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: '8px',
+                width: '34px',
+                height: '34px',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}
+            >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -153,7 +165,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
                 background: 'var(--primary)',
                 boxShadow: '0 0 6px var(--primary)'
               }} />
-            </button>
+            </motion.button>
 
             {/* Profile Avatar */}
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', overflow: 'hidden' }}>
@@ -167,8 +179,19 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Content body pane */}
-        <main style={{ flex: 1, padding: '32px 24px', overflowY: 'auto' }}>
-          {children}
+        <main style={{ flex: 1, padding: '32px 24px', overflowY: 'auto', position: 'relative' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              style={{ width: '100%', height: '100%' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

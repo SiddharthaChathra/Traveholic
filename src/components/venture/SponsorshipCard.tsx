@@ -228,8 +228,15 @@ export default function SponsorshipCard({
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', ...style }}>
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5, scale: 1.015, boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)' }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.25 }}
+      style={{ width: '100%', height: '100%', ...style }}
+    >
       {cardContent}
-    </div>
+    </motion.div>
   );
 }

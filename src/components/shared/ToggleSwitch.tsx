@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -18,29 +19,36 @@ export default function ToggleSwitch({ checked, onChange, disabled }: ToggleSwit
         disabled={disabled}
         style={{ opacity: 0, width: 0, height: 0 }}
       />
-      <span className={`slider round ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} style={{
-        position: 'absolute',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: checked ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
-        transition: '0.3s',
-        borderRadius: '34px',
-        boxShadow: checked ? '0 0 8px rgba(236,72,153,0.3)' : 'none',
-        border: '1px solid rgba(255,255,255,0.06)'
-      }}>
-        <span style={{
+      <motion.span 
+        className={`slider round ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
+        animate={{
+          backgroundColor: checked ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+          boxShadow: checked ? '0 0 8px rgba(236,72,153,0.3)' : 'none'
+        }}
+        transition={{ duration: 0.2 }}
+        style={{
           position: 'absolute',
-          content: '""',
-          height: '16px',
-          width: '16px',
-          left: checked ? '21px' : '2px',
-          bottom: '2px',
-          backgroundColor: 'white',
-          transition: '0.3s',
-          borderRadius: '50%',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
-        }} />
-      </span>
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          top: 0, left: 0, right: 0, bottom: 0,
+          borderRadius: '34px',
+          border: '1px solid rgba(255,255,255,0.06)'
+        }}
+      >
+        <motion.span 
+          layout
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+          style={{
+            position: 'absolute',
+            height: '16px',
+            width: '16px',
+            left: checked ? '21px' : '2px',
+            bottom: '2px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
+          }} 
+        />
+      </motion.span>
     </label>
   );
 }
