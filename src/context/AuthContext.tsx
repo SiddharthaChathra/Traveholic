@@ -136,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       localStorage.removeItem('travora_token');
+      localStorage.removeItem('user_view_mode');
       // await fetch('/api/auth/me', { method: 'DELETE' }); // No longer needed with stateless JWT
     } catch (error) {
       console.error('Logout request error:', error);

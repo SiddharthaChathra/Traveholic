@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface HighlightStoryModalProps {
   selectedHighlight: string;
@@ -162,6 +163,18 @@ function HighlightStoryModal({
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.role === 'business') {
+        const viewMode = localStorage.getItem('user_view_mode');
+        if (viewMode !== 'traveller') {
+          router.push('/venture/dashboard');
+        }
+      }
+    }
+  }, [user, loading, router]);
 
   const formatCount = (count: number) => {
     if (count >= 1000000) {
@@ -2628,6 +2641,7 @@ export default function Home() {
       if (formMode === 'login') {
         const result = await login(identifier, password);
         if (result.success) {
+          localStorage.removeItem('user_view_mode');
           setSuccessMsg('Logged in successfully!');
           setIdentifier('');
           setPassword('');
@@ -2667,6 +2681,7 @@ export default function Home() {
 
         const result = await signup(signupData);
         if (result.success) {
+          localStorage.removeItem('user_view_mode');
           setSuccessMsg('Account created successfully!');
           setUsername('');
           setEmail('');
@@ -2789,6 +2804,31 @@ export default function Home() {
         <header className="mobile-header">
           <span className="social-top-nav-title" style={{ fontSize: '20px', background: 'linear-gradient(135deg, #0284c7 0%, #f97316 50%, #ef4444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Travora</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {user.role === 'business' && (
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('user_view_mode');
+                  router.push('/venture/dashboard');
+                }}
+                className="social-nav-icon-btn"
+                style={{
+                  background: 'var(--brand-gradient)',
+                  color: 'white',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  height: '28px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Venture
+              </button>
+            )}
             <button 
               className="social-nav-icon-btn" 
               onClick={() => {
@@ -2979,6 +3019,32 @@ export default function Home() {
                 </span>
                 <span className="instagram-sidebar-item-label">Profile</span>
               </button>
+
+              {user.role === 'business' && (
+                <button 
+                  className="instagram-sidebar-item"
+                  onClick={() => {
+                    localStorage.removeItem('user_view_mode');
+                    router.push('/venture/dashboard');
+                  }}
+                  style={{
+                    background: 'var(--brand-gradient)',
+                    color: 'white',
+                    borderRadius: '8px',
+                    marginTop: '12px'
+                  }}
+                >
+                  <span className="instagram-sidebar-item-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="7" height="9" />
+                      <rect x="14" y="3" width="7" height="5" />
+                      <rect x="14" y="12" width="7" height="9" />
+                      <rect x="3" y="16" width="7" height="5" />
+                    </svg>
+                  </span>
+                  <span className="instagram-sidebar-item-label" style={{ fontWeight: 700 }}>Venture Dashboard</span>
+                </button>
+              )}
 
             </nav>
 

@@ -143,7 +143,7 @@ export default function VentureSidebar() {
           <Logo width={24} height={24} />
         </span>
         <span className="instagram-sidebar-logo-text" style={{ fontStyle: 'normal' }}>
-          Travora Partner
+          Travora
         </span>
       </div>
 
@@ -165,7 +165,14 @@ export default function VentureSidebar() {
       
       {/* Return to traveler platform button */}
       <div style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '12px', marginTop: 'auto' }}>
-        <Link href="/" className="instagram-sidebar-item" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link 
+          href="/" 
+          onClick={() => {
+            localStorage.setItem('user_view_mode', 'traveller');
+          }}
+          className="instagram-sidebar-item" 
+          style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+        >
           <span className="instagram-sidebar-item-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

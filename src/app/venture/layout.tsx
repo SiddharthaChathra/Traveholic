@@ -1,10 +1,37 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import VentureSidebar from '@/components/venture/VentureSidebar';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function VentureLayout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user || user.role !== 'business') {
+        router.push('/');
+      }
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', width: '100%', background: 'var(--bg-gradient)', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user || user.role !== 'business') {
+    return null;
+  }
+
+  const businessName = user.businessProfile?.businessName || 'Venture Partner';
+
   return (
     <div className="instagram-container" style={{ display: 'flex', minHeight: '100vh', width: '100%', background: 'var(--bg-gradient)' }}>
       {/* Spacer to match fixed width sidebar */}
@@ -32,7 +59,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
           {/* Top Bar Left: Business Profiler */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontWeight: 800, fontSize: '16px', color: 'var(--text-primary)', fontFamily: 'var(--font-title)' }}>
-              Grand Plaza Resorts &amp; Spa
+              {businessName}
             </span>
             <span style={{
               background: 'rgba(16, 185, 129, 0.15)',
@@ -73,6 +100,9 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
             {/* Toggle switch to traveler platform */}
             <Link 
               href="/"
+              onClick={() => {
+                localStorage.setItem('user_view_mode', 'traveller');
+              }}
               style={{
                 textDecoration: 'none',
                 background: 'var(--brand-gradient)',
@@ -128,7 +158,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
             {/* Profile Avatar */}
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', overflow: 'hidden' }}>
               <img 
-                src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=80&auto=format&fit=crop&q=80" 
+                src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(businessName)}`} 
                 alt="Avatar" 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />
