@@ -11,6 +11,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname() || '';
+  const safePathId = pathname.replace(/[^a-zA-Z0-9]/g, '-');
 
   useEffect(() => {
     if (!loading) {
@@ -180,18 +181,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
 
         {/* Content body pane */}
         <main style={{ flex: 1, padding: '32px 24px', overflowY: 'auto', position: 'relative' }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              style={{ width: '100%', height: '100%' }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          {children}
         </main>
       </div>
     </div>

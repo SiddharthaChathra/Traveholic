@@ -6,6 +6,14 @@ import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import MapLoader from '@/components/shared/MapLoader';
+import FollowButton from '@/components/shared/FollowButton';
+
+const InteractiveMap = dynamic(() => import('@/components/shared/InteractiveMap'), {
+  ssr: false,
+  loading: () => <MapLoader />
+});
 
 interface HighlightStoryModalProps {
   selectedHighlight: string;
@@ -516,6 +524,11 @@ export default function Home() {
   // Premium Social Feed States
   // ==========================================
   const [activeTab, setActiveTab] = useState<'home' | 'reels' | 'search' | 'create' | 'messages' | 'profile' | 'live' | 'live-studio' | 'live-dashboard'>('home');
+
+  // Map interaction states
+  const [hoveredDestinationName, setHoveredDestinationName] = useState<string | null>(null);
+  const [selectedDestinationName, setSelectedDestinationName] = useState<string | null>(null);
+  const [visibleDestinationNames, setVisibleDestinationNames] = useState<string[]>([]);
 
   // ==========================================
   // ==========================================
@@ -1345,7 +1358,6 @@ export default function Home() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [liveUpticks, setLiveUpticks] = useState<Record<number, number>>({});
   const [categoryMoodColor, setCategoryMoodColor] = useState('rgba(139, 92, 246, 0.15)'); // default violet glow
-  const [discoverMousePos, setDiscoverMousePos] = useState({ x: -1000, y: -1000 }); // start hidden
   const [typedPlaceholderIndex, setTypedPlaceholderIndex] = useState(0);
   const [typedText, setTypedText] = useState('');
 
@@ -1356,6 +1368,7 @@ export default function Home() {
   const [postCarouselIndices, setPostCarouselIndices] = useState<Record<string, number>>({});
   const [loadedFeedImages, setLoadedFeedImages] = useState<Record<string, boolean>>({});
   const [showSwitchDropdown, setShowSwitchDropdown] = useState(false);
+  const [isSwitchCompressing, setIsSwitchCompressing] = useState(false);
   const [hoveredVlogId, setHoveredVlogId] = useState<string | null>(null);
   const [showBellNotifications, setShowBellNotifications] = useState(false);
   const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
@@ -1367,7 +1380,7 @@ export default function Home() {
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   const showToast = (message: string) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts(prev => [...prev, { id, message }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
@@ -2535,6 +2548,37 @@ export default function Home() {
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [filterAmenities, setFilterAmenities] = useState<string[]>([]);
 
+  // Memoized destinations list based on active filters
+  const baseDestinations = React.useMemo(() => {
+    return travelDestinations
+      .map((dest, idx) => {
+        const mockPrices = [120, 240, 180, 320, 150, 290];
+        const mockRatings = [4.5, 4.8, 4.2, 4.9, 4.6, 4.7];
+        const mockAmenities = [
+          ['Free WiFi', 'Mountain View', 'Kitchen'],
+          ['Free WiFi', 'Swimming Pool', 'Ocean View', 'Spa'],
+          ['Free WiFi', 'Swimming Pool', 'Ocean View'],
+          ['Free WiFi', 'Gym', 'Kitchen'],
+          ['Free WiFi', 'Gym', 'Spa'],
+          ['Free WiFi', 'Ocean View', 'Swimming Pool', 'Spa']
+        ];
+        return {
+          ...dest,
+          price: mockPrices[idx % mockPrices.length],
+          ratingNum: mockRatings[idx % mockRatings.length],
+          amenitiesList: mockAmenities[idx % mockAmenities.length]
+        };
+      })
+      .filter(dest => {
+        const matchesSearch = searchQuery ? dest.name.toLowerCase().includes(searchQuery.toLowerCase()) : true;
+        const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
+        const matchesPrice = dest.price <= filterPriceMax;
+        const matchesRating = !filterRating || dest.ratingNum >= filterRating;
+        const matchesAmenities = filterAmenities.every(am => dest.amenitiesList.includes(am));
+        return matchesSearch && matchesCategory && matchesPrice && matchesRating && matchesAmenities;
+      });
+  }, [searchQuery, activeExploreCategory, filterPriceMax, filterRating, filterAmenities]);
+
   // Lock body background scroll when highlights modal is open
   useEffect(() => {
     if (selectedHighlight) {
@@ -2878,6 +2922,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'home' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill={activeTab === 'home' && !showSearchDrawer && !showNotificationsDrawer ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -2897,6 +2957,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {((activeTab === 'search' && !showNotificationsDrawer) || showSearchDrawer) && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
@@ -2916,6 +2992,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'reels' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="6" />
@@ -2936,6 +3028,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'live' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon" style={{ position: 'relative' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="2" fill="currentColor" />
@@ -2958,6 +3066,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'messages' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon" style={{ position: 'relative' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13" />
@@ -2976,6 +3100,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon" style={{ position: 'relative' }}>
                   <svg width="24" height="24" viewBox="0 0 24 24" fill={showNotificationsDrawer ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -2998,6 +3138,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'create' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
@@ -3019,6 +3175,22 @@ export default function Home() {
                   setShowMoreMenu(false);
                 }}
               >
+                {activeTab === 'profile' && !showSearchDrawer && !showNotificationsDrawer && (
+                  <motion.div
+                    layoutId="sidebar-active-indicator"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(236, 72, 153, 0.08)',
+                      borderRadius: '12px',
+                      zIndex: -1
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  />
+                )}
                 <span className="instagram-sidebar-item-icon">
                   <img 
                     src={user.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.fullName)}`} 
@@ -3252,8 +3424,7 @@ export default function Home() {
           setShowNotificationsDrawer(false);
         }}>
           
-          {/* Smooth page shift container */}
-          <div key={activeTab} className="page-transition-container">
+          <div className="page-transition-container">
             
             {/* VIEW 1: HOME FEED */}
             {activeTab === 'home' && (
@@ -3611,57 +3782,373 @@ export default function Home() {
                 <div className="instagram-feed-right-column">
                   
                   {/* Current User Card */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px', position: 'relative' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 800 }}>
-                      {user.fullName.charAt(0)}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: '13px' }}>{user.username}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{user.fullName}</div>
-                    </div>
+                  {(() => {
+                    const isVentureOrVlogger = user.role === 'business' || user.travellerType === 'vlogger';
                     
-                    <div style={{ position: 'relative' }}>
-                      <button 
-                        className="suggested-profile-switch-btn spring-active" 
+                    // Mechanical unfolding drop sequence variants
+                    const dropdownVariants = {
+                      initial: {
+                        opacity: 0,
+                        y: -12,
+                        scale: 0.92,
+                        scaleY: 0.8,
+                        filter: 'blur(8px)',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                      },
+                      animate: {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        scaleY: 1,
+                        filter: 'blur(0px)',
+                        borderColor: [
+                          'rgba(255, 255, 255, 0.08)', 
+                          'rgba(139, 92, 246, 0.8)', 
+                          'rgba(255, 255, 255, 0.08)'
+                        ],
+                        boxShadow: [
+                          '0 4px 10px rgba(0,0,0,0.5)', 
+                          '0 12px 30px rgba(139, 92, 246, 0.25)', 
+                          '0 12px 32px rgba(0, 0, 0, 0.6)'
+                        ],
+                        transition: {
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 20,
+                          staggerChildren: 0.04,
+                          delayChildren: 0.06,
+                          borderColor: { duration: 0.6, times: [0, 0.4, 1] },
+                          boxShadow: { duration: 0.6, times: [0, 0.4, 1] }
+                        }
+                      },
+                      exit: {
+                        opacity: 0,
+                        y: -12,
+                        scale: 0.92,
+                        scaleY: 0.8,
+                        filter: 'blur(8px)',
+                        transition: {
+                          duration: 0.2,
+                          ease: 'easeIn',
+                          staggerChildren: 0.03,
+                          staggerDirection: -1
+                        }
+                      }
+                    };
+
+                    const headerVariants = {
+                      initial: { opacity: 0, y: -4 },
+                      animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+                      exit: { opacity: 0, y: -4, transition: { duration: 0.1 } }
+                    };
+
+                    const itemVariants = {
+                      initial: { opacity: 0, x: -8 },
+                      animate: { 
+                        opacity: 1, 
+                        x: 0, 
+                        transition: { 
+                          type: 'spring', 
+                          stiffness: 300, 
+                          damping: 22 
+                        } 
+                      },
+                      exit: { opacity: 0, x: -8, transition: { duration: 0.1 } }
+                    };
+
+                    const avatarVariants = {
+                      initial: { opacity: 0, scale: 0.9 },
+                      animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: 'easeOut' } },
+                      exit: { opacity: 0, scale: 0.9, transition: { duration: 0.1 } }
+                    };
+
+                    const textVariants = {
+                      initial: { opacity: 0, x: -4 },
+                      animate: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } },
+                      exit: { opacity: 0, x: -4, transition: { duration: 0.1 } }
+                    };
+
+                    const checkmarkVariants = {
+                      initial: { opacity: 0, scale: 0.5 },
+                      animate: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 500, damping: 15, delay: 0.2 } },
+                      exit: { opacity: 0, scale: 0.5, transition: { duration: 0.1 } }
+                    };
+
+                    const handleSwitchToggle = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setIsSwitchCompressing(true);
+                      setTimeout(() => {
+                        setIsSwitchCompressing(false);
+                        setShowSwitchDropdown(prev => !prev);
+                      }, 80);
+                    };
+
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="discover-premium-card"
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '14px', 
+                          padding: '12px 16px', 
+                          borderRadius: '16px', 
+                          background: 'rgba(255, 255, 255, 0.03)', 
+                          border: '1px solid var(--card-border)',
+                          marginBottom: '16px', 
+                          position: 'relative',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.25s ease'
+                        }}
+                        whileHover={{ 
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          borderColor: 'rgba(255, 255, 255, 0.12)' 
+                        }}
                         onClick={() => setShowSwitchDropdown(!showSwitchDropdown)}
                       >
-                        Switch
-                      </button>
+                        {/* Avatar Wrap with Status Ring */}
+                        <motion.div 
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.1 }}
+                          style={{ 
+                            position: 'relative',
+                            width: '44px',
+                            height: '44px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            ...(isVentureOrVlogger 
+                              ? { background: 'var(--brand-gradient)', padding: '2px' }
+                              : { border: '2px solid rgba(255, 255, 255, 0.15)', padding: '2px' }
+                            )
+                          }}
+                        >
+                          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', background: 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)', color: 'white', fontWeight: 800, fontSize: '15px' }}>
+                                {user.fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Account Type Badge (overlay bottom-right of avatar) */}
+                          <motion.div 
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.3 }}
+                            style={{ 
+                              position: 'absolute', 
+                              bottom: '-2px', 
+                              right: '-2px', 
+                              background: '#07090e', 
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: '50%', 
+                              width: '16px', 
+                              height: '16px', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                              zIndex: 2
+                            }}
+                            title={user.role === 'business' ? 'Venture Account' : user.travellerType === 'vlogger' ? 'Vlogger Account' : 'Traveler Account'}
+                          >
+                            {user.role === 'business' ? (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                              </svg>
+                            ) : user.travellerType === 'vlogger' ? (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M23 7l-7 5 7 5V7z" />
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                              </svg>
+                            ) : (
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                              </svg>
+                            )}
+                          </motion.div>
+                        </motion.div>
 
-                      {showSwitchDropdown && (
-                        <div className="switch-accounts-dropdown discover-premium-card animate-slide-up" style={{ right: 0, top: '24px', zIndex: 120 }}>
-                          <div className="switch-dropdown-header">
-                            <span>Switch Accounts</span>
-                            <button className="switch-close-btn" onClick={() => setShowSwitchDropdown(false)}>&times;</button>
+                        {/* Identity text column */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-primary)' }}>{user.username}</span>
+                            <span 
+                              style={{ 
+                                fontSize: '9px', 
+                                fontWeight: 800, 
+                                color: 'var(--primary)', 
+                                background: 'rgba(236,72,153,0.1)', 
+                                padding: '1px 5px', 
+                                borderRadius: '6px',
+                                border: '1px solid rgba(236,72,153,0.15)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.3px'
+                              }}
+                            >
+                              Lv. 4
+                            </span>
                           </div>
-                          <div className="switch-accounts-list">
-                            <div className="switch-account-item active" onClick={() => { showToast("Already logged in as Suvarnatest"); setShowSwitchDropdown(false); }}>
-                              <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, marginRight: '8px' }}>S</div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@Suvarnatest</div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Shashank (Active)</div>
-                              </div>
-                              <span style={{ color: 'var(--accent-blue)', fontSize: '12px' }}>✓</span>
-                            </div>
-                            <div className="switch-account-item" onClick={() => { showToast("Switched to @traveler_shashank"); setShowSwitchDropdown(false); }}>
-                              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@traveler_shashank</div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Siddhartha Chathra</div>
-                              </div>
-                            </div>
-                            <div className="switch-account-item" onClick={() => { showToast("Switched to @sid_vlogs"); setShowSwitchDropdown(false); }}>
-                              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} />
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '12px', fontWeight: 600 }}>@sid_vlogs</div>
-                                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Siddhartha Vlogs</div>
-                              </div>
-                            </div>
-                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>{user.fullName}</div>
                         </div>
-                      )}
-                    </div>
-                  </div>
+                        
+                        {/* Switch Trigger Ghost Button */}
+                        <div style={{ position: 'relative' }}>
+                          <motion.button 
+                            animate={{ scale: isSwitchCompressing ? 0.96 : 1 }}
+                            transition={{ duration: 0.08, ease: 'easeOut' }}
+                            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={handleSwitchToggle}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              color: 'var(--text-primary)',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="16 3 21 8 16 13" />
+                              <line x1="21" y1="8" x2="9" y2="8" />
+                              <polyline points="8 21 3 16 8 11" />
+                              <line x1="3" y1="16" x2="15" y2="16" />
+                            </svg>
+                            <span>Switch</span>
+                          </motion.button>
+
+                          {/* Switch Dropdown overlay */}
+                          <AnimatePresence>
+                            {showSwitchDropdown && (
+                              <motion.div 
+                                variants={dropdownVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                className="switch-accounts-dropdown discover-premium-card" 
+                                style={{ 
+                                  position: 'absolute',
+                                  right: 0, 
+                                  top: '36px', 
+                                  zIndex: 120,
+                                  background: 'rgba(9, 8, 15, 0.85)',
+                                  backdropFilter: 'blur(16px)',
+                                  WebkitBackdropFilter: 'blur(16px)',
+                                  width: '230px',
+                                  overflow: 'hidden'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <motion.div variants={headerVariants} className="switch-dropdown-header">
+                                  <span>Switch Accounts</span>
+                                  <button 
+                                    className="switch-close-btn" 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowSwitchDropdown(false);
+                                    }}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'var(--text-muted)',
+                                      cursor: 'pointer',
+                                      padding: '4px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      borderRadius: '50%',
+                                      transition: 'background 0.2s'
+                                    }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                </motion.div>
+                                <div className="switch-accounts-list">
+                                  {/* Account 1 (Active) */}
+                                  <motion.div 
+                                    variants={itemVariants} 
+                                    className="switch-account-item active" 
+                                    onClick={() => { showToast("Already logged in as Suvarnatest"); setShowSwitchDropdown(false); }}
+                                  >
+                                    <motion.div 
+                                      variants={avatarVariants}
+                                      style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, marginRight: '8px', flexShrink: 0 }}
+                                    >
+                                      S
+                                    </motion.div>
+                                    <motion.div variants={textVariants} style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@Suvarnatest</div>
+                                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Shashank (Active)</div>
+                                    </motion.div>
+                                    <motion.div variants={checkmarkVariants} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    </motion.div>
+                                  </motion.div>
+                                  
+                                  {/* Account 2 */}
+                                  <motion.div 
+                                    variants={itemVariants} 
+                                    className="switch-account-item" 
+                                    onClick={() => { showToast("Switched to @traveler_shashank"); setShowSwitchDropdown(false); }}
+                                  >
+                                    <motion.img 
+                                      variants={avatarVariants}
+                                      src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80" 
+                                      style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px', flexShrink: 0 }} 
+                                    />
+                                    <motion.div variants={textVariants} style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@traveler_shashank</div>
+                                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Siddhartha Chathra</div>
+                                    </motion.div>
+                                  </motion.div>
+                                  
+                                  {/* Account 3 */}
+                                  <motion.div 
+                                    variants={itemVariants} 
+                                    className="switch-account-item" 
+                                    onClick={() => { showToast("Switched to @sid_vlogs"); setShowSwitchDropdown(false); }}
+                                  >
+                                    <motion.img 
+                                      variants={avatarVariants}
+                                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" 
+                                      style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px', flexShrink: 0 }} 
+                                    />
+                                    <motion.div variants={textVariants} style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>@sid_vlogs</div>
+                                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Siddhartha Vlogs</div>
+                                    </motion.div>
+                                  </motion.div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
 
                   {/* Suggestions Header */}
                   <div className="instagram-suggested-header">
@@ -3687,9 +4174,9 @@ export default function Home() {
                             <span className="instagram-suggested-username">{sUser.username}</span>
                             <span className="instagram-suggested-relationship">{sUser.relation}</span>
                           </div>
-                          <button 
-                            className={`follow-btn spring-active ${isFld ? 'following' : ''}`}
-                            onClick={() => {
+                          <FollowButton
+                            isFollowing={isFld}
+                            onToggle={() => {
                               setFollowedUsers(prev => {
                                 const next = new Set(prev);
                                 if (next.has(sUser.username)) {
@@ -3702,9 +4189,7 @@ export default function Home() {
                                 return next;
                               });
                             }}
-                          >
-                            {isFld ? '✓ Following' : 'Follow'}
-                          </button>
+                          />
                         </div>
                       );
                     })}
@@ -3850,12 +4335,10 @@ export default function Home() {
                                     {reel.username}
                                   </span>
                                   <span className="reel-bullet-separator">•</span>
-                                  <button 
-                                    className={`reel-follow-btn-new ${isFollowing ? 'following' : ''}`}
-                                    onClick={() => toggleFollowUser(reel.username)}
-                                  >
-                                    {isFollowing ? 'Following' : 'Follow'}
-                                  </button>
+                                  <FollowButton
+                                    isFollowing={isFollowing}
+                                    onToggle={() => toggleFollowUser(reel.username)}
+                                  />
                                 </div>
                               </div>
 
@@ -3896,12 +4379,10 @@ export default function Home() {
                                 {renderAvatar(reel.username, 32)}
                                 <span className="reel-username-new">{reel.username}</span>
                                 <span className="reel-bullet-separator">•</span>
-                                <button 
-                                  className={`reel-follow-btn-new ${isFollowing ? 'following' : ''}`}
-                                  onClick={() => toggleFollowUser(reel.username)}
-                                >
-                                  {isFollowing ? 'Following' : 'Follow'}
-                                </button>
+                                <FollowButton
+                                  isFollowing={isFollowing}
+                                  onToggle={() => toggleFollowUser(reel.username)}
+                                />
                               </div>
                               <p className="reel-caption-new">{reel.caption}</p>
                               <div className="reel-soundtrack-new">
@@ -4214,19 +4695,15 @@ export default function Home() {
                 className="discover-page-container"
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
-                  setDiscoverMousePos({
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top
-                  });
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  e.currentTarget.style.setProperty('--discover-mouse-x', `${x}px`);
+                  e.currentTarget.style.setProperty('--discover-mouse-y', `${y}px`);
                 }}
               >
                 {/* Cursor-reactive ambient background glow */}
                 <div 
                   className="cursor-reactive-glow"
-                  style={{
-                    left: `${discoverMousePos.x}px`,
-                    top: `${discoverMousePos.y}px`
-                  }}
                 ></div>
 
                 {/* Corner vignette glows */}
@@ -4539,114 +5016,74 @@ export default function Home() {
                 <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '24px 0 16px', fontFamily: 'var(--font-title)', letterSpacing: '-0.3px', background: 'linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Trending Destinations</h3>
                 
                 {(() => {
-                  const processedDestinations = travelDestinations
-                    .map((dest, idx) => {
-                      const mockPrices = [120, 240, 180, 320, 150, 290];
-                      const mockRatings = [4.5, 4.8, 4.2, 4.9, 4.6, 4.7];
-                      const mockAmenities = [
-                        ['Free WiFi', 'Mountain View', 'Kitchen'],
-                        ['Free WiFi', 'Swimming Pool', 'Ocean View', 'Spa'],
-                        ['Free WiFi', 'Swimming Pool', 'Ocean View'],
-                        ['Free WiFi', 'Gym', 'Kitchen'],
-                        ['Free WiFi', 'Gym', 'Spa'],
-                        ['Free WiFi', 'Ocean View', 'Swimming Pool', 'Spa']
-                      ];
-                      return {
-                        ...dest,
-                        price: mockPrices[idx % mockPrices.length],
-                        ratingNum: mockRatings[idx % mockRatings.length],
-                        amenitiesList: mockAmenities[idx % mockAmenities.length],
-                        x: [25, 45, 65, 35, 55, 75][idx % 6],
-                        y: [30, 45, 25, 60, 70, 50][idx % 6]
-                      };
-                    })
-                    .filter(dest => {
-                      const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase());
-                      const matchesCategory = activeExploreCategory === 'All' || dest.category === activeExploreCategory;
-                      const matchesPrice = dest.price <= filterPriceMax;
-                      const matchesRating = !filterRating || dest.ratingNum >= filterRating;
-                      const matchesAmenities = filterAmenities.every(am => dest.amenitiesList.includes(am));
-                      return matchesSearch && matchesCategory && matchesPrice && matchesRating && matchesAmenities;
-                    });
+                  const processedDestinations = baseDestinations;
+
+                  const sidebarDestinations = baseDestinations.filter(dest => {
+                    return !showMapView || visibleDestinationNames.length === 0 || visibleDestinationNames.includes(dest.name);
+                  });
 
                   if (showMapView) {
                     return (
                       <div style={{ display: 'flex', gap: '20px', height: '550px', marginTop: '16px' }}>
                         {/* Left List Pane */}
                         <div style={{ width: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
-                          {processedDestinations.map((dest, idx) => (
-                            <div 
-                              key={idx} 
-                              className="discover-premium-card" 
-                              style={{ padding: '12px', borderRadius: '12px', display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--card-border)', cursor: 'pointer' }}
-                              onClick={() => setLightboxImage(dest.img)}
-                            >
-                              <img src={dest.img} alt={dest.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{dest.name}</h4>
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>${dest.price}/night • {dest.ratingNum}★</span>
-                                <span style={{ fontSize: '9px', color: 'var(--primary)', fontWeight: 600 }}>{dest.category}</span>
-                              </div>
-                            </div>
-                          ))}
-                          {processedDestinations.length === 0 && (
-                            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No matches found. Try clearing filters.</div>
-                          )}
-                        </div>
-
-                        {/* Right Interactive Map Pane */}
-                        <div className="discover-premium-card" style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#09080f', border: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {/* Grid background */}
-                          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '24px 24px', opacity: 0.8 }} />
-                          
-                          {/* Simulated geographic island path */}
-                          <svg width="80%" height="80%" viewBox="0 0 100 100" style={{ fill: 'rgba(255,255,255,0.01)', stroke: 'rgba(255,255,255,0.06)', strokeWidth: '0.5', strokeDasharray: '2,2' }}>
-                            <path d="M20,40 Q35,15 60,30 T85,25 T75,70 T40,80 Z" />
-                            <path d="M75,25 Q82,15 90,30 T85,50 Z" style={{ fill: 'rgba(236,72,153,0.005)' }} />
-                          </svg>
-                          
-                          {/* Pulse indicators */}
-                          {processedDestinations.map((dest, idx) => (
-                            <motion.div
-                              key={idx}
-                              initial={{ scale: 0, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              whileHover={{ scale: 1.1, zIndex: 100 }}
-                              onClick={() => setLightboxImage(dest.img)}
-                              style={{
-                                position: 'absolute',
-                                left: `${dest.x}%`,
-                                top: `${dest.y}%`,
-                                transform: 'translate(-50%, -50%)',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <span className="vlogs-section-badge-pulsing" style={{ display: 'inline-block', position: 'absolute', left: '-10px', top: '-10px', width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(236,72,153,0.15)', pointerEvents: 'none' }} />
+                          {sidebarDestinations.map((dest, idx) => {
+                            const isHovered = hoveredDestinationName === dest.name;
+                            const isSelected = selectedDestinationName === dest.name;
+                            return (
                               <div 
-                                className="btn-shimmer-sweep"
-                                style={{
-                                  background: 'var(--brand-gradient)',
-                                  color: 'white',
-                                  fontSize: '9px',
-                                  fontWeight: 800,
-                                  padding: '4px 6px',
-                                  borderRadius: '6px',
-                                  boxShadow: '0 4px 10px rgba(0,0,0,0.5)',
-                                  whiteSpace: 'nowrap',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '3px'
+                                key={idx} 
+                                className="discover-premium-card animate-slide-up" 
+                                style={{ 
+                                  padding: '12px', 
+                                  borderRadius: '12px', 
+                                  display: 'flex', 
+                                  gap: '12px', 
+                                  alignItems: 'center', 
+                                  background: isSelected ? 'rgba(236,72,153,0.1)' : 'var(--card-bg)', 
+                                  borderColor: isSelected ? 'var(--primary)' : isHovered ? 'rgba(255,255,255,0.15)' : 'var(--card-border)',
+                                  borderWidth: '1px',
+                                  borderStyle: 'solid',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.25s ease'
+                                }}
+                                onMouseEnter={() => setHoveredDestinationName(dest.name)}
+                                onMouseLeave={() => setHoveredDestinationName(null)}
+                                onClick={() => {
+                                  setSelectedDestinationName(dest.name);
                                 }}
                               >
-                                📍 ${dest.price}
+                                <img src={dest.img} alt={dest.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <h4 style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{dest.name}</h4>
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>${dest.price}/night • {dest.ratingNum}★</span>
+                                  <span style={{ fontSize: '9px', color: 'var(--primary)', fontWeight: 600 }}>{dest.category}</span>
+                                </div>
                               </div>
-                            </motion.div>
-                          ))}
-
-                          {/* Map legend overlay */}
-                          <div style={{ position: 'absolute', bottom: '16px', left: '16px', background: 'rgba(5, 4, 10, 0.75)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '6px 10px', fontSize: '10px', color: 'var(--text-muted)' }}>
-                            🗺️ Bali Map Explorer (Simulated Grid)
-                          </div>
+                            );
+                          })}
+                          {sidebarDestinations.length === 0 && (
+                            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No matches found in this region.</div>
+                          )}
+                        </div>
+ 
+                        {/* Right Interactive Map Pane */}
+                        <div className="discover-premium-card" style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '16px', background: '#09080f', border: '1px solid var(--card-border)', display: 'flex', height: '100%', width: '100%' }}>
+                          <InteractiveMap 
+                            destinations={baseDestinations}
+                            hoveredDestinationName={hoveredDestinationName}
+                            selectedDestinationName={selectedDestinationName}
+                            onDestinationSelect={(name) => {
+                              const dest = travelDestinations.find(d => d.name === name);
+                              if (dest) {
+                                setLightboxImage(dest.img);
+                                setSelectedDestinationName(name);
+                              }
+                            }}
+                            onVisibleDestinationsChange={(names) => {
+                              setVisibleDestinationNames(names);
+                            }}
+                          />
                         </div>
                       </div>
                     );
@@ -7122,12 +7559,25 @@ export default function Home() {
                             /* GUEST VIEW ADAPTIVE ACTION BUTTONS */
                             <>
                               <motion.button 
-                                whileHover={{ scale: 1.03, boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
+                                whileHover={{ scale: 1.03, boxShadow: followedUsers.has(profileOwnerUser.username) ? 'none' : '0 4px 15px rgba(236,72,153,0.3)' }}
                                 whileTap={{ scale: 0.97 }}
-                                className="profile-primary-action-btn shimmer-sweep"
-                                onClick={() => showToast(`Following @${profileOwnerUser.username.replace('@','')}`)}
+                                className={`profile-primary-action-btn shimmer-sweep ${followedUsers.has(profileOwnerUser.username) ? 'btn-ghost-nomad' : ''}`}
+                                onClick={() => {
+                                  const username = profileOwnerUser.username;
+                                  setFollowedUsers(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(username)) {
+                                      next.delete(username);
+                                      showToast(`Unfollowed @${username.replace('@','')}`);
+                                    } else {
+                                      next.add(username);
+                                      showToast(`Following @${username.replace('@','')}`);
+                                    }
+                                    return next;
+                                  });
+                                }}
                               >
-                                Follow
+                                {followedUsers.has(profileOwnerUser.username) ? 'Following' : 'Follow'}
                               </motion.button>
                               
                               <motion.button 
@@ -7804,7 +8254,7 @@ export default function Home() {
                                       <button type="button" className="timeline-popover-close" onClick={() => setActiveTimelinePopoverId(null)}>&times;</button>
                                       
                                       <div className="timeline-popover-header">
-                                        <span className="popover-badge-rarity">{ms.rarity.toUpperCase()} TROPHY</span>
+                                        <span className={`popover-badge-rarity ${ms.rarity}`}>{ms.rarity.toUpperCase()} TROPHY</span>
                                         <h4 className="popover-badge-title">{ms.title}</h4>
                                         <p className="popover-badge-desc">{ms.desc}</p>
                                       </div>
