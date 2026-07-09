@@ -168,6 +168,82 @@ function HighlightStoryModal({
   );
 }
 
+// Follow Requests Expandable Panel Motion Variants
+const followRequestsPanelVariants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    scale: 0.97,
+    y: -10,
+    filter: 'blur(4px)',
+    boxShadow: '0 0 0px rgba(139, 92, 246, 0)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    transition: {
+      height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      opacity: { duration: 0.2 },
+      scale: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      filter: { duration: 0.2 },
+      boxShadow: { duration: 0.2 },
+      borderColor: { duration: 0.2 },
+      staggerChildren: 0.02,
+      staggerDirection: -1
+    }
+  },
+  expanded: {
+    height: 'auto',
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    borderColor: ['rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.3)', 'rgba(255, 255, 255, 0.08)'],
+    boxShadow: [
+      '0 0 15px rgba(139, 92, 246, 0.4), inset 0 0 8px rgba(139, 92, 246, 0.2)',
+      '0 0 8px rgba(139, 92, 246, 0.15)',
+      '0 4px 16px rgba(0, 0, 0, 0.15)'
+    ],
+    transition: {
+      height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      opacity: { duration: 0.25 },
+      scale: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+      filter: { duration: 0.25 },
+      borderColor: { duration: 0.8, times: [0, 0.4, 1] },
+      boxShadow: { duration: 0.8, times: [0, 0.5, 1] },
+      staggerChildren: 0.04,
+      delayChildren: 0.08
+    }
+  }
+};
+
+const requestItemVariants = {
+  collapsed: { opacity: 0, y: -4 },
+  expanded: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 24
+    }
+  }
+};
+
+const requestAvatarVariants = {
+  collapsed: { opacity: 0, scale: 0.8 },
+  expanded: { opacity: 1, scale: 1, transition: { duration: 0.25 } }
+};
+
+const requestUsernameVariants = {
+  collapsed: { opacity: 0, x: -8 },
+  expanded: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } }
+};
+
+const requestButtonsVariants = {
+  collapsed: { opacity: 0, scale: 0.9 },
+  expanded: { opacity: 1, scale: 1, transition: { duration: 0.25, delay: 0.1 } }
+};
+
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword } = useAuth();
@@ -660,6 +736,12 @@ export default function Home() {
   const [showSearchDrawer, setShowSearchDrawer] = useState(false);
   const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<'all' | 'following' | 'comments' | 'follows'>('all');
+  const [showFollowRequests, setShowFollowRequests] = useState(false);
+  const [followRequests, setFollowRequests] = useState([
+    { id: 'fr-1', username: 'sam_explorer', fullName: 'Sam Explorer', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', active: true },
+    { id: 'fr-2', username: 'jenny_travels', fullName: 'Jenny Travels', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', active: true },
+    { id: 'fr-3', username: 'alex_vlogs', fullName: 'Alex Vlogs', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', active: true }
+  ]);
 
   // Dynamic system time for mobile device status bar
   const [systemTime, setSystemTime] = useState('9:41');
@@ -787,6 +869,13 @@ export default function Home() {
         setScalingActiveBtn(null);
       }, 300);
       
+      // Smooth scroll centering
+      const wrapper = container.parentElement;
+      if (wrapper) {
+        const targetScrollLeft = currentLeft - (wrapper.offsetWidth / 2) + (currentWidth / 2);
+        wrapper.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      }
+      
       if (prevWidth > 0 && Math.abs(currentLeft - prevLeft) > 5) {
         // Stretch indicator to cover start to end bounds
         const combinedLeft = Math.min(prevLeft, currentLeft);
@@ -830,6 +919,87 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, [activeExploreCategory, activeTab]);
+
+  // Live Category Liquid Indicator Refs and Position States
+  const liveCategoriesContainerRef = useRef<HTMLDivElement>(null);
+  const [activeLiveCategoryStyle, setActiveLiveCategoryStyle] = useState<React.CSSProperties>({
+    left: 0,
+    width: 0,
+    opacity: 0,
+    transform: 'scale(1)',
+  });
+  const [scalingActiveLiveBtn, setScalingActiveLiveBtn] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!liveCategoriesContainerRef.current) return;
+    
+    const container = liveCategoriesContainerRef.current;
+    
+    const timer = setTimeout(() => {
+      const activeBtn = container.querySelector('.explore-category-btn.active') as HTMLButtonElement;
+      if (!activeBtn) return;
+      
+      const prevLeft = parseFloat(container.dataset.indicatorLeft || '0');
+      const prevWidth = parseFloat(container.dataset.indicatorWidth || '0');
+      
+      const currentLeft = activeBtn.offsetLeft;
+      const currentWidth = activeBtn.offsetWidth;
+      
+      setScalingActiveLiveBtn(liveCategory);
+      const bumpTimer = setTimeout(() => {
+        setScalingActiveLiveBtn(null);
+      }, 300);
+      
+      // Smooth scroll centering
+      const wrapper = container.parentElement;
+      if (wrapper) {
+        const targetScrollLeft = currentLeft - (wrapper.offsetWidth / 2) + (currentWidth / 2);
+        wrapper.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      }
+      
+      if (prevWidth > 0 && Math.abs(currentLeft - prevLeft) > 5) {
+        // Stretch indicator to cover start to end bounds
+        const combinedLeft = Math.min(prevLeft, currentLeft);
+        const combinedRight = Math.max(prevLeft + prevWidth, currentLeft + currentWidth);
+        const combinedWidth = combinedRight - combinedLeft;
+        
+        setActiveLiveCategoryStyle({
+          left: combinedLeft,
+          width: combinedWidth,
+          opacity: 1,
+          transform: 'scaleY(0.94) scaleX(1.025)',
+        });
+        
+        const snapTimer = setTimeout(() => {
+          setActiveLiveCategoryStyle({
+            left: currentLeft,
+            width: currentWidth,
+            opacity: 1,
+            transform: 'scale(1)',
+          });
+          container.dataset.indicatorLeft = String(currentLeft);
+          container.dataset.indicatorWidth = String(currentWidth);
+        }, 110);
+        
+        return () => {
+          clearTimeout(bumpTimer);
+          clearTimeout(snapTimer);
+        };
+      } else {
+        setActiveLiveCategoryStyle({
+          left: currentLeft,
+          width: currentWidth,
+          opacity: 1,
+          transform: 'scale(1)',
+        });
+        container.dataset.indicatorLeft = String(currentLeft);
+        container.dataset.indicatorWidth = String(currentWidth);
+        return () => clearTimeout(bumpTimer);
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [liveCategory, activeTab]);
   
   // Dedicated Vlogs Feed state
   const [vlogs, setVlogs] = useState([
@@ -3363,18 +3533,147 @@ export default function Home() {
             <div className="instagram-drawer-content" style={{ padding: '0 24px' }}>
               
               <div className="drawer-notification-section-title">Follow requests</div>
-              <div className="follow-requests-card" onClick={() => alert('Opening follow requests...')}>
+              <div className="follow-requests-card" onClick={() => { playUISound('click'); setShowFollowRequests(!showFollowRequests); }}>
                 <div className="follow-requests-icon-wrapper">
                   <span className="follow-requests-icon">👥</span>
                 </div>
                 <div className="follow-requests-info">
                   <span className="follow-requests-title">Follow requests</span>
-                  <span className="follow-requests-subtitle">test_explorer + 10 others</span>
+                  <span className="follow-requests-subtitle">test_explorer + {followRequests.length + 7} others</span>
                 </div>
-                <div className="follow-requests-indicator">
-                  <span className="follow-requests-dot"></span>
+                <div className="follow-requests-indicator" style={{ transform: showFollowRequests ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}>
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </div>
               </div>
+
+              {/* Futuristic Robotic Deployable Panel */}
+              <AnimatePresence initial={false}>
+                {showFollowRequests && (
+                  <motion.div
+                    key="follow-requests-panel"
+                    variants={followRequestsPanelVariants}
+                    initial="collapsed"
+                    animate="expanded"
+                    exit="collapsed"
+                    style={{
+                      overflow: 'hidden',
+                      background: 'rgba(15, 11, 25, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '16px',
+                      padding: '12px 14px',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px'
+                    }}
+                  >
+                    {followRequests.length === 0 ? (
+                      <motion.div 
+                        variants={requestItemVariants}
+                        style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', padding: '12px' }}
+                      >
+                        No pending requests
+                      </motion.div>
+                    ) : (
+                      followRequests.map((req) => (
+                        <motion.div
+                          key={req.id}
+                          variants={requestItemVariants}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '10px 12px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid rgba(255, 255, 255, 0.03)'
+                          }}
+                        >
+                          <motion.div
+                            variants={requestAvatarVariants}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              overflow: 'hidden',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              flexShrink: 0
+                            }}
+                          >
+                            <img src={req.avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </motion.div>
+                          <motion.div
+                            variants={requestUsernameVariants}
+                            style={{
+                              flex: 1,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              minWidth: 0
+                            }}
+                          >
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              @{req.username}
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              Active now
+                            </span>
+                          </motion.div>
+                          <motion.div
+                            variants={requestButtonsVariants}
+                            style={{
+                              display: 'flex',
+                              gap: '8px',
+                              flexShrink: 0
+                            }}
+                          >
+                            <button
+                              className="notification-btn-confirm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playUISound('click');
+                                showToast(`Confirmed follow request from @${req.username}`);
+                                setFollowRequests(prev => prev.filter(r => r.id !== req.id));
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '11px',
+                                height: '28px',
+                                borderRadius: '8px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="notification-btn-delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playUISound('click');
+                                showToast(`Deleted follow request from @${req.username}`);
+                                setFollowRequests(prev => prev.filter(r => r.id !== req.id));
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '11px',
+                                height: '28px',
+                                borderRadius: '8px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </motion.div>
+                        </motion.div>
+                      ))
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <div className="drawer-notification-section-title">This week</div>
               
@@ -6312,14 +6611,21 @@ export default function Home() {
 
                 {/* Filter/Category chips row */}
                 <div className="explore-categories-scroll-wrapper" style={{ margin: 0 }}>
-                  <div className="explore-categories-container">
+                  <div className="explore-categories-container" ref={liveCategoriesContainerRef}>
+                    <div className="explore-active-indicator" style={activeLiveCategoryStyle}>
+                      <div className="explore-active-indicator-glow" />
+                      <div className="explore-active-indicator-highlight" />
+                      <div className="explore-active-indicator-reflection" />
+                    </div>
                     {['All', 'IRL', 'Adventure', 'Culture', 'Q&A', 'Behind the Scenes', 'Special Events'].map((cat) => {
                       const isActive = liveCategory === cat;
                       return (
-                        <motion.button
+                        <button
                           key={cat}
-                          className={`explore-category-btn ${isActive ? 'active' : ''}`}
+                          className={`explore-category-btn ${isActive ? 'active' : ''} ${scalingActiveLiveBtn === cat ? 'scale-bump' : ''}`}
                           onClick={() => {
+                            // Play synthesized micro-sound click
+                            playUISound('click');
                             setHasEverSwitchedLiveCategory(true);
                             setIsLiveSwitchingCategory(true);
                             setLiveCategory(cat); // Update active category state instantly for responsive motion feedback
@@ -6328,91 +6634,10 @@ export default function Home() {
                               setIsLiveSwitchingCategory(false);
                             }, 220);
                           }}
-                          animate={isActive ? { scale: [1, 1.03, 1] } : { scale: 1 }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ 
-                            scale: {
-                              duration: 0.32,
-                              times: [0, 0.4, 1],
-                              ease: "easeOut"
-                            }
-                          }}
-                          style={{ 
-                            padding: '8px 18px', 
-                            borderRadius: '24px', 
-                            border: isActive ? '1px solid transparent' : '1px solid rgba(255, 255, 255, 0.08)', 
-                            background: isActive ? 'transparent' : 'rgba(255, 255, 255, 0.02)', 
-                            color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)', 
-                            fontSize: '13px', 
-                            fontWeight: 700, 
-                            cursor: 'pointer', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '6px',
-                            position: 'relative',
-                            overflow: 'visible',
-                            zIndex: 1
-                          }}
+                          onMouseEnter={() => playUISound('hover')}
                         >
-                          {isActive && (
-                            <>
-                              {/* Faint Bloom / Glow behind the button */}
-                              <motion.div
-                                layoutId="liveCategoryActiveGlow"
-                                className="absolute inset-0"
-                                transition={{
-                                  type: 'spring',
-                                  stiffness: 350,
-                                  damping: 28,
-                                  mass: 0.9
-                                }}
-                                style={{
-                                  borderRadius: '24px',
-                                  background: 'var(--brand-gradient)',
-                                  filter: 'blur(12px)',
-                                  opacity: 0.35,
-                                  zIndex: -2,
-                                  pointerEvents: 'none',
-                                  transform: 'translate3d(0, 2px, 0)'
-                                }}
-                              />
-                              {/* Main Glassy Active Bubble */}
-                              <motion.div
-                                layoutId="liveCategoryActiveBubble"
-                                className="absolute inset-0"
-                                transition={{
-                                  type: 'spring',
-                                  stiffness: 350,
-                                  damping: 28,
-                                  mass: 0.9
-                                }}
-                                style={{
-                                  borderRadius: '24px',
-                                  background: 'var(--brand-gradient)',
-                                  boxShadow: 'inset 0 1px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.2px 1.5px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(236, 72, 153, 0.3), 0 2px 6px rgba(139, 92, 246, 0.2)',
-                                  zIndex: -1,
-                                  overflow: 'hidden'
-                                }}
-                              >
-                                {/* Diagonal glass reflection shine */}
-                                <div 
-                                  style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    background: 'linear-gradient(115deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0) 100%)',
-                                    borderRadius: '24px',
-                                    pointerEvents: 'none'
-                                  }}
-                                />
-                              </motion.div>
-                            </>
-                          )}
-                          <span style={{ position: 'relative', zIndex: 2 }}>{cat}</span>
-                        </motion.button>
+                          <span className="explore-category-name">{cat}</span>
+                        </button>
                       );
                     })}
                   </div>

@@ -2652,9 +2652,9 @@ input:checked + .slider:before {
   left: 72px; /* Next to collapsed sidebar */
   bottom: 0;
   width: 397px;
-  background: var(--left-pane-bg);
-  backdrop-filter: var(--glass-backdrop);
-  -webkit-backdrop-filter: var(--glass-backdrop);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-right: 1px solid var(--card-border);
   box-shadow: 12px 0 35px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--glass-border);
   z-index: 90;
@@ -2662,6 +2662,10 @@ input:checked + .slider:before {
   flex-direction: column;
   animation: drawerSlideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
   overflow: hidden;
+}
+
+[data-theme='dark'] .instagram-drawer {
+  background: rgba(13, 17, 28, 0.92);
 }
 
 .instagram-drawer-header {
