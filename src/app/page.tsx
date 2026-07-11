@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import MapLoader from '@/components/shared/MapLoader';
 import FollowButton from '@/components/shared/FollowButton';
+import TheTrail from '@/components/shared/TheTrail';
 
 const InteractiveMap = dynamic(() => import('@/components/shared/InteractiveMap'), {
   ssr: false,
@@ -222,7 +223,7 @@ const requestItemVariants = {
     opacity: 1, 
     y: 0,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 300,
       damping: 24
     }
@@ -236,7 +237,7 @@ const requestAvatarVariants = {
 
 const requestUsernameVariants = {
   collapsed: { opacity: 0, x: -8 },
-  expanded: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } }
+  expanded: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 20 } }
 };
 
 const requestButtonsVariants = {
@@ -248,6 +249,16 @@ export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab && ['home', 'reels', 'search', 'create', 'messages', 'profile', 'live'].includes(tab)) {
+        setActiveTab(tab as any);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && user) {
@@ -631,6 +642,7 @@ export default function Home() {
       isVerified: true,
       isFollowed: true,
       thumbnail: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-waterfall-in-forest-2213-large.mp4',
       isHovered: false
     },
     {
@@ -646,6 +658,7 @@ export default function Home() {
       isVerified: false,
       isFollowed: false,
       thumbnail: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&auto=format&fit=crop&q=80',
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-camp-fire-in-the-woods-at-night-42289-large.mp4',
       isHovered: false
     },
     {
@@ -661,6 +674,7 @@ export default function Home() {
       isVerified: true,
       isFollowed: true,
       thumbnail: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600&auto=format&fit=crop&q=80',
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-sunlight-through-forest-trees-4841-large.mp4',
       isHovered: false
     },
     {
@@ -676,6 +690,7 @@ export default function Home() {
       isVerified: false,
       isFollowed: false,
       thumbnail: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&auto=format&fit=crop&q=80',
+      videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-colosseum-in-rome-43094-large.mp4',
       isHovered: false
     }
   ]);
@@ -704,6 +719,64 @@ export default function Home() {
   const [saveRecording, setSaveRecording] = useState(true);
   const [liveCoppaToggle, setLiveCoppaToggle] = useState(false);
 
+  // Travora Live player modal states & chat simulation ticker
+  const [viewerLiveStream, setViewerLiveStream] = useState<any | null>(null);
+  const [viewerChatMessages, setViewerChatMessages] = useState<Array<{ id: string; user: string; text: string; isVerified?: boolean; avatarColor: string }>>([]);
+  const [viewerChatMessageInput, setViewerChatMessageInput] = useState('');
+
+  useEffect(() => {
+    if (!viewerLiveStream) {
+      setViewerChatMessages([]);
+      return;
+    }
+
+    const initialChats = [
+      { id: 'chat-1', user: 'backpacker_alex', text: 'This stream is absolutely insane! 😍', avatarColor: '#ec4899', isVerified: true },
+      { id: 'chat-2', user: 'wanderlust_jen', text: 'So clean! Adds to my bucket list.', avatarColor: '#8b5cf6' },
+      { id: 'chat-3', user: 'nature_seeker', text: 'Woooooah! 🏔️', avatarColor: '#14b8a6' },
+      { id: 'chat-4', user: 'explorer_sam', text: 'Stunning sunset quality!', avatarColor: '#f59e0b', isVerified: true }
+    ];
+    setViewerChatMessages(initialChats);
+
+    const mockUserComments = [
+      'Is the temperature cold right now? ❄️',
+      'What camera are you using? The quality is unreal!',
+      'Travora Live has the best stream player interface!',
+      'Grateful for this stream! 📍',
+      'Plotted this on my bucket list map immediately.',
+      'So inspiring! 🎒✈️',
+      'Greetings from California! 🌴',
+      'Love the ambient audio!',
+      'Cannot wait to visit next year!'
+    ];
+
+    const mockUsers = [
+      { user: 'globetrotter_dave', color: '#3b82f6', isVerified: false },
+      { user: 'clara_adventures', color: '#ec4899', isVerified: true },
+      { user: 'zen_nomad', color: '#10b981', isVerified: false },
+      { user: 'peak_chaser', color: '#f59e0b', isVerified: false },
+      { user: 'beach_babe', color: '#14b8a6', isVerified: true }
+    ];
+
+    const chatInterval = setInterval(() => {
+      const randomComment = mockUserComments[Math.floor(Math.random() * mockUserComments.length)];
+      const randomUser = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+      
+      setViewerChatMessages((prev: any[]) => [
+        ...prev,
+        {
+          id: `chat-${Date.now()}`,
+          user: randomUser.user,
+          text: randomComment,
+          avatarColor: randomUser.color,
+          isVerified: randomUser.isVerified
+        }
+      ].slice(-50));
+    }, 2200);
+
+    return () => clearInterval(chatInterval);
+  }, [viewerLiveStream]);
+
   // Live Stream Dashboard States
   const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'nodata'>('connecting');
   const [dashboardTab, setDashboardTab] = useState<'settings' | 'analytics' | 'health'>('settings');
@@ -723,6 +796,42 @@ export default function Home() {
   const [dashboardChatRate, setDashboardChatRate] = useState(0);
   const [isMiniInboxOpen, setIsMiniInboxOpen] = useState(false);
   const [isExpandingFullscreen, setIsExpandingFullscreen] = useState(false);
+
+  // Camera Media Stream reference and Video ref
+  const liveVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [liveMediaStream, setLiveMediaStream] = useState<MediaStream | null>(null);
+
+  // Webcam Activation Effect
+  useEffect(() => {
+    let activeStream: MediaStream | null = null;
+
+    if (activeTab === 'live-dashboard' && liveSource === 'webcam' && streamStatus === 'live') {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then((stream) => {
+          activeStream = stream;
+          setLiveMediaStream(stream);
+        })
+        .catch((err) => {
+          console.error("Webcam access error:", err);
+          showToast("Failed to access camera: " + err.message);
+        });
+    }
+
+    return () => {
+      if (activeStream) {
+        activeStream.getTracks().forEach((track) => track.stop());
+      }
+      setLiveMediaStream(null);
+    };
+  }, [activeTab, liveSource, streamStatus]);
+
+  // Bind video element to media stream
+  useEffect(() => {
+    if (liveVideoRef.current && liveMediaStream) {
+      liveVideoRef.current.srcObject = liveMediaStream;
+      liveVideoRef.current.play().catch(err => console.log("Video playback interrupted", err));
+    }
+  }, [liveMediaStream, liveVideoRef.current]);
   const [miniSlideActive, setMiniSlideActive] = useState(false);
   const [miniActiveChatBuddy, setMiniActiveChatBuddy] = useState<string | null>(null);
   const [miniChatInput, setMiniChatInput] = useState('');
@@ -2207,7 +2316,7 @@ export default function Home() {
   };
 
   // --- PROFILE DASHBOARD REDESIGN STATES ---
-  const [profileTab, setProfileTab] = useState<'posts' | 'saved' | 'milestones' | 'settings'>('posts');
+  const [profileTab, setProfileTab] = useState<'posts' | 'saved' | 'milestones' | 'trail'>('posts');
   const [selectedHighlight, setSelectedHighlight] = useState<string | null>(null);
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [editFullName, setEditFullName] = useState('');
@@ -3405,7 +3514,7 @@ export default function Home() {
                {/* More Menu Dropdown */}
               {showMoreMenu && (
                 <div className="instagram-more-menu-dropdown">
-                  <button className="instagram-more-menu-item" onClick={() => { setProfileOwnerUser(null); setActiveTab('profile'); setProfileTab('settings'); setShowMoreMenu(false); }}>
+                  <button className="instagram-more-menu-item" onClick={() => { router.push('/settings'); setShowMoreMenu(false); }}>
                     <span>⚙️</span> Settings
                   </button>
                   <button className="instagram-more-menu-item" onClick={() => { setAiChatOpen(true); setShowMoreMenu(false); }}>
@@ -4112,7 +4221,7 @@ export default function Home() {
                           '0 12px 32px rgba(0, 0, 0, 0.6)'
                         ],
                         transition: {
-                          type: 'spring',
+                          type: 'spring' as const,
                           stiffness: 400,
                           damping: 20,
                           staggerChildren: 0.04,
@@ -4129,7 +4238,7 @@ export default function Home() {
                         filter: 'blur(8px)',
                         transition: {
                           duration: 0.2,
-                          ease: 'easeIn',
+                          ease: 'easeIn' as const,
                           staggerChildren: 0.03,
                           staggerDirection: -1
                         }
@@ -4148,7 +4257,7 @@ export default function Home() {
                         opacity: 1, 
                         x: 0, 
                         transition: { 
-                          type: 'spring', 
+                          type: 'spring' as const, 
                           stiffness: 300, 
                           damping: 22 
                         } 
@@ -4158,19 +4267,19 @@ export default function Home() {
 
                     const avatarVariants = {
                       initial: { opacity: 0, scale: 0.9 },
-                      animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: 'easeOut' } },
+                      animate: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: 'easeOut' as const } },
                       exit: { opacity: 0, scale: 0.9, transition: { duration: 0.1 } }
                     };
 
                     const textVariants = {
                       initial: { opacity: 0, x: -4 },
-                      animate: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 20 } },
+                      animate: { opacity: 1, x: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 20 } },
                       exit: { opacity: 0, x: -4, transition: { duration: 0.1 } }
                     };
 
                     const checkmarkVariants = {
                       initial: { opacity: 0, scale: 0.5 },
-                      animate: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 500, damping: 15, delay: 0.2 } },
+                      animate: { opacity: 1, scale: 1, transition: { type: 'spring' as const, stiffness: 500, damping: 15, delay: 0.2 } },
                       exit: { opacity: 0, scale: 0.5, transition: { duration: 0.1 } }
                     };
 
@@ -4223,11 +4332,11 @@ export default function Home() {
                             flexShrink: 0,
                             ...(isVentureOrVlogger 
                               ? { background: 'var(--brand-gradient)', padding: '2px' }
-                              : { border: '2px solid rgba(255, 255, 255, 0.15)', padding: '2px' }
+                              : { border: '2px solid var(--avatar-border-color)', padding: '2px' }
                             )
                           }}
                         >
-                          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#07090e', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                          <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--avatar-border-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                             {user.avatarUrl ? (
                               <img src={user.avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
@@ -4246,8 +4355,8 @@ export default function Home() {
                               position: 'absolute', 
                               bottom: '-2px', 
                               right: '-2px', 
-                              background: '#07090e', 
-                              border: '1px solid rgba(255,255,255,0.15)',
+                              background: 'var(--avatar-border-bg)', 
+                              border: '1px solid var(--avatar-border-color)',
                               borderRadius: '50%', 
                               width: '16px', 
                               height: '16px', 
@@ -6739,8 +6848,11 @@ export default function Home() {
                           onMouseLeave={() => {
                             setActiveStreams(prev => prev.map(s => s.id === stream.id ? { ...s, isHovered: false } : s));
                           }}
-                          onClick={() => {
-                            showToast(`Connecting to ${stream.username}'s stream...`);
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log("Stream card clicked:", stream);
+                            showToast(`Opening ${stream.username}'s stream...`);
+                            setViewerLiveStream(stream);
                           }}
                         >
                           {/* Thumbnail / Widescreen Preview Area */}
@@ -6754,11 +6866,22 @@ export default function Home() {
                             boxShadow: stream.isHovered ? '0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(236,72,153,0.15)' : '0 4px 10px rgba(0,0,0,0.2)',
                             transition: 'all 0.3s ease'
                           }}>
-                            <img 
-                              src={stream.thumbnail} 
-                              alt={stream.title} 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', transform: stream.isHovered ? 'scale(1.03)' : 'scale(1)' }} 
-                            />
+                            {stream.isHovered && stream.videoUrl ? (
+                              <video 
+                                src={stream.videoUrl} 
+                                autoPlay 
+                                loop 
+                                muted={stream.isMuted} 
+                                playsInline 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} 
+                              />
+                            ) : (
+                              <img 
+                                src={stream.thumbnail} 
+                                alt={stream.title} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease', pointerEvents: 'none' }} 
+                              />
+                            )}
                             
                             {/* YouTube style LIVE Badge bottom right */}
                             <div style={{ position: 'absolute', bottom: '10px', right: '10px', backgroundColor: '#ef4444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '0.5px', boxShadow: '0 2px 8px rgba(0,0,0,0.5)', zIndex: 5 }}>
@@ -6800,7 +6923,7 @@ export default function Home() {
                           <div style={{ padding: '12px 0px 8px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                             {/* Avatar on the left */}
                             <div className="story-ring" style={{ width: '36px', height: '36px', padding: '2px', background: 'var(--brand-gradient)', flexShrink: 0, borderRadius: '50%' }}>
-                              <img src={stream.avatar} alt={stream.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #07090e' }} />
+                              <img src={stream.avatar} alt={stream.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--avatar-border-bg)' }} />
                             </div>
                             
                             {/* Metadata on the right */}
@@ -7411,12 +7534,18 @@ export default function Home() {
                         /* Simulated stream preview or webcam stream image placeholder */
                         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                           {liveSource === 'webcam' ? (
-                            /* Simulated webcam view with gradient moving patterns */
-                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, #1e1b4b 0%, #311042 50%, #0f172a 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.15, color: 'white' }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                              <div style={{ position: 'absolute', bottom: '20px', left: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '20px' }}>
-                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-                                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>Webcam active</span>
+                            /* Real webcam video or fallback simulated view */
+                            <div style={{ width: '100%', height: '100%', position: 'relative', background: '#000' }}>
+                              <video 
+                                ref={liveVideoRef}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                playsInline
+                                muted
+                                autoPlay
+                              />
+                              <div style={{ position: 'absolute', bottom: '20px', left: '20px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.6)', padding: '6px 12px', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>
+                                <span className="live-status-dot-pulse" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
+                                <span style={{ fontSize: '11px', color: 'white', fontWeight: 600 }}>Webcam active</span>
                               </div>
                             </div>
                           ) : (
@@ -7432,6 +7561,7 @@ export default function Home() {
                         </div>
                       )}
                     </div>
+
 
                     {/* Stats Summary strip */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
@@ -7748,7 +7878,7 @@ export default function Home() {
                                 whileHover={{ scale: 1.03, boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
                                 whileTap={{ scale: 0.97 }}
                                 className="profile-primary-action-btn shimmer-sweep"
-                                onClick={() => setProfileTab('settings')}
+                                onClick={() => router.push('/settings/profile')}
                               >
                                 Edit Profile
                               </motion.button>
@@ -7757,7 +7887,7 @@ export default function Home() {
                                 whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
                                 whileTap={{ scale: 0.95 }}
                                 className="profile-icon-action-btn"
-                                onClick={() => setProfileTab('settings')}
+                                onClick={() => router.push('/settings')}
                                 title="Settings"
                               >
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -8051,14 +8181,16 @@ export default function Home() {
                   </button>
                   
                   <button 
-                    className={`profile-tab-btn ${profileTab === 'settings' ? 'active' : ''}`}
-                    onClick={() => setProfileTab('settings')}
+                    className={`profile-tab-btn ${profileTab === 'trail' ? 'active' : ''}`}
+                    onClick={() => setProfileTab('trail')}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 3a2 2 0 1 0 0 4h12a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H8a2 2 0 1 0 0 4" />
+                      <circle cx="4" cy="5" r="1" fill="currentColor"/>
+                      <circle cx="20" cy="13" r="1" fill="currentColor"/>
+                      <circle cx="8" cy="21" r="1" fill="currentColor"/>
                     </svg>
-                    <span>SETTINGS</span>
+                    <span>THE TRAIL</span>
                   </button>
                 </div>
 
@@ -8584,94 +8716,17 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* TAB D: EDIT PROFILE SETTINGS AND ROLE MANAGMENT */}
-                  {profileTab === 'settings' && (
-                    <div className="profile-settings-panel">
-                      <form onSubmit={(e) => { e.preventDefault(); alert('Profile settings updated successfully!'); setProfileTab('posts'); }}>
-                        
-                        <div className="profile-settings-form-row">
-                          <div className="form-group">
-                            <label className="form-label-new">Full Name</label>
-                            <input 
-                              type="text" 
-                              className="form-input" 
-                              value={editFullName} 
-                              onChange={(e) => setEditFullName(e.target.value)} 
-                              required 
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label-new">Username</label>
-                            <input 
-                              type="text" 
-                              className="form-input" 
-                              value={editUsername} 
-                              onChange={(e) => setEditUsername(e.target.value)} 
-                              required 
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label-new">Email Address</label>
-                          <input 
-                            type="email" 
-                            className="form-input" 
-                            value={editEmail} 
-                            onChange={(e) => setEditEmail(e.target.value)} 
-                            required 
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label-new">Biography</label>
-                          <textarea 
-                            className="form-input-textarea" 
-                            rows={3}
-                            value={editBio} 
-                            onChange={(e) => setEditBio(e.target.value)} 
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label-new">Website Link</label>
-                          <input 
-                            type="text" 
-                            className="form-input" 
-                            placeholder="website.com"
-                            value={editWebsite} 
-                            onChange={(e) => setEditWebsite(e.target.value)} 
-                          />
-                        </div>
-
-                        {user.role === 'traveller' && (
-                          <div className="profile-vlogger-settings-toggle">
-                            <div className="toggle-text-column">
-                              <span className="toggle-header-label">Switch Creator Mode</span>
-                              <span className="toggle-sub-label">Publish vlogs and travel maps as a verified vlogger.</span>
-                            </div>
-                            <label className="switch">
-                              <input 
-                                type="checkbox" 
-                                checked={user.travellerType === 'vlogger'} 
-                                onChange={async (e) => {
-                                  const result = await updateTravellerType(e.target.checked ? 'vlogger' : 'normal');
-                                  if (!result.success) alert('Failed to switch mode.');
-                                }} 
-                              />
-                              <span className="slider"></span>
-                            </label>
-                          </div>
-                        )}
-
-                        <div className="profile-settings-footer-actions">
-                          <button type="submit" className="btn-primary">
-                            Save Changes
-                          </button>
-                        </div>
-
-                      </form>
-                    </div>
+                  {/* TAB D: THE TRAIL TRAVEL HISTORY & BUCKET LIST */}
+                  {profileTab === 'trail' && (
+                    <TheTrail 
+                      onZoomToDestination={(destName) => {
+                        showToast(`Shared-element layout zoom into travel logs for ${destName}`);
+                      }}
+                      onOpenChatWithItinerary={(destName) => {
+                        setActiveTab('messages');
+                        showToast(`Chatbot initiated for ${destName} itinerary planning!`);
+                      }}
+                    />
                   )}
 
                 </div>
@@ -8693,7 +8748,6 @@ export default function Home() {
                     />
                   )}
                 </AnimatePresence>
-
 
 
               </div>
@@ -9085,6 +9139,345 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* Post Image Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 4, 10, 0.95)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'zoom-out'
+            }}
+          >
+            <motion.button
+              onClick={() => setLightboxImage(null)}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              &times;
+            </motion.button>
+            <motion.img
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={lightboxImage}
+              alt="Lightbox"
+              style={{
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: '16px',
+                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(236, 72, 153, 0.15)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- MODAL 2: DYNAMIC PREVIEWS OF TRAVORA LIVE STREAMS WITH DYNAMIC CHAT INTERFACE --- */}
+      <AnimatePresence>
+        {viewerLiveStream && (
+          <motion.div 
+            key="travora-live-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(5, 6, 12, 0.94)',
+              backdropFilter: 'blur(30px)',
+              WebkitBackdropFilter: 'blur(30px)',
+              zIndex: 99999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px'
+            }}
+            onClick={() => setViewerLiveStream(null)}
+          >
+            <motion.div
+              key="travora-live-modal-content"
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: '1150px',
+                height: '90vh',
+                maxHeight: '720px',
+                background: 'rgba(13, 16, 27, 0.95)',
+                backdropFilter: 'blur(40px)',
+                WebkitBackdropFilter: 'blur(40px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '24px',
+                display: 'flex',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.85)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* LEFT COLUMN: PLAYER & METADATA */}
+              <div style={{ flex: 7, display: 'flex', flexDirection: 'column', height: '100%', borderRight: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                {/* Custom Player Header */}
+                <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1.5s infinite' }} />
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1.5px', color: '#ef4444', fontWeight: 800 }}>TRAVORA LIVE</span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{viewerLiveStream.category} &bull; 21.5K viewers</span>
+                </div>
+
+                {/* Video Box Container */}
+                <div style={{ flex: 1, background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <video 
+                    src={viewerLiveStream.videoUrl} 
+                    autoPlay 
+                    loop 
+                    muted={viewerLiveStream.isMuted} 
+                    playsInline 
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                  
+                  {/* Player control overlay bar */}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <button style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="6" y="4" width="4" height="16" rx="1" />
+                          <rect x="14" y="4" width="4" height="16" rx="1" />
+                        </svg>
+                      </button>
+
+                      {/* Volume */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveStreams((prev: any[]) => prev.map((s: any) => s.id === viewerLiveStream.id ? { ...s, isMuted: !s.isMuted } : s));
+                          setViewerLiveStream((prev: any) => ({ ...prev, isMuted: !prev.isMuted }));
+                        }}
+                        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
+                      >
+                        {viewerLiveStream.isMuted ? (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                          </svg>
+                        ) : (
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Progress status */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', background: '#ef4444', padding: '2px 6px', borderRadius: '4px' }}>LIVE</span>
+                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>01:42:08</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer stream details */}
+                <div style={{ padding: '24px', background: 'rgba(9, 10, 16, 0.4)' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 16px' }}>{viewerLiveStream.title}</h3>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', padding: '2px', background: 'var(--brand-gradient)', borderRadius: '50%' }}>
+                        <img src={viewerLiveStream.avatar} alt={viewerLiveStream.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #090a10' }} />
+                      </div>
+                      
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>{viewerLiveStream.username}</span>
+                          {viewerLiveStream.isVerified && (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#3b82f6">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>245K Followers</span>
+                      </div>
+                    </div>
+
+                    {/* Interactive actions */}
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <button 
+                        className="btn-primary" 
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                          border: 'none',
+                          boxShadow: '0 4px 12px rgba(236,72,153,0.3)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Follow Creator
+                      </button>
+                      <button 
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          color: 'var(--text-primary)',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => showToast('Shared stream link! ✈️')}
+                      >
+                        Share Stream
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: LIVE CHAT */}
+              <div style={{ flex: 3, display: 'flex', flexDirection: 'column', height: '100%', background: 'rgba(7, 8, 14, 0.4)' }}>
+                {/* Chat Header */}
+                <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-title)' }}>Live Chat</span>
+                    <span style={{ fontSize: '9px', background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>AUTO</span>
+                  </div>
+                  <button 
+                    onClick={() => setViewerLiveStream(null)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      fontSize: '20px',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                {/* Messages Scroll Box */}
+                <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {viewerChatMessages.map(msg => (
+                    <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', lineHeight: '1.4' }}>
+                      <span 
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          background: msg.avatarColor,
+                          display: 'inline-block',
+                          flexShrink: 0,
+                          boxShadow: 'inset 0 0 4px rgba(0,0,0,0.5)'
+                        }}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <span style={{ fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginRight: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          {msg.user}
+                          {msg.isVerified && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="#3b82f6">
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                          )}
+                        </span>
+                        <span style={{ color: 'var(--text-secondary)', wordBreak: 'break-word' }}>{msg.text}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Message sender Input Box */}
+                <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <form 
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!viewerChatMessageInput.trim()) return;
+                      
+                      setViewerChatMessages((prev: any[]) => [
+                        ...prev,
+                        {
+                          id: `chat-user-${Date.now()}`,
+                          user: `@${(user as any)?.username || 'traveler_me'}`,
+                          text: viewerChatMessageInput,
+                          avatarColor: 'var(--primary)',
+                          isVerified: true
+                        }
+                      ]);
+                      setViewerChatMessageInput('');
+                    }}
+                    style={{ display: 'flex', gap: '8px' }}
+                  >
+                    <input 
+                      type="text"
+                      className="comment-input"
+                      placeholder="Chat publicly as creator..."
+                      value={viewerChatMessageInput}
+                      onChange={(e) => setViewerChatMessageInput(e.target.value)}
+                      style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255,255,255,0.02)', outline: 'none', color: 'white', fontSize: '12px' }}
+                    />
+                    <button 
+                      type="submit"
+                      style={{
+                        background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '0 16px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Send
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
      </>
     );
   }
@@ -9606,67 +9999,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {/* Post Image Lightbox Modal */}
-      <AnimatePresence>
-        {lightboxImage && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setLightboxImage(null)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(5, 4, 10, 0.95)',
-              backdropFilter: 'blur(12px)',
-              zIndex: 9999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'zoom-out'
-            }}
-          >
-            <motion.button
-              onClick={() => setLightboxImage(null)}
-              style={{
-                position: 'absolute',
-                top: '24px',
-                right: '24px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '50%',
-                width: '40px',
-                height: '40px',
-                color: 'white',
-                fontSize: '20px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              &times;
-            </motion.button>
-            <motion.img
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              src={lightboxImage}
-              alt="Lightbox"
-              style={{
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                objectFit: 'contain',
-                borderRadius: '16px',
-                boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(236, 72, 153, 0.15)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
    </>

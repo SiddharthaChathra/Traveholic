@@ -97,7 +97,7 @@ export default function SponsorshipCard({
         {/* Circular Progress Indicator */}
         <div style={{ position: 'relative', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="56" height="56" viewBox="0 0 56 56">
-            <circle cx="28" cy="28" r={radius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+            <circle cx="28" cy="28" r={radius} fill="none" stroke="var(--glass-border-subtle, rgba(255,255,255,0.05))" strokeWidth="4" />
             <circle 
               cx="28" 
               cy="28" 
@@ -164,7 +164,7 @@ export default function SponsorshipCard({
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
         <div>
           {/* Key Stats Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px', background: 'var(--glass-bg-flat, rgba(255,255,255,0.02))', padding: '10px', borderRadius: '10px', border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.04))' }}>
             <div style={{ textAlign: 'center' }}>
               <span style={{ fontSize: '9px', color: 'var(--text-muted)', display: 'block' }}>FOLLOWERS</span>
               <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>{formatFollowers(traveler.followers)}</span>

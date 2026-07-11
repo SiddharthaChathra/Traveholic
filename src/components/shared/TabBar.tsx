@@ -40,9 +40,9 @@ export default function TabBar({ tabs, activeTab, onChangeTab, style }: TabBarPr
               style={{
                 padding: '8px 18px',
                 borderRadius: '24px',
-                border: isActive ? '1px solid transparent' : '1px solid rgba(255, 255, 255, 0.08)',
-                background: isActive ? 'var(--brand-gradient)' : 'rgba(255, 255, 255, 0.02)',
-                color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                border: isActive ? '1px solid transparent' : '1px solid var(--tag-border, rgba(255, 255, 255, 0.08))',
+                background: isActive ? 'var(--brand-gradient)' : 'var(--tag-bg, rgba(255, 255, 255, 0.02))',
+                color: isActive ? '#ffffff' : 'var(--tag-color, rgba(255, 255, 255, 0.7))',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',

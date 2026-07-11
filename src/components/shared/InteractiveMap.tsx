@@ -248,17 +248,25 @@ export default function InteractiveMap({
         const dest = c.properties.destination;
         const isHovered = hoveredDestinationName === dest.name;
         const isSelected = selectedDestinationName === dest.name;
+        
+        // Extract city and emoji cleanly
+        const parts = dest.name.split(',');
+        const city = parts[0];
+        const words = dest.name.split(' ');
+        const emoji = words[words.length - 1];
+        const cleanName = emoji && emoji.length <= 4 ? `${city} ${emoji}` : city;
 
         const pinIcon = L.divIcon({
           className: 'custom-map-marker-container',
           html: `
             <div class="custom-map-marker ${isHovered ? 'hovered' : ''} ${isSelected ? 'selected' : ''}">
-              <span class="marker-price">$${dest.price}</span>
+              <span class="marker-pin-icon">📍</span>
+              <span class="marker-location">${cleanName}</span>
               <div class="marker-tail"></div>
             </div>
           `,
-          iconSize: [50, 30],
-          iconAnchor: [25, 30]
+          iconSize: [0, 0],
+          iconAnchor: [0, 0]
         });
 
         // Popup hover preview card
@@ -282,7 +290,7 @@ export default function InteractiveMap({
           .addTo(markersLayer)
           .bindPopup(popupContent, {
             closeButton: false,
-            offset: [0, -18],
+            offset: [0, -32],
             className: 'custom-hover-popup'
           });
 
@@ -328,13 +336,22 @@ export default function InteractiveMap({
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Styles injection for Leaflet Dark Premium theme */}
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Price Pin Styling */
+        /* Leaflet DivIcon Box Overrides for Auto Sizing */
+        .custom-map-marker-container {
+          width: auto !important;
+          height: auto !important;
+          margin-left: 0px !important;
+          margin-top: 0px !important;
+          overflow: visible !important;
+        }
+
+        /* Destination Location Pin Styling */
         .custom-map-marker {
           background: var(--brand-gradient, linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%));
           color: white;
           font-size: 11px;
           font-weight: 800;
-          padding: 6px 10px;
+          padding: 6px 14px;
           border-radius: 20px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.5);
           border: 1px solid rgba(255,255,255,0.25);
@@ -342,24 +359,31 @@ export default function InteractiveMap({
           position: relative;
           display: inline-flex;
           align-items: center;
+          gap: 6px;
           justify-content: center;
+          transform: translate(-50%, -100%) translateY(-6px);
           transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
           transform-origin: bottom center;
         }
-
+ 
         .custom-map-marker.hovered, .custom-map-marker:hover {
-          transform: scale(1.15) translateY(-2px);
+          transform: translate(-50%, -100%) translateY(-8px) scale(1.1);
           box-shadow: 0 8px 18px rgba(236, 72, 153, 0.4);
           z-index: 999;
         }
-
+ 
         .custom-map-marker.selected {
-          transform: scale(1.2) translateY(-2px);
+          transform: translate(-50%, -100%) translateY(-8px) scale(1.15);
           border-color: #34d399;
           box-shadow: 0 0 14px #34d399;
           z-index: 1000;
         }
 
+        .custom-map-marker .marker-location {
+          font-weight: 800;
+          opacity: 0.96;
+        }
+ 
         .custom-map-marker .marker-tail {
           position: absolute;
           bottom: -6px;
@@ -372,7 +396,7 @@ export default function InteractiveMap({
           border-top: 6px solid #8b5cf6;
           transition: border-top-color 0.2s ease;
         }
-
+ 
         .custom-map-marker.selected .marker-tail {
           border-top-color: #34d399;
         }

@@ -19,9 +19,9 @@ export default function TagPill({ label, isActive = false, onClick, icon, style 
       style={{
         padding: '6px 14px',
         borderRadius: '20px',
-        border: isActive ? '1px solid transparent' : '1px solid rgba(255, 255, 255, 0.08)',
-        background: isActive ? 'var(--brand-gradient)' : 'rgba(255, 255, 255, 0.02)',
-        color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+        border: isActive ? '1px solid transparent' : '1px solid var(--tag-border, rgba(255, 255, 255, 0.08))',
+        background: isActive ? 'var(--brand-gradient)' : 'var(--tag-bg, rgba(255, 255, 255, 0.02))',
+        color: isActive ? '#ffffff' : 'var(--tag-color, rgba(255, 255, 255, 0.7))',
         fontSize: '12px',
         fontWeight: 600,
         cursor: onClick ? 'pointer' : 'default',

@@ -22,7 +22,7 @@ export default function ToggleSwitch({ checked, onChange, disabled }: ToggleSwit
       <motion.span 
         className={`slider round ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} 
         animate={{
-          backgroundColor: checked ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+          backgroundColor: checked ? 'var(--primary)' : 'var(--switch-bg, rgba(255,255,255,0.08))',
           boxShadow: checked ? '0 0 8px rgba(236,72,153,0.3)' : 'none'
         }}
         transition={{ duration: 0.2 }}
@@ -31,7 +31,7 @@ export default function ToggleSwitch({ checked, onChange, disabled }: ToggleSwit
           cursor: disabled ? 'not-allowed' : 'pointer',
           top: 0, left: 0, right: 0, bottom: 0,
           borderRadius: '34px',
-          border: '1px solid rgba(255,255,255,0.06)'
+          border: '1px solid var(--switch-border, rgba(255,255,255,0.06))'
         }}
       >
         <motion.span 

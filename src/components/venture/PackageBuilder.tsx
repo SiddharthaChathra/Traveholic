@@ -105,7 +105,7 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
+      <div style={{ borderTop: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', paddingTop: '20px', marginTop: '10px' }}>
         <label className="form-label" style={{ display: 'block', marginBottom: '16px', fontSize: '14px', fontWeight: 700 }}>Package Inclusions</label>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -143,7 +143,7 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
+      <div style={{ borderTop: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', paddingTop: '20px', marginTop: '10px' }}>
         <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>Custom Features & Amenities</label>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           <input 

@@ -108,7 +108,7 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
         </div>
 
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', marginTop: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', paddingTop: '16px', marginTop: '8px' }}>
             <div>
               <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>PRICE RANGE</span>
               <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>
@@ -126,8 +126,8 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
                 <Link 
                   href={`/venture/listings/${listing.id}/edit`}
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--glass-bg-subtle, rgba(255,255,255,0.04))',
+                    border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.08))',
                     padding: '6px 12px',
                     borderRadius: '8px',
                     color: 'var(--text-primary)',
@@ -144,12 +144,12 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
               </motion.div>
               {onToggleStatus && (
                 <motion.button
-                  whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.08)' }}
+                  whileHover={{ scale: 1.05, background: 'var(--glass-bg-subtle, rgba(255,255,255,0.08))' }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onToggleStatus(listing.id, listing.status)}
                   style={{
                     background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.12)',
+                    border: '1px solid var(--glass-border-medium, rgba(255,255,255,0.12))',
                     padding: '6px',
                     borderRadius: '8px',
                     color: 'var(--text-secondary)',

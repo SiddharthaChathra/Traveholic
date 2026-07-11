@@ -88,8 +88,8 @@ export default function StatCard({
         </div>
         {icon && (
           <div style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: 'var(--glass-bg-subtle, rgba(255,255,255,0.03))',
+            border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))',
             borderRadius: '10px',
             padding: '8px',
             color: 'var(--primary)'

@@ -45,8 +45,8 @@ export default function ThreeTierButtonGroup({ buttons, style }: ThreeTierButton
         } else if (isSecondary) {
           buttonStyle = {
             ...buttonStyle,
-            background: 'rgba(255, 255, 255, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            background: 'var(--btn-secondary-bg, rgba(255, 255, 255, 0.06))',
+            border: '1px solid var(--btn-secondary-border, rgba(255, 255, 255, 0.08))',
             color: 'var(--text-primary)'
           };
         } else {
@@ -54,7 +54,7 @@ export default function ThreeTierButtonGroup({ buttons, style }: ThreeTierButton
           buttonStyle = {
             ...buttonStyle,
             background: 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            border: '1px solid var(--btn-outline-border, rgba(255, 255, 255, 0.15))',
             color: 'var(--text-secondary)'
           };
         }

@@ -106,7 +106,7 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
       style={{ 
         padding: '24px', 
         borderRadius: '16px', 
-        background: 'linear-gradient(135deg, var(--card-bg) 0%, rgba(255,255,255,0.01) 100%)', 
+        background: 'linear-gradient(135deg, var(--card-bg) 0%, var(--glass-bg-extra-subtle, rgba(255,255,255,0.01)) 100%)', 
         border: '1px solid var(--card-border)', 
         boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
         ...style 
@@ -123,8 +123,8 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
           <button 
             onClick={handleJumpToToday}
             style={{ 
-              background: 'rgba(255,255,255,0.03)', 
-              border: '1px solid rgba(255,255,255,0.06)', 
+              background: 'var(--glass-bg-subtle, rgba(255,255,255,0.03))', 
+              border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', 
               borderRadius: '8px', 
               padding: '6px 12px',
               fontSize: '11px',
@@ -138,10 +138,10 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
             Today
           </button>
           <div style={{ display: 'flex', gap: '4px' }}>
-            <button onClick={handlePrevMonth} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={handlePrevMonth} style={{ background: 'var(--glass-bg-subtle, rgba(255,255,255,0.03))', border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               &larr;
             </button>
-            <button onClick={handleNextMonth} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button onClick={handleNextMonth} style={{ background: 'var(--glass-bg-subtle, rgba(255,255,255,0.03))', border: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               &rarr;
             </button>
           </div>
@@ -153,8 +153,8 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
         display: 'flex',
         gap: '24px',
         padding: '12px 16px',
-        background: 'rgba(255, 255, 255, 0.02)',
-        border: '1px solid rgba(255, 255, 255, 0.04)',
+        background: 'var(--glass-bg-flat, rgba(255, 255, 255, 0.02))',
+        border: '1px solid var(--glass-border-subtle, rgba(255, 255, 255, 0.04))',
         borderRadius: '12px',
         marginBottom: '20px',
         fontSize: '12px',
@@ -165,12 +165,12 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
           <span style={{ color: 'var(--text-muted)' }}>Bookings this month:</span>{' '}
           <strong style={{ color: 'var(--primary)' }}>{bookings.length}</strong>
         </div>
-        <div style={{ width: '1px', background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ width: '1px', background: 'var(--glass-border-subtle, rgba(255,255,255,0.08))' }} />
         <div>
           <span style={{ color: 'var(--text-muted)' }}>Pending Approval:</span>{' '}
           <strong style={{ color: '#fbbf24' }}>{bookings.filter(b => b.status === 'pending').length}</strong>
         </div>
-        <div style={{ width: '1px', background: 'rgba(255,255,255,0.08)' }} />
+        <div style={{ width: '1px', background: 'var(--glass-border-subtle, rgba(255,255,255,0.08))' }} />
         <div>
           <span style={{ color: 'var(--text-muted)' }}>Occupancy Rate:</span>{' '}
           <strong style={{ color: '#34d399' }}>78%</strong>
@@ -244,11 +244,11 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
                   style={{
                     minHeight: '90px',
                     borderRadius: '8px',
-                    border: isToday ? '1.5px solid var(--primary)' : '1px solid rgba(255,255,255,0.03)',
+                    border: isToday ? '1.5px solid var(--primary)' : '1px solid var(--glass-border-subtle, rgba(255,255,255,0.03))',
                     boxShadow: isToday ? '0 0 10px rgba(236,72,153,0.15)' : 'none',
                     background: isWeekend 
-                      ? 'rgba(255,255,255,0.02)' 
-                      : (cell.isCurrentMonth ? 'rgba(255,255,255,0.008)' : 'rgba(255,255,255,0.002)'),
+                      ? 'var(--glass-bg-flat, rgba(255,255,255,0.02))' 
+                      : (cell.isCurrentMonth ? 'var(--glass-bg-extra-subtle, rgba(255,255,255,0.008))' : 'var(--glass-bg-micro, rgba(255,255,255,0.002))'),
                     padding: '6px',
                     cursor: 'pointer',
                     display: 'flex',
@@ -265,7 +265,7 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
                     fontWeight: 800, 
                     color: isToday 
                       ? 'var(--primary)' 
-                      : (cell.isCurrentMonth ? 'var(--text-primary)' : 'rgba(255,255,255,0.15)'),
+                      : (cell.isCurrentMonth ? 'var(--text-primary)' : 'var(--text-muted-glass, rgba(255,255,255,0.15))'),
                     alignSelf: 'flex-start'
                   }}>
                     {cell.day}
@@ -303,7 +303,7 @@ export default function BookingCalendar({ bookings, onSelectDate, style }: Booki
                             gap: '4px',
                             padding: '2px 4px',
                             borderRadius: '4px',
-                            background: 'rgba(255, 255, 255, 0.04)',
+                            background: 'var(--glass-bg-subtle, rgba(255, 255, 255, 0.04))',
                             fontSize: '9px',
                             fontWeight: 700,
                             maxWidth: '100%',
