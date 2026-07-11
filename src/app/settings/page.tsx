@@ -1,10 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Logo from '@/components/Logo';
 import { useTheme } from '@/context/ThemeContext';
+
+// Static imports of all 26 settings subpages for instant dev compiling & loading
+import AccessibilityPage from './accessibility/page';
+import AccountCenterPage from './account/page';
+import AccountTypePage from './account-type/page';
+import ArchivingPage from './archiving/page';
+import BlockedAccountsPage from './blocked/page';
+import InnerCirclePage from './close-friends/page';
+import CommentsPage from './comments/page';
+import ContentPreferencesPage from './content-preferences/page';
+import HelpScamProtectionPage from './help/page';
+import HiddenWordsPage from './hidden-words/page';
+import LanguagePage from './language/page';
+import LikeShareCountsPage from './like-share-counts/page';
+import MessagesStoryRepliesPage from './messages/page';
+import MutedAccountsPage from './muted/page';
+import NotificationsPage from './notifications/page';
+import AccountPrivacyPage from './privacy/page';
+import PrivacyCenterPage from './privacy-center/page';
+import EditProfilePage from './profile/page';
+import RestrictedAccountsPage from './restricted/page';
+import SharingPage from './sharing/page';
+import AccountStatusPage from './status/page';
+import StoryLocationPrivacyPage from './story-location/page';
+import CreatorSubscriptionsPage from './subscriptions/page';
+import TagsMentionsPage from './tags-mentions/page';
+import TravoraVerifiedPage from './verified/page';
+import WebsitePermissionsPage from './website-permissions/page';
 
 interface SettingsRow {
   id: string;
@@ -22,7 +50,20 @@ interface SettingsSection {
 export default function SettingsLandingPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
   const { theme } = useTheme();
+  const [activeView, setActiveView] = useState<string | null>(null);
+
+  // Sync state with URL pathname instantly
+  useEffect(() => {
+    if (!pathname) return;
+    const slug = pathname.split('/').pop();
+    if (slug && slug !== 'settings') {
+      setActiveView(slug);
+    } else {
+      setActiveView(null);
+    }
+  }, [pathname]);
 
   const sections: SettingsSection[] = [
     {
@@ -401,6 +442,38 @@ export default function SettingsLandingPage() {
     })
     .filter(section => section.rows.length > 0);
 
+  if (activeView) {
+    switch (activeView) {
+      case 'accessibility': return <AccessibilityPage />;
+      case 'account': return <AccountCenterPage />;
+      case 'account-type': return <AccountTypePage />;
+      case 'archiving': return <ArchivingPage />;
+      case 'blocked': return <BlockedAccountsPage />;
+      case 'close-friends': return <InnerCirclePage />;
+      case 'comments': return <CommentsPage />;
+      case 'content-preferences': return <ContentPreferencesPage />;
+      case 'help': return <HelpScamProtectionPage />;
+      case 'hidden-words': return <HiddenWordsPage />;
+      case 'language': return <LanguagePage />;
+      case 'like-share-counts': return <LikeShareCountsPage />;
+      case 'messages': return <MessagesStoryRepliesPage />;
+      case 'muted': return <MutedAccountsPage />;
+      case 'notifications': return <NotificationsPage />;
+      case 'privacy': return <AccountPrivacyPage />;
+      case 'privacy-center': return <PrivacyCenterPage />;
+      case 'profile': return <EditProfilePage />;
+      case 'restricted': return <RestrictedAccountsPage />;
+      case 'sharing': return <SharingPage />;
+      case 'status': return <AccountStatusPage />;
+      case 'story-location': return <StoryLocationPrivacyPage />;
+      case 'subscriptions': return <CreatorSubscriptionsPage />;
+      case 'tags-mentions': return <TagsMentionsPage />;
+      case 'verified': return <TravoraVerifiedPage />;
+      case 'website-permissions': return <WebsitePermissionsPage />;
+      default: break;
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       {/* Title Header */}
@@ -507,7 +580,10 @@ export default function SettingsLandingPage() {
               {section.rows.map((row, rowIdx) => (
                 <div
                   key={row.id}
-                  onClick={() => router.push(row.path)}
+                  onClick={() => {
+                    setActiveView(row.id);
+                    window.history.pushState(null, '', row.path);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
