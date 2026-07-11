@@ -8158,6 +8158,13 @@ export default function Home() {
                       <rect x="3" y="14" width="7" height="7" />
                     </svg>
                     <span>POSTS</span>
+                    {profileTab === 'posts' && (
+                      <motion.div 
+                        layoutId="activeTabUnderline" 
+                        className="profile-tab-active-line"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </button>
                   
                   <button 
@@ -8168,6 +8175,13 @@ export default function Home() {
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                     </svg>
                     <span>SAVED</span>
+                    {profileTab === 'saved' && (
+                      <motion.div 
+                        layoutId="activeTabUnderline" 
+                        className="profile-tab-active-line"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </button>
                   
                   <button 
@@ -8178,6 +8192,13 @@ export default function Home() {
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                     <span>MILESTONES</span>
+                    {profileTab === 'milestones' && (
+                      <motion.div 
+                        layoutId="activeTabUnderline" 
+                        className="profile-tab-active-line"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </button>
                   
                   <button 
@@ -8191,13 +8212,27 @@ export default function Home() {
                       <circle cx="8" cy="21" r="1" fill="currentColor"/>
                     </svg>
                     <span>THE TRAIL</span>
+                    {profileTab === 'trail' && (
+                      <motion.div 
+                        layoutId="activeTabUnderline" 
+                        className="profile-tab-active-line"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
                   </button>
                 </div>
 
                 {/* 4. Tab Contents Grid */}
-                <div className="profile-tab-content-area">
-                  
-                  {/* TAB A: POSTS DYNAMIC POSTCARDS GRID */}
+                <div className="profile-tab-content-area" style={{ position: 'relative', overflow: 'hidden' }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={profileTab}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -15 }}
+                      transition={{ duration: 0.22, ease: 'easeInOut' }}
+                    >
+                      {/* TAB A: POSTS DYNAMIC POSTCARDS GRID */}
                   {profileTab === 'posts' && (
                     <div className="profile-media-grid">
                       {userPosts.map((post) => (
@@ -8728,7 +8763,8 @@ export default function Home() {
                       }}
                     />
                   )}
-
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
                 {/* --- MODAL 1: TRAVEL STORIES STORY HIGHLIGHT VIEWER CAROUSEL (Fixed AnimatePresence) --- */}

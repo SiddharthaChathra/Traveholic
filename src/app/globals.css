@@ -6377,8 +6377,6 @@ input:checked + .slider:before {
   letter-spacing: 1.2px;
   cursor: pointer;
   position: relative;
-  border-top: 1.5px solid transparent;
-  margin-top: -1.5px;
   transition: all 0.2s ease;
 }
 
@@ -6388,7 +6386,17 @@ input:checked + .slider:before {
 
 .profile-tab-btn.active {
   color: #ffffff;
-  border-top-color: #ffffff;
+}
+
+/* Shifting dynamic active tab underline */
+.profile-tab-active-line {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
 }
 
 /* Tab Content area styling */
