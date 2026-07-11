@@ -624,7 +624,7 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '10px', textTransform: 'uppercase', tracking: '2px', letterSpacing: '2px', color: 'var(--primary)', fontWeight: 800 }}>
+            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary)', fontWeight: 800 }}>
               Cinematic Travel log
             </span>
             <h3 style={{ fontSize: '26px', fontWeight: 900, margin: 0, color: 'var(--text-primary)', fontFamily: 'var(--font-title)', letterSpacing: '-0.5px' }}>
@@ -1597,7 +1597,7 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
                 </div>
 
                 {/* Collage Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', autoRows: '160px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', gridAutoRows: '160px' }}>
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
                     style={{ gridColumn: 'span 2', gridRow: 'span 2', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', cursor: 'pointer' }}
