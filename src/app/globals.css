@@ -6377,7 +6377,7 @@ input:checked + .slider:before {
   letter-spacing: 1.2px;
   cursor: pointer;
   position: relative;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 .profile-tab-btn:hover {

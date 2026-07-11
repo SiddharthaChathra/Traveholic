@@ -8227,10 +8227,10 @@ export default function Home() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={profileTab}
-                      initial={{ opacity: 0, y: 15 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -15 }}
-                      transition={{ duration: 0.22, ease: 'easeInOut' }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15, ease: 'easeInOut' }}
                     >
                       {/* TAB A: POSTS DYNAMIC POSTCARDS GRID */}
                   {profileTab === 'posts' && (
