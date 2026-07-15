@@ -25,6 +25,11 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
   const [features, setFeatures] = useState<string[]>(initialData?.features || ['Breakfast included', 'Welcome drinks', 'Free WiFi']);
   const [newFeature, setNewFeature] = useState('');
 
+  // Vlogger Group Trip States
+  const [isGroupTrip, setIsGroupTrip] = useState(initialData?.isGroupTrip || false);
+  const [minTravelers, setMinTravelers] = useState(initialData?.minTravelers || 5);
+  const [hostCommission, setHostCommission] = useState(initialData?.hostCommission || 10);
+
   const handleAddFeature = () => {
     if (newFeature.trim() && !features.includes(newFeature)) {
       setFeatures([...features, newFeature.trim()]);
@@ -49,7 +54,10 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
         transport: includesTransport,
         guide: includesGuide
       },
-      features
+      features,
+      isGroupTrip,
+      minTravelers: isGroupTrip ? Number(minTravelers) : null,
+      hostCommission: isGroupTrip ? Number(hostCommission) : null
     });
   };
 
@@ -178,6 +186,44 @@ export default function PackageBuilder({ onSave, initialData }: PackageBuilderPr
             />
           ))}
         </div>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--glass-border-subtle, rgba(255,255,255,0.06))', paddingTop: '20px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isGroupTrip ? '16px' : '0' }}>
+          <div>
+            <span style={{ fontSize: '13px', fontWeight: 600, display: 'block', color: 'var(--text-primary)' }}>Co-Host Vlogger Group Trip</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Flag this itinerary for crowdfunding group packages</span>
+          </div>
+          <ToggleSwitch checked={isGroupTrip} onChange={setIsGroupTrip} />
+        </div>
+
+        {isGroupTrip && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '12px' }}>
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 600 }}>Min Travelers Needed</label>
+              <input 
+                type="number" 
+                value={minTravelers} 
+                onChange={(e) => setMinTravelers(Number(e.target.value))} 
+                min={2}
+                required 
+                style={{ width: '100%', padding: '12px', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'block', marginBottom: '8px', fontSize: '12px', fontWeight: 600 }}>Host Commission (%)</label>
+              <input 
+                type="number" 
+                value={hostCommission} 
+                onChange={(e) => setHostCommission(Number(e.target.value))} 
+                min={0}
+                max={50}
+                required 
+                style={{ width: '100%', padding: '12px', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '10px', color: 'var(--text-primary)', outline: 'none' }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <motion.button 

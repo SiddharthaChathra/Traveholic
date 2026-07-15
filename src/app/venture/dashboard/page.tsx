@@ -10,7 +10,35 @@ export default function VentureDashboardPage() {
   const chartDataRevenue = [12000, 14500, 13000, 16000, 15000, 17500, 16500, 19000, 18000, 21000, 19500, 24500];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  const [extraRevenue, setExtraRevenue] = React.useState(0);
+  const [extraBookings, setExtraBookings] = React.useState(0);
+  const [recentBookings, setRecentBookings] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('traveholic_bookings');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const rev = parsed.reduce((sum: number, b: any) => sum + b.price, 0);
+      setExtraRevenue(rev);
+      setExtraBookings(parsed.length);
+      setRecentBookings(parsed);
+    }
+  }, []);
+
   const activities = [
+    ...recentBookings.map((b: any) => ({
+      id: b.id,
+      type: 'booking',
+      title: `Referral Booking at ${b.hotel.split(',')[0]}`,
+      desc: `${b.guests} guests • Code: ${b.referralCode} • Comm: $${b.commission}`,
+      time: 'Just now',
+      color: '#10b981',
+      icon: (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      )
+    })),
     {
       id: 'act-1',
       type: 'booking',
@@ -70,13 +98,13 @@ export default function VentureDashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
         <StatCard 
           title="TODAY'S BOOKINGS" 
-          value={12} 
+          value={12 + extraBookings} 
           icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>}
           trend={{ value: 8.5, isPositive: true }}
         />
         <StatCard 
           title="REVENUE THIS MONTH" 
-          value={24500} 
+          value={24500 + extraRevenue} 
           prefix="$"
           icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
           trend={{ value: 12.3, isPositive: true }}

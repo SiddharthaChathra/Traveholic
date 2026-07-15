@@ -198,6 +198,43 @@ export default function SponsorshipCard({
               </span>
             ))}
           </div>
+
+          {/* Verified Milestones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.5px' }}>VERIFIED ELIGIBILITY BADGES</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {traveler.username === 'sophia_travels' && (
+                <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#f59e0b' }}>
+                    🏅 First Flight
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(71,85,105,0.1)', border: '1px solid rgba(71,85,105,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#94a3b8' }}>
+                    🌙 Night Owl
+                  </span>
+                </>
+              )}
+              {traveler.username === 'marcus_vlogs' && (
+                <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(71,85,105,0.1)', border: '1px solid rgba(71,85,105,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#94a3b8' }}>
+                    🌙 Night Owl
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#f43f5e' }}>
+                    💖 Local Fav
+                  </span>
+                </>
+              )}
+              {traveler.username === 'jenna_explores' && (
+                <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#f59e0b' }}>
+                    🏅 First Flight
+                  </span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', padding: '2px 8px', borderRadius: '20px', fontSize: '9px', fontWeight: 600, color: '#ec4899' }}>
+                    🌍 Culture Seeker
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

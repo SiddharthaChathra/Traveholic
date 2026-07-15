@@ -100,6 +100,7 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
   const [hoveredStopId, setHoveredStopId] = useState<string | null>(null);
   const [convertingStopId, setConvertingStopId] = useState<string | null>(null);
   const [showCollageStop, setShowCollageStop] = useState<TrailStop | null>(null);
+  const [trailBookingSuccess, setTrailBookingSuccess] = useState<string | null>(null);
 
   // Form variables
   const [formName, setFormName] = useState('');
@@ -1144,15 +1145,79 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
-                      Kyoto represents untapped exploration territory! Plan your stays, hotels, and custom travel guide.
-                    </p>
-
-                    {activeStop.inspiration && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Inspiration:</span>
-                        <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>{activeStop.inspiration}</span>
+                    {trailBookingSuccess === activeStop.id ? (
+                      <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '16px', borderRadius: '12px', textAlign: 'center', color: '#34d399', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <span style={{ fontSize: '24px' }}>🎉</span>
+                        <strong>Stay Booked &amp; Confirmed!</strong>
+                        <span>Your reservation at <strong>{activeStop.name.includes('Kyoto') ? 'Zen Garden Sanctuary Boutique Hotel' : activeStop.name.includes('Zermatt') ? 'Matterhorn Peak Grand Chalet & Spa' : activeStop.name.includes('Santorini') ? 'Caldera Cliffside Luxury Cave Suite' : activeStop.name.includes('Petra') ? 'Treasury View Heritage Hotel' : 'Venture Partner Luxury Eco Lodge'}</strong> is locked in using referral code.</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Commission split has been sent to the referring creator. Check your vouchers page.</span>
                       </div>
+                    ) : (
+                      <>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                          {activeStop.name} represents untapped exploration territory! Plan your stays, hotels, and custom travel guide.
+                        </p>
+
+                        {activeStop.inspiration && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--card-border)' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Inspiration:</span>
+                            <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>{activeStop.inspiration}</span>
+                          </div>
+                        )}
+
+                        {/* Partner Deal Booking Section */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', marginTop: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                              <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#10b981', fontWeight: 800, letterSpacing: '0.5px', display: 'block', marginBottom: '2px' }}>⚡ PARTNER DEAL</span>
+                              <strong style={{ fontSize: '12px', color: 'white', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {activeStop.name.includes('Kyoto') ? 'Zen Garden Sanctuary Boutique Hotel' : activeStop.name.includes('Zermatt') ? 'Matterhorn Peak Grand Chalet & Spa' : activeStop.name.includes('Santorini') ? 'Caldera Cliffside Luxury Cave Suite' : activeStop.name.includes('Petra') ? 'Treasury View Heritage Hotel' : 'Venture Partner Luxury Eco Lodge'}
+                              </strong>
+                            </div>
+                            <span style={{ fontSize: '13px', fontWeight: 800, color: '#10b981', marginLeft: '12px' }}>
+                              ${activeStop.name.includes('Kyoto') ? 150 : activeStop.name.includes('Zermatt') ? 280 : activeStop.name.includes('Santorini') ? 340 : activeStop.name.includes('Petra') ? 190 : 120}/night
+                            </span>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              const price = activeStop.name.includes('Kyoto') ? 150 : activeStop.name.includes('Zermatt') ? 280 : activeStop.name.includes('Santorini') ? 340 : activeStop.name.includes('Petra') ? 190 : 120;
+                              const hotel = activeStop.name.includes('Kyoto') ? 'Zen Garden Sanctuary Boutique Hotel' : activeStop.name.includes('Zermatt') ? 'Matterhorn Peak Grand Chalet & Spa' : activeStop.name.includes('Santorini') ? 'Caldera Cliffside Luxury Cave Suite' : activeStop.name.includes('Petra') ? 'Treasury View Heritage Hotel' : 'Venture Partner Luxury Eco Lodge';
+                              const subtotal = price * 3;
+                              const currentBookings = JSON.parse(localStorage.getItem('traveholic_bookings') || '[]');
+                              currentBookings.push({
+                                id: 'book-trail-' + Date.now(),
+                                hotel: hotel,
+                                price: Number((subtotal * 1.1).toFixed(2)),
+                                referralCode: 'TRAIL_DISCOVER',
+                                commission: Number((subtotal * 0.05).toFixed(2)),
+                                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                                guests: 2
+                              });
+                              localStorage.setItem('traveholic_bookings', JSON.stringify(currentBookings));
+                              setTrailBookingSuccess(activeStop.id);
+                              triggerConfetti('#10b981');
+                            }}
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: 'white',
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              padding: '10px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              boxShadow: '0 4px 10px rgba(16,185,129,0.2)'
+                            }}
+                          >
+                            ⚡ Book Partner Stay Directly (3 Nights)
+                          </button>
+                        </div>
+                      </>
                     )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
@@ -1161,7 +1226,7 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
                       <button
                         onClick={() => {
                           setActiveStop(null);
-                          if (onOpenChatWithItinerary) onOpenChatWithItinerary(activeStop.name);
+                          window.location.href = `/trip-planner/${encodeURIComponent(activeStop.name.split(',')[0].trim().toLowerCase())}`;
                         }}
                         className="btn-primary"
                         style={{ 
@@ -1172,10 +1237,11 @@ export default function TheTrail({ onZoomToDestination, onOpenChatWithItinerary 
                           fontWeight: 700,
                           background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
                           border: 'none',
-                          boxShadow: '0 4px 15px rgba(236,72,153,0.25)'
+                          boxShadow: '0 4px 15px rgba(236,72,153,0.25)',
+                          cursor: 'pointer'
                         }}
                       >
-                        Plan This Trip with Chatbot &rarr;
+                        Plan This Trip &rarr;
                       </button>
 
                       <div style={{ display: 'flex', gap: '10px' }}>

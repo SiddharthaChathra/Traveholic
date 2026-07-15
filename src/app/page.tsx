@@ -217,6 +217,46 @@ const followRequestsPanelVariants = {
   }
 };
 
+// Futuristic Share Dropdown Animation Variants
+const shareDropdownVariants = {
+  collapsed: {
+    height: 0,
+    opacity: 0,
+    scale: 0.95,
+    y: 10,
+    filter: 'blur(4px)',
+    transition: {
+      height: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as any },
+      opacity: { duration: 0.15 },
+      scale: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as any },
+      y: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as any },
+      filter: { duration: 0.15 }
+    }
+  },
+  expanded: {
+    height: 'auto',
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    borderColor: ['rgba(139, 92, 246, 0.8)', 'rgba(139, 92, 246, 0.3)', 'rgba(255, 255, 255, 0.08)'],
+    boxShadow: [
+      '0 0 15px rgba(139, 92, 246, 0.4), inset 0 0 8px rgba(139, 92, 246, 0.2)',
+      '0 0 8px rgba(139, 92, 246, 0.15)',
+      '0 4px 16px rgba(0, 0, 0, 0.15)'
+    ],
+    transition: {
+      height: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as any },
+      opacity: { duration: 0.2 },
+      scale: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as any },
+      y: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as any },
+      filter: { duration: 0.2 },
+      borderColor: { duration: 0.8, times: [0, 0.4, 1] },
+      boxShadow: { duration: 0.8, times: [0, 0.5, 1] }
+    }
+  }
+};
+
 const requestItemVariants = {
   collapsed: { opacity: 0, y: -4 },
   expanded: { 
@@ -724,6 +764,207 @@ export default function Home() {
   const [viewerChatMessages, setViewerChatMessages] = useState<Array<{ id: string; user: string; text: string; isVerified?: boolean; avatarColor: string }>>([]);
   const [viewerChatMessageInput, setViewerChatMessageInput] = useState('');
 
+  // Shared & follow states for live viewer modal
+  const [followedCreators, setFollowedCreators] = useState<string[]>([]);
+  const [showShareDropdown, setShowShareDropdown] = useState(false);
+  const [shareScreen, setShareScreen] = useState<'main' | 'messages'>('main');
+  const [isCopied, setIsCopied] = useState(false);
+  const shareDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Custom video player control states
+  const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+  const [videoVolume, setVideoVolume] = useState(0.8);
+  const [isVolumeHovered, setIsVolumeHovered] = useState(false);
+  const [videoQuality, setVideoQuality] = useState('720p');
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const qualityOptions = ['1080p', '720p', '480p', 'Auto'];
+  const [showPlayerControls, setShowPlayerControls] = useState(true);
+  const [isLiveEdge, setIsLiveEdge] = useState(true);
+  const [playbackTime, setPlaybackTime] = useState(100);
+
+  // Heart reactions states
+  const [localHearts, setLocalHearts] = useState<Array<{ id: number; x: number; y: number; color: string }>>([]);
+  const [otherHearts, setOtherHearts] = useState<Array<{ id: number; x: number; color: string }>>([]);
+  const [reactionCount, setReactionCount] = useState(1420);
+
+  // Chat Panel collapsible state
+  const [isChatPanelOpen, setIsChatPanelOpen] = useState(true);
+  const [isAutoTooltipHovered, setIsAutoTooltipHovered] = useState(false);
+  const [isAutoScrollActive, setIsAutoScrollActive] = useState(true);
+  const [isCaptionsEnabled, setIsCaptionsEnabled] = useState(false);
+  const [activeCaption, setActiveCaption] = useState("Welcome to the adventure! Let me know if you can hear me. 🏔️✈️");
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [selectedBookingListing, setSelectedBookingListing] = useState<any | null>(null);
+  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
+  const [bookingDates, setBookingDates] = useState({ checkIn: '2026-07-20', checkOut: '2026-07-23' });
+  const [selectedExploreDestination, setSelectedExploreDestination] = useState<any | null>(null);
+
+  // Refs
+  const viewerVideoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-hide controls handler
+  const handlePlayerMouseMove = () => {
+    setShowPlayerControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isVideoPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowPlayerControls(false);
+      }, 3000);
+    }
+  };
+
+  // Reset controls when switching streams
+  useEffect(() => {
+    if (viewerLiveStream) {
+      setIsVideoPlaying(true);
+      setIsLiveEdge(true);
+      setPlaybackTime(100);
+      setShowPlayerControls(true);
+      setIsChatPanelOpen(true);
+      setIsCaptionsEnabled(false);
+      setActiveCaption("Welcome to the adventure! Let me know if you can hear me. 🏔️✈️");
+      setReactionCount(1420 + Math.floor(Math.random() * 200));
+    }
+  }, [viewerLiveStream]);
+
+  // Synchronize playback play/pause state
+  const togglePlayPause = () => {
+    if (!viewerVideoRef.current) return;
+    if (isVideoPlaying) {
+      viewerVideoRef.current.pause();
+      setIsVideoPlaying(false);
+    } else {
+      viewerVideoRef.current.play().catch(() => {});
+      setIsVideoPlaying(true);
+    }
+    playUISound('click');
+  };
+
+  // Synchronize seek/progress change
+  const handleProgressChange = (val: number) => {
+    setPlaybackTime(val);
+    if (val >= 98) {
+      setIsLiveEdge(true);
+      if (viewerVideoRef.current) {
+        viewerVideoRef.current.currentTime = viewerVideoRef.current.duration || 0;
+      }
+    } else {
+      setIsLiveEdge(false);
+      if (viewerVideoRef.current && viewerVideoRef.current.duration) {
+        viewerVideoRef.current.currentTime = (val / 100) * viewerVideoRef.current.duration;
+      }
+    }
+  };
+
+  // Time progress updates
+  const handleTimeUpdate = () => {
+    if (!viewerVideoRef.current) return;
+    const current = viewerVideoRef.current.currentTime;
+    const duration = viewerVideoRef.current.duration || 1;
+    if (!isLiveEdge) {
+      setPlaybackTime((current / duration) * 100);
+    }
+  };
+
+  // Format seek-back time or current time offset
+  const formatOffset = () => {
+    if (isLiveEdge) return '01:42:08';
+    if (!viewerVideoRef.current) return '00:00';
+    const duration = viewerVideoRef.current.duration || 102;
+    const current = viewerVideoRef.current.currentTime;
+    const diff = duration - current;
+    const minutes = Math.floor(diff / 60);
+    const seconds = Math.floor(diff % 60);
+    return `-${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Spawn local heart on video container click
+  const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('input')) {
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const colors = ['#ec4899', '#f43f5e', '#ef4444', '#a855f7', '#3b82f6'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    const heartId = Date.now() + Math.random();
+    setLocalHearts(prev => [...prev, { id: heartId, x, y, color: randomColor }]);
+    setReactionCount(prev => prev + 1);
+    playUISound('tap');
+    
+    setTimeout(() => {
+      setLocalHearts(prev => prev.filter(h => h.id !== heartId));
+    }, 1500);
+  };
+
+  // Periodic automatic stream reactions from other users
+  useEffect(() => {
+    if (!viewerLiveStream) return;
+    const interval = setInterval(() => {
+      if (Math.random() > 0.4) {
+        const colors = ['#ec4899', '#f43f5e', '#ef4444', '#a855f7', '#10b981', '#f59e0b'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const heartId = Date.now() + Math.random();
+        const x = 70 + Math.random() * 20;
+        setOtherHearts(prev => [...prev, { id: heartId, x, color: randomColor }]);
+        setReactionCount(prev => prev + 1);
+        setTimeout(() => {
+          setOtherHearts(prev => prev.filter(h => h.id !== heartId));
+        }, 1800);
+      }
+    }, 1400);
+
+    return () => clearInterval(interval);
+  }, [viewerLiveStream]);
+
+  // Fullscreen toggle handler
+  const toggleFullscreen = () => {
+    playUISound('click');
+    if (!videoContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      videoContainerRef.current.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  // Captions generator rotation effect
+  useEffect(() => {
+    if (!isCaptionsEnabled) return;
+    const captionPhrases = [
+      "Welcome to the adventure! Let me know if you can hear me. 🏔️✈️",
+      "The view up here is absolutely breathtaking today...",
+      "We hiked for about 3 hours to reach this spot! 🎒",
+      "Look at those golden sunset rays hitting the peak! 🌅",
+      "If you're just joining, we are live from Chamonix, France!",
+      "Next up, we are heading down to the valley market. 🍕🛒",
+      "Thanks for all the hearts and support, travel buddies! 💖",
+      "Drop a comment if you've ever traveled here before!",
+      "The local guides here are absolutely amazing..."
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % captionPhrases.length;
+      setActiveCaption(captionPhrases[i]);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [isCaptionsEnabled]);
+
+  // Scroll chat messages box to bottom if auto-scroll is active
+  useEffect(() => {
+    if (isAutoScrollActive && chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [viewerChatMessages, isAutoScrollActive]);
+
   useEffect(() => {
     if (!viewerLiveStream) {
       setViewerChatMessages([]);
@@ -776,6 +1017,26 @@ export default function Home() {
 
     return () => clearInterval(chatInterval);
   }, [viewerLiveStream]);
+
+  // Close share dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (shareDropdownRef.current && !shareDropdownRef.current.contains(event.target as Node)) {
+        setShowShareDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Reset share screen view when dropdown closes
+  useEffect(() => {
+    if (!showShareDropdown) {
+      setShareScreen('main');
+    }
+  }, [showShareDropdown]);
 
   // Live Stream Dashboard States
   const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'nodata'>('connecting');
@@ -1596,6 +1857,65 @@ export default function Home() {
     { name: 'Amalfi Coast, Italy 🍋', count: '18.7k posts', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=300&auto=format&fit=crop&q=80', category: 'Cultural' }
   ];
 
+  // Verified Venture listings dataset
+  const travelVentureListings = [
+    {
+      id: 'list-1',
+      name: 'Grand Oceanfront Deluxe Suite',
+      image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&auto=format&fit=crop&q=80',
+      price: '$220 - $350 / night',
+      rating: 4.9,
+      reviewsCount: 142,
+      location: 'Nusa Dua, Bali',
+      category: 'Hotel Room',
+      associatedReelId: 'reel-ref-1'
+    },
+    {
+      id: 'list-2',
+      name: 'Forest Canopy Private Villa',
+      image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&auto=format&fit=crop&q=80',
+      price: '$450 - $780 / night',
+      rating: 4.8,
+      reviewsCount: 89,
+      location: 'Ubud, Bali',
+      category: 'Villa',
+      associatedReelId: 'reel-1'
+    },
+    {
+      id: 'list-3',
+      name: 'Tropical Garden Bungalow',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
+      price: '$120 - $180 / night',
+      rating: 4.6,
+      reviewsCount: 54,
+      location: 'Seminyak, Bali',
+      category: 'Bungalow',
+      associatedReelId: 'reel-ref-2'
+    },
+    {
+      id: 'list-4',
+      name: 'Aurora Glass Cabin',
+      image: 'https://images.unsplash.com/photo-1518602164578-cd007474d88e?w=600&auto=format&fit=crop&q=80',
+      price: '$290 - $480 / night',
+      rating: 4.95,
+      reviewsCount: 104,
+      location: 'Reykjavik, Iceland',
+      category: 'Cabin',
+      associatedReelId: 'reel-2'
+    },
+    {
+      id: 'list-5',
+      name: 'Manali Alpine Retreat',
+      image: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&auto=format&fit=crop&q=80',
+      price: '$80 - $150 / night',
+      rating: 4.7,
+      reviewsCount: 76,
+      location: 'Manali, Himachal Pradesh',
+      category: 'Cottage',
+      associatedReelId: 'reel-3'
+    }
+  ];
+
   // Creator state
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostLocation, setNewPostLocation] = useState('');
@@ -2120,21 +2440,56 @@ export default function Home() {
     // AI Responses
     setTimeout(() => {
       let aiText = '';
+      let listingId: string | undefined = undefined;
       const textLower = userText.toLowerCase();
 
       if (textLower.includes('itinerary') || textLower.includes('plan')) {
         aiText = '🗺️ **Recommended 3-Day Travel Itinerary:**\n\n**Day 1: Cultural Sightseeing**\n- Morning: Historical walk around town.\n- Afternoon: Local marketplace food tour.\n- Evening: Catch a sunset at the mountain terrace.\n\n**Day 2: Wilderness Trail**\n- Morning: Trek towards waterfalls or cliffs.\n- Afternoon: Refresh at a lake picnic.\n- Evening: Fireside dinner under the stars.\n\n**Day 3: Connect & Chill**\n- Morning: Cozy local cafes.\n- Afternoon: Social group tour with local Travora buddies!';
+      } else if (textLower.includes('hotel') || textLower.includes('stay') || textLower.includes('book') || textLower.includes('villa') || textLower.includes('resort') || textLower.includes('accommodation') || textLower.includes('room')) {
+        aiText = '🏨 I found a verified property matching your style that you can book directly in this chat! It offers a signature gradient discount for Travora travelers:';
+        if (textLower.includes('manali')) {
+          listingId = 'list-5';
+        } else if (textLower.includes('iceland') || textLower.includes('reykjavik')) {
+          listingId = 'list-4';
+        } else if (textLower.includes('seminyak')) {
+          listingId = 'list-3';
+        } else {
+          listingId = 'list-2'; // Ubud Bali Forest Canopy Private Villa
+        }
       } else if (textLower.includes('bali') || textLower.includes('ubud')) {
-        aiText = '🌴 **Bali Travel Tips:**\n- **Places:** Tegallalang rice fields, Kanto Lampo waterfall, Uluwatu cliff temple.\n- **Buddy Connect:** Connect with @wanderlust_jenny who is active in Ubud right now!\n- **Safety:** Rent a motorbike, but always keep a digital license on your phone.';
+        aiText = '🌴 **Bali Travel Tips:**\n- **Places:** Tegallalang rice fields, Kanto Lampo waterfall.\n- **Stay Offer:** Forest Canopy Private Villa in Ubud is bookable directly! Ask me about stays in Bali.\n- **Buddy Connect:** Connect with @wanderlust_jenny who is active in Ubud right now!';
+        listingId = 'list-2';
       } else if (textLower.includes('manali') || textLower.includes('himachal')) {
-        aiText = '🏔️ **Manali Guide:**\n- **Must See:** Jogini Falls, Solang Valley, Hampta trekking camp.\n- **Local Buddy:** @backpacker_sam is climbing nearby peaks and sharing live updates!\n- **Dish:** Siddu with melted ghee is a local warm delight.';
-      } else if (textLower.includes('goa')) {
-        aiText = '🌊 **Goa Recommendations:**\n- **Beaches:** Palolem (quiet South) or Arambol (creative North).\n- **Stays:** Private villas via @stay_luxury_bali (direct in-app chat).\n- **Vibe:** Sunset drums at Arambol sweet lake is a must!';
+        aiText = '🏔️ **Manali Guide:**\n- **Must See:** Jogini Falls, Solang Valley.\n- **Stay Offer:** Manali Alpine Retreat is bookable directly! Ask me to book stays in Manali.\n- **Local Buddy:** @backpacker_sam is active nearby!';
+        listingId = 'list-5';
+      } else if (textLower.includes('goa') || textLower.includes('seminyak')) {
+        aiText = '🌊 **Goa & Seminyak Guide:**\n- **Beaches:** Palolem or Arambol.\n- **Stay Offer:** Tropical Garden Bungalow is bookable directly! Ask me to find stays in Seminyak.\n- **Vibe:** Sunset beach cafes are a must!';
+        listingId = 'list-3';
+      } else if (textLower.includes('iceland') || textLower.includes('reykjavik')) {
+        aiText = '❄️ **Reykjavik Guide:**\n- **Must See:** Blue Lagoon, Northern Lights.\n- **Stay Offer:** Aurora Glass Cabin is bookable directly! Ask me to find stays in Reykjavik.\n- **Vibe:** Glacier hikes and waterfalls!';
+        listingId = 'list-4';
       } else {
-        aiText = '✈️ That sounds like a wonderful adventure! I recommend connecting with travel buddies like @backpacker_sam or @wanderlust_jenny who have visited similar spots recently. \n\nLet me know if you need specific packing lists, weather forecasts, or hotel recommendations!';
+        aiText = '✈️ That sounds like a wonderful adventure! If you would like to book a stay, just ask me to "show hotels" or "find a villa" to browse verified Ventures in our marketplace.\n\nLet me know if you need specific packing lists, weather forecasts, or hotel recommendations!';
       }
 
-      setAiChatMessages((prev) => [...prev, { sender: 'ai' as const, text: aiText }]);
+      let destination: string | undefined = undefined;
+      if (textLower.includes('bali') || textLower.includes('ubud')) {
+        destination = 'Bali';
+      } else if (textLower.includes('manali')) {
+        destination = 'Manali';
+      } else if (textLower.includes('goa') || textLower.includes('seminyak')) {
+        destination = 'Seminyak';
+      } else if (textLower.includes('iceland') || textLower.includes('reykjavik')) {
+        destination = 'Reykjavik';
+      } else if (textLower.includes('paris')) {
+        destination = 'Paris';
+      } else if (textLower.includes('amalfi')) {
+        destination = 'Amalfi';
+      } else if (textLower.includes('plan') || textLower.includes('trip') || textLower.includes('itinerary')) {
+        destination = 'Bali';
+      }
+
+      setAiChatMessages((prev) => [...prev, { sender: 'ai' as const, text: aiText, listingId, destination }]);
       setAiTyping(false);
     }, 1200);
   };
@@ -3443,6 +3798,22 @@ export default function Home() {
                 <span className="instagram-sidebar-item-label">Create</span>
               </button>
 
+              {/* Trip Planner */}
+              <button 
+                className="instagram-sidebar-item"
+                onClick={() => {
+                  router.push('/trip-planner');
+                }}
+              >
+                <span className="instagram-sidebar-item-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </span>
+                <span className="instagram-sidebar-item-label">Trip Planner</span>
+              </button>
+
               {/* Profile */}
               <button 
                 className={`instagram-sidebar-item ${activeTab === 'profile' && !showSearchDrawer && !showNotificationsDrawer ? 'active' : ''}`}
@@ -3527,7 +3898,7 @@ export default function Home() {
                     <span>{theme === 'light' ? '🌙' : '☀️'}</span> Switch Appearance
                   </button>
                   <div style={{ height: '1px', background: 'var(--card-border)', margin: '4px 0' }} />
-                  <button className="instagram-more-menu-item" style={{ color: '#ef4444' }} onClick={() => { logout(); setShowMoreMenu(false); }}>
+                  <button className="instagram-more-menu-item" style={{ color: '#ef4444' }} onClick={() => { setShowLogoutConfirm(true); setShowMoreMenu(false); playUISound('click'); }}>
                     <span>🚪</span> Log Out
                   </button>
                 </div>
@@ -4303,7 +4674,7 @@ export default function Home() {
                           gap: '14px', 
                           padding: '12px 16px', 
                           borderRadius: '16px', 
-                          background: 'rgba(255, 255, 255, 0.03)', 
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)', 
                           border: '1px solid var(--card-border)',
                           marginBottom: '16px', 
                           position: 'relative',
@@ -4311,7 +4682,7 @@ export default function Home() {
                           transition: 'background-color 0.25s ease'
                         }}
                         whileHover={{ 
-                          background: 'rgba(255, 255, 255, 0.06)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.06)',
                           borderColor: 'rgba(255, 255, 255, 0.12)' 
                         }}
                         onClick={() => setShowSwitchDropdown(!showSwitchDropdown)}
@@ -4415,11 +4786,11 @@ export default function Home() {
                           <motion.button 
                             animate={{ scale: isSwitchCompressing ? 0.96 : 1 }}
                             transition={{ duration: 0.08, ease: 'easeOut' }}
-                            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }}
+                            whileHover={{ scale: 1.04, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.18)' }}
                             whileTap={{ scale: 0.96 }}
                             onClick={handleSwitchToggle}
                             style={{
-                              background: 'rgba(255, 255, 255, 0.03)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.03)',
                               border: '1px solid rgba(255, 255, 255, 0.1)',
                               color: 'var(--text-primary)',
                               fontSize: '10px',
@@ -4766,6 +5137,64 @@ export default function Home() {
                                   <span className="music-text-scroll">{reel.soundtrack}</span>
                                 </div>
                               </div>
+
+                              {/* Venture Product Association Pill */}
+                              {(() => {
+                                const associatedListing = travelVentureListings.find(l => l.associatedReelId === reel.id);
+                                if (!associatedListing) return null;
+                                return (
+                                  <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                    onClick={() => setSelectedBookingListing(associatedListing)}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                      padding: '8px 12px',
+                                      background: 'rgba(255, 255, 255, 0.08)',
+                                      backdropFilter: 'blur(16px)',
+                                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                                      borderRadius: '10px',
+                                      marginTop: '12px',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                      width: 'fit-content',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.14)';
+                                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                                      e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                      e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                  >
+                                    <div style={{
+                                      width: '24px',
+                                      height: '24px',
+                                      borderRadius: '6px',
+                                      backgroundImage: `url(${associatedListing.image})`,
+                                      backgroundSize: 'cover',
+                                      backgroundPosition: 'center',
+                                    }} />
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#ec4899', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                                        Verified Venture Offer
+                                      </span>
+                                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                        Stay at {associatedListing.name.length > 24 ? associatedListing.name.slice(0, 24) + '...' : associatedListing.name}
+                                      </span>
+                                    </div>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: '4px', color: 'rgba(255,255,255,0.7)' }}>
+                                      <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                  </motion.div>
+                                );
+                              })()}
 
                             </div>
                           </div>
@@ -5458,7 +5887,9 @@ export default function Home() {
                                 onMouseEnter={() => setHoveredDestinationName(dest.name)}
                                 onMouseLeave={() => setHoveredDestinationName(null)}
                                 onClick={() => {
+                                  setSelectedExploreDestination(dest);
                                   setSelectedDestinationName(dest.name);
+                                  playUISound('tap');
                                 }}
                               >
                                 <img src={dest.img} alt={dest.name} style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
@@ -5531,7 +5962,7 @@ export default function Home() {
                               }
                             }}
                             onClick={() => {
-                              setSearchQuery(dest.name.split(',')[0]);
+                              setSelectedExploreDestination(dest);
                               playUISound('tap');
                             }}
                           >
@@ -7900,7 +8331,10 @@ export default function Home() {
                                 whileHover={{ scale: 1.05, background: 'rgba(239,68,68,0.1)' }}
                                 whileTap={{ scale: 0.95 }}
                                 className="profile-icon-action-btn logout-btn-red"
-                                onClick={logout}
+                                onClick={() => {
+                                  setShowLogoutConfirm(true);
+                                  playUISound('click');
+                                }}
                                 title="Log Out"
                               >
                                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -8858,14 +9292,121 @@ export default function Home() {
             </div>
             
             <div className="ai-chatbot-messages">
-              {aiChatMessages.map((msg, idx) => (
-                <div key={idx} className={`ai-chat-bubble ${msg.sender === 'ai' ? 'ai' : 'user'}`}>
-                  {msg.text.split('\n').map((line, lineIdx) => {
-                    if (line.startsWith('**') || line.startsWith('-')) {
-                      return <div key={lineIdx} style={{ margin: '4px 0', fontWeight: line.startsWith('**') ? 'bold' : 'normal' }}>{line.replace(/\*\*/g, '')}</div>;
-                    }
-                    return <p key={lineIdx} style={{ margin: '2px 0' }}>{line}</p>;
-                  })}
+              {aiChatMessages.map((msg: any, idx) => (
+                <div key={idx} className={`ai-chat-bubble ${msg.sender === 'ai' ? 'ai' : 'user'}`} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div>
+                    {msg.text.split('\n').map((line: string, lineIdx: number) => {
+                      if (line.startsWith('**') || line.startsWith('-')) {
+                        return <div key={lineIdx} style={{ margin: '4px 0', fontWeight: line.startsWith('**') ? 'bold' : 'normal' }}>{line.replace(/\*\*/g, '')}</div>;
+                      }
+                      return <p key={lineIdx} style={{ margin: '2px 0' }}>{line}</p>;
+                    })}
+                  </div>
+
+                  {msg.listingId && (() => {
+                    const listing = travelVentureListings.find(l => l.id === msg.listingId);
+                    if (!listing) return null;
+                    return (
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '12px',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          marginTop: '6px',
+                          width: '100%',
+                          maxWidth: '280px',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <div style={{
+                          height: '90px',
+                          backgroundImage: `url(${listing.image})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          borderRadius: '8px',
+                          position: 'relative'
+                        }}>
+                          <span style={{
+                            position: 'absolute',
+                            top: '6px',
+                            left: '6px',
+                            background: 'rgba(236,72,153,0.9)',
+                            color: 'white',
+                            fontSize: '8px',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            textTransform: 'uppercase'
+                          }}>
+                            {listing.category}
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '11px', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {listing.name}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: 'var(--text-secondary)' }}>
+                          <span style={{ fontWeight: 700, color: '#ec4899' }}>{listing.price.split(' ')[0]} / night</span>
+                          <span>★ {listing.rating}</span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBookingListing(listing);
+                            setAiChatOpen(false);
+                            playUISound('click');
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: 'white',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            width: '100%'
+                          }}
+                        >
+                          Book Stay Now
+                        </button>
+                      </div>
+                    );
+                  })()}
+
+                  {msg.destination && (
+                    <button
+                      onClick={() => {
+                        setAiChatOpen(false);
+                        router.push(`/trip-planner/${encodeURIComponent(msg.destination.toLowerCase())}`);
+                      }}
+                      style={{
+                        padding: '10px 16px',
+                        background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        width: '100%',
+                        marginTop: '8px',
+                        boxShadow: '0 4px 12px rgba(236,72,153,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      Open full trip planner for {msg.destination} &rarr;
+                    </button>
+                  )}
                 </div>
               ))}
               {aiTyping && (
@@ -9259,6 +9800,40 @@ export default function Home() {
             }}
             onClick={() => setViewerLiveStream(null)}
           >
+            {/* Exit-to-Dashboard Close Button */}
+            <motion.button 
+              onClick={(e) => {
+                e.stopPropagation();
+                playUISound('click');
+                setViewerLiveStream(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                left: '24px',
+                zIndex: 100000,
+                background: 'rgba(15, 11, 25, 0.7)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              }}
+              whileHover={{ scale: 1.08, borderColor: 'rgba(255, 255, 255, 0.25)', background: 'rgba(255, 255, 255, 0.08)' }}
+              whileTap={{ scale: 0.94 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+            </motion.button>
+
             <motion.div
               key="travora-live-modal-content"
               initial={{ opacity: 0, scale: 0.96, y: 20 }}
@@ -9293,56 +9868,518 @@ export default function Home() {
                 </div>
 
                 {/* Video Box Container */}
-                <div style={{ flex: 1, background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div 
+                  ref={videoContainerRef}
+                  onMouseMove={handlePlayerMouseMove}
+                  onMouseLeave={() => {
+                    if (isVideoPlaying) {
+                      setShowPlayerControls(false);
+                    }
+                  }}
+                  onClick={handleVideoClick}
+                  style={{ flex: 1, background: '#000', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: 'pointer' }}
+                >
                   <video 
+                    ref={viewerVideoRef}
                     src={viewerLiveStream.videoUrl} 
                     autoPlay 
                     loop 
-                    muted={viewerLiveStream.isMuted} 
+                    muted={videoVolume === 0}
+                    onTimeUpdate={handleTimeUpdate}
                     playsInline 
                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
-                  
-                  {/* Player control overlay bar */}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%)', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <button style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                          <rect x="6" y="4" width="4" height="16" rx="1" />
-                          <rect x="14" y="4" width="4" height="16" rx="1" />
-                        </svg>
-                      </button>
 
-                      {/* Volume */}
-                      <button 
+                  {/* Real-time Dynamic Closed Captions (YouTube Style) */}
+                  {isCaptionsEnabled && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      style={{
+                        position: 'absolute',
+                        bottom: '80px',
+                        left: 0,
+                        right: 0,
+                        marginLeft: 'auto',
+                        marginRight: 'auto',
+                        width: 'fit-content',
+                        maxWidth: '85%',
+                        background: 'rgba(0, 0, 0, 0.65)',
+                        padding: '4px 10px',
+                        borderRadius: '2px',
+                        color: '#ffffff',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        textAlign: 'center',
+                        zIndex: 8,
+                        pointerEvents: 'none',
+                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        letterSpacing: '0.2px',
+                        textShadow: '0px 1px 2px rgba(0, 0, 0, 0.9)',
+                      }}
+                    >
+                      {activeCaption}
+                    </motion.div>
+                  )}
+
+                  {/* Live-stream-to-booking handoff overlay card */}
+                  {(() => {
+                    const matchedListing = travelVentureListings.find(l => {
+                      if (viewerLiveStream.username === 'nomad_vlogs') return l.id === 'list-2';
+                      if (viewerLiveStream.username === 'backpack_sam') return l.id === 'list-5';
+                      
+                      const streamLoc = viewerLiveStream.location || '';
+                      if (streamLoc) {
+                        return l.location.toLowerCase().includes(streamLoc.toLowerCase());
+                      }
+                      return false;
+                    }) || travelVentureListings.find(l => l.id === 'list-2');
+                    if (!matchedListing) return null;
+
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1 }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setActiveStreams((prev: any[]) => prev.map((s: any) => s.id === viewerLiveStream.id ? { ...s, isMuted: !s.isMuted } : s));
-                          setViewerLiveStream((prev: any) => ({ ...prev, isMuted: !prev.isMuted }));
+                          setSelectedBookingListing(matchedListing);
                         }}
-                        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}
+                        style={{
+                          position: 'absolute',
+                          left: '20px',
+                          bottom: '85px',
+                          zIndex: 39,
+                          width: '240px',
+                          background: 'rgba(15, 11, 25, 0.85)',
+                          backdropFilter: 'blur(16px)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '12px',
+                          padding: '10px',
+                          boxShadow: '0 10px 24px rgba(0, 0, 0, 0.5)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(15, 11, 25, 0.95)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.25)';
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(15, 11, 25, 0.85)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                          e.currentTarget.style.transform = 'translateY(0)';
+                        }}
                       >
-                        {viewerLiveStream.isMuted ? (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                            <line x1="23" y1="9" x2="17" y2="15"></line>
-                            <line x1="17" y1="9" x2="23" y2="15"></line>
-                          </svg>
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                          </svg>
-                        )}
-                      </button>
+                        <img src={matchedListing.image} alt="" style={{ width: '48px', height: '48px', borderRadius: '6px', objectFit: 'cover' }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: '8px', fontWeight: 800, color: '#ec4899', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>
+                            Featured Stay
+                          </span>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: 'white', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            {matchedListing.name}
+                          </span>
+                          <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)', display: 'block' }}>
+                            {matchedListing.price.split(' ')[0]}/night
+                          </span>
+                        </div>
+                        <div style={{
+                          background: 'rgba(236,72,153,0.1)',
+                          border: '1px solid rgba(236,72,153,0.25)',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          color: '#ec4899',
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                        }}>
+                          Book
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
+
+                  {/* Local Clicked Heart Particles */}
+                  {localHearts.map((heart) => (
+                    <motion.div
+                      key={heart.id}
+                      initial={{ opacity: 1, scale: 0.8, x: heart.x - 12, y: heart.y - 12 }}
+                      animate={{ 
+                        opacity: 0, 
+                        scale: 1.4, 
+                        y: heart.y - 120,
+                        x: heart.x - 12 + (Math.random() * 40 - 20)
+                      }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      style={{
+                        position: 'absolute',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                        color: heart.color
+                      }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                    </motion.div>
+                  ))}
+
+                  {/* Other Viewers Heart Particles */}
+                  {otherHearts.map((heart) => (
+                    <motion.div
+                      key={heart.id}
+                      initial={{ opacity: 1, scale: 0.6, bottom: '20px', left: `${heart.x}%` }}
+                      animate={{ 
+                        opacity: 0, 
+                        scale: 1.2, 
+                        bottom: '150px',
+                        left: `${heart.x + (Math.sin(Date.now() / 100) * 5)}%`
+                      }}
+                      transition={{ duration: 1.8, ease: 'easeOut' }}
+                      style={{
+                        position: 'absolute',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                        color: heart.color
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                    </motion.div>
+                  ))}
+
+                  {/* Float Open Chat Tab (When collapsed) */}
+                  {!isChatPanelOpen && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsChatPanelOpen(true);
+                        playUISound('open');
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '16px',
+                        zIndex: 40,
+                        background: 'rgba(15, 11, 25, 0.75)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '8px',
+                        padding: '8px 14px',
+                        color: 'var(--text-primary)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-sans)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+                      }}
+                      whileHover={{ scale: 1.03, background: 'rgba(255, 255, 255, 0.08)' }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      Open Chat
+                    </motion.button>
+                  )}
+                  
+                  {/* Upgraded Video Player Controls Scrim */}
+                  <motion.div
+                    animate={{ opacity: showPlayerControls ? 1 : 0, y: showPlayerControls ? 0 : 8 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    style={{ 
+                      position: 'absolute', 
+                      bottom: 0, 
+                      left: 0, 
+                      right: 0, 
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)', 
+                      padding: '20px 24px', 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      gap: '12px',
+                      zIndex: 10,
+                      pointerEvents: showPlayerControls ? 'auto' : 'none'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Progress Seek Slider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                      <input 
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={isLiveEdge ? 100 : playbackTime}
+                        onChange={(e) => handleProgressChange(parseFloat(e.target.value))}
+                        style={{
+                          width: '100%',
+                          height: '4px',
+                          accentColor: '#8b5cf6',
+                          background: 'rgba(255,255,255,0.2)',
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      />
                     </div>
 
-                    {/* Progress status */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', background: '#ef4444', padding: '2px 6px', borderRadius: '4px' }}>LIVE</span>
-                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>01:42:08</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {/* Left: Play/Pause, Volume, Live Badge */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        {/* Play/Pause */}
+                        <button 
+                          onClick={togglePlayPause}
+                          style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                        >
+                          {isVideoPlaying ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <rect x="6" y="4" width="4" height="16" rx="1" />
+                              <rect x="14" y="4" width="4" height="16" rx="1" />
+                            </svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Volume Control */}
+                        <div 
+                          onMouseEnter={() => setIsVolumeHovered(true)}
+                          onMouseLeave={() => setIsVolumeHovered(false)}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (videoVolume > 0) {
+                                setVideoVolume(0);
+                                if (viewerVideoRef.current) viewerVideoRef.current.volume = 0;
+                              } else {
+                                setVideoVolume(0.8);
+                                if (viewerVideoRef.current) viewerVideoRef.current.volume = 0.8;
+                              }
+                              playUISound('click');
+                            }}
+                            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                          >
+                            {videoVolume === 0 ? (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <line x1="23" y1="9" x2="17" y2="15"></line>
+                                <line x1="17" y1="9" x2="23" y2="15"></line>
+                              </svg>
+                            ) : videoVolume < 0.5 ? (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                              </svg>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                              </svg>
+                            )}
+                          </button>
+                          
+                          <motion.div
+                            initial={{ width: 0, opacity: 0 }}
+                            animate={{ 
+                              width: isVolumeHovered ? 80 : 0, 
+                              opacity: isVolumeHovered ? 1 : 0 
+                            }}
+                            transition={{ duration: 0.2 }}
+                            style={{ overflow: 'hidden', display: 'flex', alignItems: 'center' }}
+                          >
+                            <input 
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={videoVolume}
+                              onChange={(e) => {
+                                const vol = parseFloat(e.target.value);
+                                setVideoVolume(vol);
+                                if (viewerVideoRef.current) viewerVideoRef.current.volume = vol;
+                              }}
+                              style={{
+                                width: '70px',
+                                height: '4px',
+                                accentColor: '#8b5cf6',
+                                background: 'rgba(255,255,255,0.2)',
+                                borderRadius: '2px',
+                                cursor: 'pointer',
+                                outline: 'none'
+                              }}
+                            />
+                          </motion.div>
+                        </div>
+
+                        {/* LIVE progress/live-edge indicator */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button 
+                            onClick={() => {
+                              setIsLiveEdge(true);
+                              setPlaybackTime(100);
+                              if (viewerVideoRef.current && viewerVideoRef.current.duration) {
+                                viewerVideoRef.current.currentTime = viewerVideoRef.current.duration;
+                              }
+                              playUISound('click');
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <span style={{ 
+                              width: '6px', 
+                              height: '6px', 
+                              borderRadius: '50%', 
+                              background: isLiveEdge ? '#ef4444' : '#94a3b8', 
+                              display: 'inline-block',
+                              boxShadow: isLiveEdge ? '0 0 8px #ef4444' : 'none',
+                              transition: 'all 0.2s ease',
+                            }} />
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 700, 
+                              color: isLiveEdge ? 'white' : '#94a3b8',
+                              transition: 'all 0.2s ease',
+                            }}>
+                              LIVE
+                            </span>
+                          </button>
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontFamily: 'monospace' }}>
+                            {formatOffset()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: PiP, Settings (Gear), Fullscreen */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        {/* Captions Toggle Button */}
+                        <button 
+                          onClick={() => {
+                            setIsCaptionsEnabled(!isCaptionsEnabled);
+                            playUISound('click');
+                            showToast(!isCaptionsEnabled ? 'Captions enabled' : 'Captions disabled');
+                          }}
+                          style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            color: isCaptionsEnabled ? '#8b5cf6' : 'white', 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            padding: 0,
+                            filter: isCaptionsEnabled ? 'drop-shadow(0 0 4px #8b5cf6)' : 'none',
+                            transition: 'all 0.2s ease',
+                          }}
+                          title="Toggle Captions"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2" fill={isCaptionsEnabled ? 'rgba(139, 92, 246, 0.2)' : 'transparent'}></rect>
+                            <text x="5" y="14" fill="currentColor" fontSize="7" fontWeight="bold" fontFamily="monospace">CC</text>
+                          </svg>
+                        </button>
+
+                        {/* Settings selector (Gear icon) */}
+                        <div style={{ position: 'relative' }}>
+                          <button 
+                            onClick={() => {
+                              setShowQualityMenu(!showQualityMenu);
+                              playUISound('click');
+                            }}
+                            style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                            title="Quality Settings"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: showQualityMenu ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
+                              <circle cx="12" cy="12" r="3"></circle>
+                              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.5 1z"></path>
+                            </svg>
+                          </button>
+
+                          <AnimatePresence>
+                            {showQualityMenu && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 'calc(100% + 12px)',
+                                  right: 0,
+                                  background: 'rgba(15, 11, 25, 0.95)',
+                                  backdropFilter: 'blur(16px)',
+                                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                                  borderRadius: '8px',
+                                  padding: '6px',
+                                  width: '100px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '2px',
+                                  zIndex: 100,
+                                }}
+                              >
+                                {qualityOptions.map(opt => (
+                                  <button
+                                    key={opt}
+                                    onClick={() => {
+                                      setVideoQuality(opt);
+                                      setShowQualityMenu(false);
+                                      playUISound('click');
+                                      showToast(`Switched quality to ${opt}`);
+                                    }}
+                                    style={{
+                                      background: videoQuality === opt ? 'rgba(139, 92, 246, 0.25)' : 'transparent',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      color: 'white',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      textAlign: 'left',
+                                      cursor: 'pointer',
+                                      width: '100%',
+                                    }}
+                                  >
+                                    {opt}
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Fullscreen */}
+                        <button 
+                          onClick={toggleFullscreen}
+                          style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                          title="Fullscreen"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Footer stream details */}
@@ -9369,83 +10406,603 @@ export default function Home() {
                     </div>
 
                     {/* Interactive actions */}
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button 
-                        className="btn-primary" 
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <style>{`
+                        @keyframes scan {
+                          0% { transform: translateY(0); opacity: 0; }
+                          50% { opacity: 0.8; }
+                          100% { transform: translateY(140px); opacity: 0; }
+                        }
+                      `}</style>
+                      <motion.button 
+                        onClick={() => {
+                          const username = viewerLiveStream.username;
+                          const isFollowing = followedCreators.includes(username);
+                          playUISound('click');
+                          if (isFollowing) {
+                            setFollowedCreators(prev => prev.filter(name => name !== username));
+                            showToast(`Unfollowed @${username}`);
+                          } else {
+                            setFollowedCreators(prev => [...prev, username]);
+                            showToast(`Following @${username}! 💖`);
+                          }
+                        }}
                         style={{
+                          position: 'relative',
                           padding: '10px 20px',
                           borderRadius: '10px',
                           fontSize: '12px',
                           fontWeight: 700,
-                          background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-                          border: 'none',
-                          boxShadow: '0 4px 12px rgba(236,72,153,0.3)',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          userSelect: 'none',
+                          outline: 'none',
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          color: followedCreators.includes(viewerLiveStream.username) ? '#cbd5e1' : '#ffffff',
+                          boxShadow: followedCreators.includes(viewerLiveStream.username)
+                            ? '0 0px 0px rgba(0,0,0,0)'
+                            : '0 4px 12px rgba(236,72,153,0.3)',
+                          border: followedCreators.includes(viewerLiveStream.username)
+                            ? '1px solid rgba(255, 255, 255, 0.15)'
+                            : '1px solid transparent',
+                          overflow: 'hidden'
                         }}
+                        whileHover={{ 
+                          scale: 1.04,
+                          boxShadow: followedCreators.includes(viewerLiveStream.username)
+                            ? '0 4px 12px rgba(255,255,255,0.05)'
+                            : '0 6px 16px rgba(236,72,153,0.5)',
+                        }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                       >
-                        Follow Creator
-                      </button>
-                      <button 
+                        {/* Animatable gradient background layer */}
+                        <motion.div 
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                            zIndex: 0,
+                          }}
+                          animate={{
+                            opacity: followedCreators.includes(viewerLiveStream.username) ? 0 : 1
+                          }}
+                          transition={{ duration: 0.25 }}
+                        />
+
+                        {/* Content text/icons */}
+                        <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {followedCreators.includes(viewerLiveStream.username) ? (
+                            <>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}>
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Following
+                            </>
+                          ) : (
+                            'Follow Creator'
+                          )}
+                        </span>
+                      </motion.button>
+
+                      <div style={{ position: 'relative' }} ref={shareDropdownRef}>
+                        <motion.button 
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            backgroundColor: showShareDropdown ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                            border: showShareDropdown ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            outline: 'none',
+                          }}
+                          onClick={() => {
+                            playUISound(showShareDropdown ? 'click' : 'open');
+                            setShowShareDropdown(!showShareDropdown);
+                          }}
+                          whileHover={{ scale: 1.04, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                          whileTap={{ scale: 0.96 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="18" cy="5" r="3" />
+                            <circle cx="6" cy="12" r="3" />
+                            <circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                          </svg>
+                          Share Stream
+                        </motion.button>
+
+                        <AnimatePresence>
+                          {showShareDropdown && (
+                            <motion.div
+                              variants={shareDropdownVariants}
+                              initial="collapsed"
+                              animate="expanded"
+                              exit="collapsed"
+                              style={{
+                                position: 'absolute',
+                                bottom: 'calc(100% + 12px)',
+                                right: 0,
+                                width: '290px',
+                                background: 'rgba(15, 11, 25, 0.95)',
+                                backdropFilter: 'blur(20px)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '16px',
+                                padding: '16px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px',
+                                zIndex: 100,
+                                transformOrigin: 'bottom right',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <AnimatePresence mode="wait">
+                                {shareScreen === 'main' ? (
+                                  <motion.div
+                                    key="share-screen-main"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
+                                    transition={{ duration: 0.15 }}
+                                    style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                                  >
+                                    {/* Header */}
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <span style={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 700, 
+                                        color: 'var(--text-primary)', 
+                                        fontFamily: 'var(--font-sans)', 
+                                      }}>
+                                        Share Stream
+                                      </span>
+                                    </div>
+
+                                    {/* Link Copy Field */}
+                                    <div style={{ 
+                                      display: 'flex', 
+                                      gap: '8px', 
+                                      alignItems: 'center'
+                                    }}>
+                                      <input 
+                                        type="text" 
+                                        readOnly 
+                                        value={`https://traveholic.com/venture?creator=${viewerLiveStream.username}`} 
+                                        style={{ 
+                                          background: 'rgba(255,255,255,0.03)', 
+                                          border: '1px solid rgba(255, 255, 255, 0.08)', 
+                                          color: 'var(--text-secondary)', 
+                                          fontSize: '12px', 
+                                          fontFamily: 'var(--font-sans)', 
+                                          flex: 1, 
+                                          outline: 'none',
+                                          padding: '8px 12px',
+                                          borderRadius: '8px',
+                                          textOverflow: 'ellipsis',
+                                        }}
+                                      />
+                                      <button 
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(`https://traveholic.com/venture?creator=${viewerLiveStream.username}`);
+                                          setIsCopied(true);
+                                          playUISound('tap');
+                                          showToast('Link copied to clipboard');
+                                          setTimeout(() => setIsCopied(false), 2000);
+                                        }}
+                                        style={{
+                                          background: 'rgba(255, 255, 255, 0.08)',
+                                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                                          color: 'var(--text-primary)',
+                                          padding: '8px 12px',
+                                          borderRadius: '8px',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          fontFamily: 'var(--font-sans)',
+                                          cursor: 'pointer',
+                                          transition: 'all 0.2s ease',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; }}
+                                      >
+                                        {isCopied ? 'Copied' : 'Copy'}
+                                      </button>
+                                    </div>
+
+                                    {/* Share channels */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                      <button
+                                        onClick={() => {
+                                          playUISound('click');
+                                          showToast('Sharing to Feed');
+                                          setTimeout(() => {
+                                            setViewerChatMessages(prev => [
+                                              ...prev,
+                                              {
+                                                id: `chat-share-${Date.now()}`,
+                                                user: 'System',
+                                                text: `@${viewerLiveStream.username}'s stream link shared to Feed`,
+                                                avatarColor: '#8b5cf6',
+                                                isVerified: true
+                                              }
+                                            ]);
+                                          }, 600);
+                                        }}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px',
+                                          padding: '8px 10px',
+                                          background: 'rgba(255, 255, 255, 0.04)',
+                                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                                          borderRadius: '8px',
+                                          cursor: 'pointer',
+                                          color: 'var(--text-primary)',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          fontFamily: 'var(--font-sans)',
+                                          transition: 'all 0.2s ease',
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+                                      >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#8b5cf6' }}>
+                                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                                        </svg>
+                                        Share to Feed
+                                      </button>
+
+                                      <button
+                                        onClick={() => {
+                                          playUISound('click');
+                                          showToast('Opening X');
+                                          const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out @${viewerLiveStream.username}'s awesome travel stream on Traveholic! https://traveholic.com/venture?creator=${viewerLiveStream.username}`)}`;
+                                          window.open(shareUrl, '_blank');
+                                        }}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '6px',
+                                          padding: '8px 10px',
+                                          background: 'rgba(255, 255, 255, 0.04)',
+                                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                                          borderRadius: '8px',
+                                          cursor: 'pointer',
+                                          color: 'var(--text-primary)',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          fontFamily: 'var(--font-sans)',
+                                          transition: 'all 0.2s ease',
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'; }}
+                                      >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style={{ color: '#ffffff' }}>
+                                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                        </svg>
+                                        Share to X
+                                      </button>
+                                    </div>
+
+                                    {/* Direct Messages trigger button */}
+                                    <button
+                                      onClick={() => {
+                                        playUISound('click');
+                                        setShareScreen('messages');
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        padding: '10px 14px',
+                                        background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        color: '#ffffff',
+                                        fontSize: '12px',
+                                        fontWeight: 700,
+                                        fontFamily: 'var(--font-sans)',
+                                        transition: 'all 0.2s ease',
+                                        width: '100%'
+                                      }}
+                                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; }}
+                                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                    >
+                                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ffffff' }}>
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                      </svg>
+                                      Send to Messages
+                                    </button>
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    key="share-screen-messages"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.15 }}
+                                    style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+                                  >
+                                    {/* Header with back button */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <button
+                                        onClick={() => {
+                                          playUISound('click');
+                                          setShareScreen('main');
+                                        }}
+                                        style={{
+                                          background: 'transparent',
+                                          color: 'rgba(255,255,255,0.6)',
+                                          cursor: 'pointer',
+                                          fontFamily: 'var(--font-sans)',
+                                          fontSize: '11px',
+                                          padding: '2px 6px',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          borderRadius: '4px',
+                                          border: '1px solid rgba(255,255,255,0.1)'
+                                        }}
+                                        onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                                      >
+                                        &larr; Back
+                                      </button>
+                                      <span style={{ 
+                                        fontSize: '12px', 
+                                        fontWeight: 700, 
+                                        color: '#8b5cf6', 
+                                        fontFamily: 'var(--font-sans)', 
+                                      }}>
+                                        Send to Messages
+                                      </span>
+                                    </div>
+
+                                    {/* List of buddy conversations */}
+                                    <div style={{ 
+                                      display: 'flex', 
+                                      flexDirection: 'column', 
+                                      gap: '6px', 
+                                      maxHeight: '180px', 
+                                      overflowY: 'auto', 
+                                      paddingRight: '2px' 
+                                    }}>
+                                      {Object.keys(conversations).map((buddy) => {
+                                        const buddyLabel = buddy.split('_')[1] || buddy;
+                                        return (
+                                          <button
+                                            key={buddy}
+                                            onClick={() => {
+                                              playUISound('click');
+                                              const newMsg = {
+                                                sender: 'me' as const,
+                                                text: `Check out this stream! https://traveholic.com/venture?creator=${viewerLiveStream.username}`,
+                                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                              };
+                                              setConversations(prev => ({
+                                                ...prev,
+                                                [buddy]: [...(prev[buddy] || []), newMsg]
+                                              }));
+                                              showToast(`Transmitted to @${buddyLabel}`);
+                                              setShowShareDropdown(false);
+                                            }}
+                                            style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '10px',
+                                              padding: '8px 10px',
+                                              background: 'rgba(255, 255, 255, 0.03)',
+                                              border: '1px solid rgba(255, 255, 255, 0.06)',
+                                              borderRadius: '8px',
+                                              cursor: 'pointer',
+                                              color: '#ffffff',
+                                              textAlign: 'left',
+                                              width: '100%',
+                                              transition: 'all 0.2s ease',
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(139, 92, 246, 0.08)'; e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'; }}
+                                          >
+                                            <div style={{
+                                              width: '24px',
+                                              height: '24px',
+                                              borderRadius: '50%',
+                                              background: 'var(--brand-gradient)',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'center',
+                                              fontSize: '10px',
+                                              fontWeight: 'bold',
+                                              color: 'white',
+                                              textTransform: 'uppercase'
+                                            }}>
+                                              {buddyLabel[0]}
+                                            </div>
+                                            <span style={{ fontSize: '12px', fontFamily: 'var(--font-sans)', fontWeight: 600 }}>
+                                              @{buddyLabel}
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Tappable Likes Reaction Count Affordance */}
+                      <motion.button 
+                        onClick={() => {
+                          setReactionCount(prev => prev + 1);
+                          playUISound('tap');
+                          if (videoContainerRef.current) {
+                            const rect = videoContainerRef.current.getBoundingClientRect();
+                            const x = rect.width / 2;
+                            const y = rect.height / 2;
+                            const colors = ['#ec4899', '#f43f5e', '#ef4444', '#a855f7', '#3b82f6'];
+                            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                            const heartId = Date.now() + Math.random();
+                            setLocalHearts(prev => [...prev, { id: heartId, x, y, color: randomColor }]);
+                            setTimeout(() => {
+                              setLocalHearts(prev => prev.filter(h => h.id !== heartId));
+                            }, 1500);
+                          }
+                        }}
                         style={{
                           padding: '10px 16px',
                           borderRadius: '10px',
                           fontSize: '12px',
                           fontWeight: 700,
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          color: 'var(--text-primary)',
-                          cursor: 'pointer'
+                          background: 'rgba(236, 72, 153, 0.1)',
+                          border: '1px solid rgba(236, 72, 153, 0.25)',
+                          color: '#ec4899',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
                         }}
-                        onClick={() => showToast('Shared stream link! ✈️')}
+                        whileHover={{ scale: 1.04, background: 'rgba(236, 72, 153, 0.15)' }}
+                        whileTap={{ scale: 0.96 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                       >
-                        Share Stream
-                      </button>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span>{reactionCount}</span>
+                      </motion.button>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* RIGHT COLUMN: LIVE CHAT */}
-              <div style={{ flex: 3, display: 'flex', flexDirection: 'column', height: '100%', background: 'rgba(7, 8, 14, 0.4)' }}>
+              <motion.div 
+                animate={{ width: isChatPanelOpen ? '345px' : '0px' }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                style={{ 
+                  flexShrink: 0, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  height: '100%', 
+                  background: 'rgba(7, 8, 14, 0.4)',
+                  borderLeft: isChatPanelOpen ? '1px solid rgba(255, 255, 255, 0.08)' : 'none',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}
+              >
                 {/* Chat Header */}
-                <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', minWidth: '345px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-title)' }}>Live Chat</span>
-                    <span style={{ fontSize: '9px', background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>AUTO</span>
+                    <div 
+                      onMouseEnter={() => setIsAutoTooltipHovered(true)}
+                      onMouseLeave={() => setIsAutoTooltipHovered(false)}
+                      style={{ position: 'relative', display: 'inline-block' }}
+                    >
+                      <span 
+                        onClick={() => {
+                          setIsAutoScrollActive(!isAutoScrollActive);
+                          playUISound('click');
+                          showToast(isAutoScrollActive ? 'Auto-scroll disabled' : 'Auto-scroll enabled');
+                        }}
+                        style={{ 
+                          fontSize: '9px', 
+                          background: isAutoScrollActive ? 'rgba(139, 92, 246, 0.15)' : 'rgba(255,255,255,0.08)', 
+                          color: isAutoScrollActive ? '#a855f7' : 'var(--text-muted)', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          fontWeight: 700, 
+                          cursor: 'pointer',
+                          border: isAutoScrollActive ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid transparent',
+                          userSelect: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        AUTO
+                      </span>
+                      {/* Tooltip floating below button */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 8px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '180px',
+                        padding: '6px 10px',
+                        background: 'rgba(15, 11, 25, 0.95)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'var(--text-primary)',
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        opacity: isAutoTooltipHovered ? 1 : 0,
+                        pointerEvents: 'none',
+                        transition: 'opacity 0.2s ease',
+                        zIndex: 100,
+                        textAlign: 'center',
+                        lineHeight: '1.4',
+                        fontFamily: 'var(--font-sans)'
+                      }}>
+                        {isAutoScrollActive ? 'Auto-scroll to latest messages active' : 'Auto-scroll disabled (click to enable)'}
+                      </div>
+                    </div>
                   </div>
                   <button 
-                    onClick={() => setViewerLiveStream(null)}
+                    onClick={() => {
+                      setIsChatPanelOpen(false);
+                      playUISound('click');
+                    }}
                     style={{
                       background: 'transparent',
                       border: 'none',
                       color: 'var(--text-muted)',
-                      fontSize: '20px',
                       cursor: 'pointer',
-                      padding: 0,
+                      padding: '4px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s ease',
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
                   >
-                    &times;
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="11 17 6 12 11 7"></polyline>
+                      <polyline points="18 17 13 12 18 7"></polyline>
+                    </svg>
                   </button>
                 </div>
 
                 {/* Messages Scroll Box */}
-                <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div 
+                  ref={chatScrollRef}
+                  style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', minWidth: '345px' }}
+                >
                   {viewerChatMessages.map(msg => (
                     <div key={msg.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', lineHeight: '1.4' }}>
-                      <span 
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          background: msg.avatarColor,
-                          display: 'inline-block',
-                          flexShrink: 0,
-                          boxShadow: 'inset 0 0 4px rgba(0,0,0,0.5)'
-                        }}
-                      />
+                      <div style={{ flexShrink: 0 }}>
+                        {renderAvatar(msg.user, 20)}
+                      </div>
                       <div style={{ minWidth: 0 }}>
                         <span style={{ fontWeight: 800, color: 'rgba(255,255,255,0.9)', marginRight: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                           {msg.user}
@@ -9462,7 +11019,7 @@ export default function Home() {
                 </div>
 
                 {/* Message sender Input Box */}
-                <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                <div style={{ padding: '16px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', minWidth: '345px' }}>
                   <form 
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -9485,7 +11042,7 @@ export default function Home() {
                     <input 
                       type="text"
                       className="comment-input"
-                      placeholder="Chat publicly as creator..."
+                      placeholder="Chat with everyone..."
                       value={viewerChatMessageInput}
                       onChange={(e) => setViewerChatMessageInput(e.target.value)}
                       style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255,255,255,0.02)', outline: 'none', color: 'white', fontSize: '12px' }}
@@ -9507,13 +11064,715 @@ export default function Home() {
                     </button>
                   </form>
                 </div>
-              </div>
+              </motion.div>
 
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Logout Confirmation Dialog (YouTube/Traveholic style) */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 6, 12, 0.75)',
+              backdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}
+            onClick={() => setShowLogoutConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%',
+                maxWidth: '340px',
+                background: 'rgba(15, 17, 28, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '24px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '16px',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </div>
+
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                margin: '0 0 8px 0',
+                fontFamily: 'var(--font-sans)',
+              }}>
+                Log out
+              </h3>
+
+              <p style={{
+                fontSize: '13px',
+                color: 'var(--text-secondary)',
+                margin: '0 0 24px 0',
+                lineHeight: '1.5',
+                fontFamily: 'var(--font-sans)',
+              }}>
+                Are you sure you want to log out of Traveholic?
+              </p>
+
+              <div style={{ display: 'flex', width: '100%', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    playUISound('click');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    playUISound('click');
+                    logout();
+                    setShowLogoutConfirm(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                    boxShadow: '0 4px 12px rgba(236, 72, 153, 0.2)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                >
+                  Log out
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Venture Listing Details & Booking Modal */}
+      <AnimatePresence>
+        {selectedBookingListing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 6, 12, 0.8)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+            }}
+            onClick={() => setSelectedBookingListing(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '90%',
+                maxWidth: '440px',
+                background: 'rgba(15, 17, 28, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              {/* Image Banner */}
+              <div style={{
+                height: '180px',
+                backgroundImage: `url(${selectedBookingListing.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to bottom, transparent 40%, rgba(15, 17, 28, 0.95) 100%)'
+                }} />
+                <button
+                  onClick={() => setSelectedBookingListing(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              {/* Body Details */}
+              <div style={{ padding: '20px 24px 24px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#ec4899', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Verified Listing &bull; {selectedBookingListing.category}
+                </span>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', margin: '4px 0 8px 0', fontFamily: 'var(--font-title)' }}>
+                  {selectedBookingListing.name}
+                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBookingListing.rating}</span>
+                  <span>({selectedBookingListing.reviewsCount} reviews)</span>
+                  <span>&bull;</span>
+                  <span>📍 {selectedBookingListing.location}</span>
+                </div>
+
+                <div style={{
+                  height: '1px',
+                  background: 'rgba(255,255,255,0.06)',
+                  margin: '16px 0'
+                }} />
+
+                {/* Booking Inputs */}
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Check In</label>
+                    <input 
+                      type="date" 
+                      value={bookingDates.checkIn}
+                      onChange={(e) => setBookingDates(prev => ({ ...prev, checkIn: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        color: 'white',
+                        fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>Check Out</label>
+                    <input 
+                      type="date" 
+                      value={bookingDates.checkOut}
+                      onChange={(e) => setBookingDates(prev => ({ ...prev, checkOut: e.target.value }))}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        color: 'white',
+                        fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Price Display */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Estimated Price</span>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#ec4899' }}>
+                      {selectedBookingListing.price}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '20px', color: '#10b981', fontSize: '11px', fontWeight: 600 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Available
+                  </div>
+                </div>
+
+                {/* CTA Buttons */}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={() => {
+                      playUISound('click');
+                      // Redirect to the Venture's public dashboard or dashboard view
+                      setActiveTab('home');
+                      setSelectedBookingListing(null);
+                      showToast(`Navigating to ${selectedBookingListing.name} public profile`);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '10px',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                  >
+                    View Details
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      playUISound('click');
+                      setShowBookingSuccess(true);
+                      setSelectedBookingListing(null);
+                    }}
+                    style={{
+                      flex: 1.5,
+                      padding: '12px',
+                      background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: '#ffffff',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(236, 72, 153, 0.2)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    Book Stay Now
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Booking Success Dialog */}
+      <AnimatePresence>
+        {showBookingSuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 6, 12, 0.8)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10001,
+            }}
+            onClick={() => setShowBookingSuccess(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{
+                width: '90%',
+                maxWidth: '380px',
+                background: 'rgba(15, 17, 28, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '20px',
+                padding: '24px',
+                textAlign: 'center',
+                boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10b981',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto',
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'white', margin: '0 0 8px 0', fontFamily: 'var(--font-title)' }}>
+                Booking Request Sent!
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 24px 0', lineHeight: '1.5' }}>
+                Your request has been successfully transmitted to the Venture. You will receive a confirmation message under your Chats once they approve the stay.
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowBookingSuccess(false);
+                  playUISound('click');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Back to Feed
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Destination Venture Hub Modal */}
+      <AnimatePresence>
+        {selectedExploreDestination && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 6, 12, 0.8)',
+              backdropFilter: 'blur(12px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+            }}
+            onClick={() => setSelectedExploreDestination(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '90%',
+                maxWidth: '600px',
+                background: 'rgba(15, 17, 28, 0.95)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Cover Banner */}
+              <div style={{
+                height: '200px',
+                backgroundImage: `url(${selectedExploreDestination.img})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative',
+                flexShrink: 0
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'linear-gradient(to bottom, transparent 30%, rgba(15, 17, 28, 0.95) 100%)'
+                }} />
+                
+                <button
+                  onClick={() => setSelectedExploreDestination(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+
+                <div style={{ position: 'absolute', bottom: '16px', left: '24px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#ec4899', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    Destination Hub &bull; {selectedExploreDestination.category}
+                  </span>
+                  <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'white', margin: '4px 0 0 0', fontFamily: 'var(--font-title)' }}>
+                    {selectedExploreDestination.name}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Hub Scroll Container */}
+              <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Plan This Trip Action Card */}
+                <div 
+                  onClick={() => {
+                    setSelectedExploreDestination(null);
+                    router.push(`/trip-planner/${selectedExploreDestination.name.split(',')[0].trim().toLowerCase()}`);
+                  }}
+                  className="btn-shimmer-sweep"
+                  style={{
+                    background: 'var(--brand-gradient)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    color: 'white',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 24px rgba(236,72,153,0.35)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    textAlign: 'left'
+                  }}
+                >
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 800 }}>Plan your trip to {selectedExploreDestination.name.split(',')[0]}</h4>
+                    <p style={{ margin: '4px 0 0', fontSize: '10px', color: 'rgba(255, 255, 255, 0.8)' }}>
+                      AI-generated itineraries, document visa guidelines, flight comparisons & budgets.
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: 800, whiteSpace: 'nowrap' }}>Plan This Trip &rarr;</span>
+                </div>
+
+                {/* Section 1: Where to Stay (Ventures) */}
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: '0 0 12px 0', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: '#ec4899' }}>
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Where to Stay (Verified Ventures)
+                  </h4>
+                  
+                  {(() => {
+                    const matchedListings = travelVentureListings.filter(l => 
+                      selectedExploreDestination.name.toLowerCase().includes(l.location.split(',')[0].toLowerCase()) ||
+                      l.location.toLowerCase().includes(selectedExploreDestination.name.split(',')[0].toLowerCase())
+                    );
+                    
+                    if (matchedListings.length === 0) {
+                      return (
+                        <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                          No verified properties listed at this destination yet. Check back soon!
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {matchedListings.map(listing => (
+                          <div 
+                            key={listing.id}
+                            style={{
+                              display: 'flex',
+                              gap: '12px',
+                              padding: '12px',
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: '1px solid rgba(255, 255, 255, 0.06)',
+                              borderRadius: '12px',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <img src={listing.image} alt={listing.name} style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h5 style={{ fontSize: '12px', fontWeight: 700, color: 'white', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {listing.name}
+                              </h5>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                <span>{listing.category}</span>
+                                <span>&bull;</span>
+                                <span style={{ color: '#f59e0b' }}>★ {listing.rating}</span>
+                              </div>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: '#ec4899' }}>{listing.price}</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setSelectedBookingListing(listing);
+                                setSelectedExploreDestination(null);
+                                playUISound('click');
+                              }}
+                              style={{
+                                padding: '8px 14px',
+                                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: '#ffffff',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Book
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Section 2: Vlogs / Traveler Posts from this Destination */}
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: '0 0 12px 0', fontFamily: 'var(--font-title)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: '#8b5cf6' }}>
+                      <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    Immersive Travel Vlogs
+                  </h4>
+
+                  {(() => {
+                    const destKeyword = selectedExploreDestination.name.split(',')[0].toLowerCase();
+                    const matchedReels = reels.filter(r => 
+                      r.caption.toLowerCase().includes(destKeyword)
+                    );
+
+                    if (matchedReels.length === 0) {
+                      return (
+                        <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+                          No traveler vlogs posted for this location yet. Be the first to post!
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {matchedReels.map(reel => (
+                          <div 
+                            key={reel.id}
+                            onClick={() => {
+                              setSelectedExploreDestination(null);
+                              setActiveTab('reels');
+                              const idx = reels.findIndex(r => r.id === reel.id);
+                              if (idx !== -1) setActiveReelIndex(idx);
+                              playUISound('click');
+                            }}
+                            style={{
+                              borderRadius: '12px',
+                              overflow: 'hidden',
+                              background: reel.imageGradient,
+                              height: '110px',
+                              position: 'relative',
+                              padding: '12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'flex-end',
+                              cursor: 'pointer',
+                              border: '1px solid rgba(255, 255, 255, 0.05)'
+                            }}
+                          >
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 80%)'
+                            }} />
+                            <div style={{ position: 'relative', zIndex: 1 }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: 'white', display: 'block' }}>
+                                @{reel.username}
+                              </span>
+                              <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', margin: '4px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {reel.caption}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
      </>
     );
   }
@@ -9610,7 +11869,10 @@ export default function Home() {
         <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '12px', zIndex: 50 }}>
           {user && (
             <button
-              onClick={logout}
+              onClick={() => {
+                setShowLogoutConfirm(true);
+                playUISound('click');
+              }}
               className="theme-toggle-btn"
               style={{ position: 'static' }}
               aria-label="Log Out"
@@ -10035,6 +12297,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
 
     </div>
    </>

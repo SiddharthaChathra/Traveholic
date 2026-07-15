@@ -89,8 +89,70 @@ export default function VentureSponsorshipsPage() {
     }
   ]);
 
+  const [promoCodes, setPromoCodes] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const defaultCodes = [
+      {
+        code: 'SOPHIA10',
+        creator: 'Sophia Loren',
+        username: 'sophia_travels',
+        discount: '10% Discount',
+        status: 'Active',
+        impressions: 1420,
+        clicks: 340,
+        bookingsCount: 8,
+        totalRevenue: 24500,
+        commissionPaid: 1225
+      }
+    ];
+    const saved = localStorage.getItem('traveholic_sponsorship_codes');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const merged = [...defaultCodes];
+      parsed.forEach((p: any) => {
+        if (!merged.some(m => m.code === p.code)) {
+          merged.push(p);
+        }
+      });
+      setPromoCodes(merged);
+    } else {
+      localStorage.setItem('traveholic_sponsorship_codes', JSON.stringify(defaultCodes));
+      setPromoCodes(defaultCodes);
+    }
+  }, []);
+
   const handleSwipeRight = (id: string) => {
-    alert(`Sending Sponsorship Offer to ${travelers.find(t => t.id === id)?.name}!`);
+    const trav = travelers.find(t => t.id === id);
+    if (trav) {
+      const code = (trav.username.split('_')[0] + '10').toUpperCase();
+      const newCodeObj = {
+        code,
+        creator: trav.name,
+        username: trav.username,
+        discount: '10% Discount',
+        status: 'Active',
+        impressions: 0,
+        clicks: 0,
+        bookingsCount: 0,
+        totalRevenue: 0,
+        commissionPaid: 0
+      };
+
+      const saved = JSON.parse(localStorage.getItem('traveholic_sponsorship_codes') || '[]');
+      if (!saved.some((c: any) => c.code === code)) {
+        const updated = [...saved, newCodeObj];
+        localStorage.setItem('traveholic_sponsorship_codes', JSON.stringify(updated));
+        localStorage.setItem('active_sponsorship_code', code);
+        setPromoCodes(prev => {
+          if (!prev.some(m => m.code === code)) {
+            return [...prev, newCodeObj];
+          }
+          return prev;
+        });
+      }
+      alert(`Sponsorship Offer Sent to ${trav.name}! Co-branded referral code "${code}" is now Active.`);
+    }
     setTravelerIndex(prev => prev + 1);
   };
 
@@ -99,7 +161,37 @@ export default function VentureSponsorshipsPage() {
   };
 
   const handleAcceptApp = (appId: string, travelerName: string) => {
-    alert(`Approved application from ${travelerName}!`);
+    const app = incomingApps.find(a => a.id === appId);
+    if (app) {
+      const username = app.traveler.username;
+      const code = (username.split('_')[0] + '15').toUpperCase();
+      const newCodeObj = {
+        code,
+        creator: app.traveler.name,
+        username: app.traveler.username,
+        discount: '15% Discount',
+        status: 'Active',
+        impressions: 0,
+        clicks: 0,
+        bookingsCount: 0,
+        totalRevenue: 0,
+        commissionPaid: 0
+      };
+
+      const saved = JSON.parse(localStorage.getItem('traveholic_sponsorship_codes') || '[]');
+      if (!saved.some((c: any) => c.code === code)) {
+        const updated = [...saved, newCodeObj];
+        localStorage.setItem('traveholic_sponsorship_codes', JSON.stringify(updated));
+        localStorage.setItem('active_sponsorship_code', code);
+        setPromoCodes(prev => {
+          if (!prev.some(m => m.code === code)) {
+            return [...prev, newCodeObj];
+          }
+          return prev;
+        });
+      }
+      alert(`Approved application from ${travelerName}! Co-branded promo code "${code}" is now active.`);
+    }
     setIncomingApps(incomingApps.filter(app => app.id !== appId));
   };
 
@@ -257,6 +349,35 @@ export default function VentureSponsorshipsPage() {
                       {app.traveler.name} (@{app.traveler.username})
                     </h4>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Focus: {app.traveler.countryFocus} • Followers: {app.traveler.followers.toLocaleString()}</span>
+                    
+                    {/* Verified Badges Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.2)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Eligibility Checked
+                      </span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {app.traveler.username === 'marcus_vlogs' && (
+                          <>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '12px', fontSize: '9px', color: 'var(--text-secondary)' }}>
+                              🌙 Night Owl
+                            </span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '12px', fontSize: '9px', color: 'var(--text-secondary)' }}>
+                              💖 Local Fav
+                            </span>
+                          </>
+                        )}
+                        {app.traveler.username === 'jenna_explores' && (
+                          <>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '12px', fontSize: '9px', color: 'var(--text-secondary)' }}>
+                              🏅 First Flight
+                            </span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '12px', fontSize: '9px', color: 'var(--text-secondary)' }}>
+                              🌍 Culture Seeker
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.03)', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.06)' }}>
                     Dates: {app.requestedDates}
@@ -294,14 +415,63 @@ export default function VentureSponsorshipsPage() {
       )}
 
       {activeTab === 'active' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {activeDeals.map(deal => (
-            <SponsorshipCard 
-              key={deal.id} 
-              traveler={deal.traveler} 
-              activeDealProgress={deal.progress} 
-            />
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            {activeDeals.map(deal => (
+              <SponsorshipCard 
+                key={deal.id} 
+                traveler={deal.traveler} 
+                activeDealProgress={deal.progress} 
+              />
+            ))}
+          </div>
+
+          {/* Co-Branded Referral Code Tracking Table */}
+          <div className="discover-premium-card" style={{ padding: '24px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <h4 style={{ fontSize: '15px', fontWeight: 800, margin: '0 0 16px', color: 'var(--text-primary)' }}>
+              🔑 Co-Branded Sponsorship Promo Codes &amp; ROI Tracking
+            </h4>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', color: 'var(--text-muted)' }}>
+                    <th style={{ padding: '10px 8px' }}>Creator</th>
+                    <th style={{ padding: '10px 8px' }}>Promo Code</th>
+                    <th style={{ padding: '10px 8px' }}>Discount Offer</th>
+                    <th style={{ padding: '10px 8px' }}>Impressions</th>
+                    <th style={{ padding: '10px 8px' }}>Conversions</th>
+                    <th style={{ padding: '10px 8px' }}>Total Sales (USD)</th>
+                    <th style={{ padding: '10px 8px' }}>Commission Paid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {promoCodes.map((p, idx) => {
+                    const currentBookings = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('traveholic_bookings') || '[]') : [];
+                    const codeBookings = currentBookings.filter((b: any) => b.referralCode === p.code.toUpperCase());
+                    const bookingsCount = p.bookingsCount + codeBookings.length;
+                    const totalRevenue = p.totalRevenue + codeBookings.reduce((sum: number, b: any) => sum + b.price, 0);
+                    const commissionPaid = p.commissionPaid + codeBookings.reduce((sum: number, b: any) => sum + b.commission, 0);
+
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <td style={{ padding: '12px 8px', fontWeight: 700 }}>{p.creator}</td>
+                        <td style={{ padding: '12px 8px' }}>
+                          <span style={{ background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', color: '#ec4899', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', fontWeight: 800, letterSpacing: '1px' }}>
+                            {p.code}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>{p.discount}</td>
+                        <td style={{ padding: '12px 8px', color: 'var(--text-muted)' }}>{p.impressions + (codeBookings.length * 12)}</td>
+                        <td style={{ padding: '12px 8px', fontWeight: 700, color: bookingsCount > 0 ? '#10b981' : 'var(--text-muted)' }}>{bookingsCount}</td>
+                        <td style={{ padding: '12px 8px', fontWeight: 700 }}>${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        <td style={{ padding: '12px 8px', color: '#eab308', fontWeight: 700 }}>${commissionPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

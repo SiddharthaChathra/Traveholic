@@ -22,6 +22,23 @@ export default function NewPackagePage() {
   };
 
   const handlePublish = () => {
+    const saved = JSON.parse(localStorage.getItem('traveholic_created_packages') || '[]');
+    const newPackage = {
+      id: 'pack-' + Date.now(),
+      name: packageData?.name || 'Custom Package',
+      durationDays: packageData?.durationDays || 3,
+      price: packageData?.price || 199,
+      isFeatured: false,
+      views: 0,
+      bookingsCount: 0,
+      conversionRate: 0,
+      isGroupTrip: packageData?.isGroupTrip || false,
+      minTravelers: packageData?.minTravelers || null,
+      hostCommission: packageData?.hostCommission || null
+    };
+    saved.push(newPackage);
+    localStorage.setItem('traveholic_created_packages', JSON.stringify(saved));
+
     alert('Package published successfully!');
     router.push('/venture/packages');
   };

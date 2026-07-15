@@ -46,6 +46,46 @@ export default function InteractiveMap({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const superclusterRef = useRef<Supercluster | null>(null);
 
+  // Sync destinations to a ref to avoid stale closure in leaflet event callbacks
+  const destinationsRef = useRef(destinations);
+  useEffect(() => {
+    destinationsRef.current = destinations;
+  }, [destinations]);
+
+  // Checkout bottom sheet states
+  const [activeCheckoutDest, setActiveCheckoutDest] = useState<Destination | null>(null);
+  const [couponCode, setCouponCode] = useState<string>('');
+  const [isCouponApplied, setIsCouponApplied] = useState<boolean>(false);
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [commissionAmount, setCommissionAmount] = useState<number>(0);
+  const [bookingSuccess, setBookingSuccess] = useState<boolean>(false);
+  const [checkInDate, setCheckInDate] = useState<string>('2026-07-20');
+  const [checkOutDate, setCheckOutDate] = useState<string>('2026-07-23');
+  const [guestCount, setGuestCount] = useState<number>(2);
+
+  // Quest Check-in states
+  const [activeQuest, setActiveQuest] = useState<{ name: string; lat: number; lng: number; rewardCode: string; rewardDesc: string } | null>(null);
+  const [questCompleted, setQuestCompleted] = useState<boolean>(false);
+  const [scratchProgress, setScratchProgress] = useState<boolean>(false);
+
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c * 1000; // meters
+  };
+
+  const QUEST_SPOTS = [
+    { name: 'Amalfi Lemon Cafe 🍋', lat: 40.6333, lng: 14.6028, rewardCode: 'AMALFI15', rewardDesc: '15% Off Amalfi Coast Stays' },
+    { name: 'Ubud Jungle Spa 🌴', lat: -8.5069, lng: 115.2625, rewardCode: 'SOPHIA10', rewardDesc: '10% Off Sophia Loren Sponsored Bookings' },
+    { name: 'Reykjavik Glacial Hut ❄️', lat: 64.1466, lng: -21.9426, rewardCode: 'ICELANDFREE', rewardDesc: 'Free Excursion Voucher' }
+  ];
+
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [currentRoute, setCurrentRoute] = useState<{
     destName: string;
@@ -220,6 +260,19 @@ export default function InteractiveMap({
     map.on('popupopen', (e: any) => {
       const popupEl = e.popup.getElement();
       if (!popupEl) return;
+
+      const planBtn = popupEl.querySelector('.plan-trip-btn');
+      if (planBtn) {
+        planBtn.addEventListener('click', (ev: any) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const destName = planBtn.getAttribute('data-dest');
+          if (destName) {
+            window.location.href = `/trip-planner/${encodeURIComponent(destName.split(',')[0].trim().toLowerCase())}`;
+          }
+        });
+      }
+      
       const dirBtn = popupEl.querySelector('.get-directions-btn');
       if (dirBtn) {
         dirBtn.addEventListener('click', (ev: any) => {
@@ -228,6 +281,54 @@ export default function InteractiveMap({
           const destName = dirBtn.getAttribute('data-dest');
           if (destName) {
             calculateRouteRef.current?.(destName);
+          }
+        });
+      }
+
+      const bookBtn = popupEl.querySelector('.instant-book-btn');
+      if (bookBtn) {
+        bookBtn.addEventListener('click', (ev: any) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const destName = bookBtn.getAttribute('data-dest');
+          if (destName) {
+            const foundDest = destinationsRef.current.find((d: any) => d.name === destName);
+            if (foundDest) {
+              setActiveCheckoutDest(foundDest);
+              setBookingSuccess(false);
+              setIsCouponApplied(false);
+              setCouponDiscount(0);
+              setCommissionAmount(0);
+              
+              // Pre-apply saved codes from localStorage if available
+              const savedCode = localStorage.getItem('active_sponsorship_code');
+              if (savedCode) {
+                setCouponCode(savedCode);
+                const discount = Number((foundDest.price * 3 * 0.10).toFixed(2));
+                setCouponDiscount(discount);
+                setIsCouponApplied(true);
+                setCommissionAmount(Number((foundDest.price * 3 * 0.05).toFixed(2)));
+              } else {
+                setCouponCode('');
+              }
+            }
+          }
+        });
+      }
+
+      const questBtn = popupEl.querySelector('.check-in-quest-btn');
+      if (questBtn) {
+        questBtn.addEventListener('click', (ev: any) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const questName = questBtn.getAttribute('data-quest');
+          if (questName) {
+            const foundQuest = QUEST_SPOTS.find(q => q.name === questName);
+            if (foundQuest) {
+              setActiveQuest(foundQuest);
+              setQuestCompleted(false);
+              setScratchProgress(false);
+            }
           }
         });
       }
@@ -441,7 +542,7 @@ export default function InteractiveMap({
           iconAnchor: [0, 0]
         });
 
-        // Popup hover preview card
+        // Popup hover preview card with Instant Book integration
         const popupContent = `
           <div class="map-hover-card animate-slide-up" style="pointer-events: auto;">
             <img src="${dest.img}" class="map-hover-card-img" />
@@ -451,12 +552,20 @@ export default function InteractiveMap({
                 <span class="map-hover-card-rating">★ ${dest.ratingNum}</span>
                 <span class="map-hover-card-price">$${dest.price}/night</span>
               </div>
-              <button class="get-directions-btn" data-dest="${dest.name}" style="width: 100%; padding: 6px 12px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border: none; border-radius: 6px; color: white; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                </svg>
-                Get Directions
-              </button>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <button class="plan-trip-btn" data-dest="${dest.name}" style="width: 100%; padding: 6px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: white; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                  Plan This Trip
+                </button>
+                <button class="get-directions-btn" data-dest="${dest.name}" style="width: 100%; padding: 6px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: white; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                  </svg>
+                  Get Directions
+                </button>
+                <button class="instant-book-btn" data-dest="${dest.name}" style="width: 100%; padding: 6px 10px; background: var(--brand-gradient); border: none; border-radius: 6px; color: white; font-size: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 4px 10px rgba(236,72,153,0.35);">
+                  ⚡ Instant Book
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -486,6 +595,49 @@ export default function InteractiveMap({
           onDestinationSelect(dest.name);
         });
       }
+    });
+
+    // Render Quest Spots on the map
+    QUEST_SPOTS.forEach(quest => {
+      // Calculate distance (if userCoords loaded, check if within 5000 km for demo)
+      const distanceM = userCoords ? getDistance(userCoords.lat, userCoords.lng, quest.lat, quest.lng) : 999999;
+      const isUserNear = distanceM < 5000000; // Large threshold to make verification simple, but displays real distance
+      
+      const questIcon = L.divIcon({
+        className: 'custom-quest-marker-container',
+        html: `
+          <div class="custom-quest-marker ${isUserNear ? 'near' : ''}">
+            <span class="quest-marker-icon">💎</span>
+            <span class="quest-marker-title">${quest.name.split(' ')[0]} Quest</span>
+          </div>
+        `,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+
+      const popupContent = `
+        <div style="padding: 12px; font-family: var(--font-title); color: white; width: 180px; text-align: center; background: rgba(9, 8, 15, 0.95);">
+          <div style="font-size: 24px; margin-bottom: 6px;">🎁</div>
+          <strong style="font-size: 12px; display: block; margin-bottom: 6px; color: #fbbf24;">${quest.name}</strong>
+          <p style="font-size: 10px; color: var(--text-muted); margin: 0 0 10px 0;">
+            Check in here to unlock: <strong style="color: white;">${quest.rewardDesc}</strong>
+          </p>
+          <div style="font-size: 9px; color: var(--text-muted); margin-bottom: 8px;">
+            Distance: ${(distanceM / 1000).toFixed(1)} km
+          </div>
+          <button class="check-in-quest-btn" data-quest="${quest.name}" style="width: 100%; padding: 8px; background: #eab308; border: none; border-radius: 6px; color: black; font-size: 10px; font-weight: 800; cursor: pointer; transition: background 0.2s;">
+            🔑 Check In & Scratch Card
+          </button>
+        </div>
+      `;
+
+      L.marker([quest.lat, quest.lng], { icon: questIcon })
+        .addTo(markersLayer)
+        .bindPopup(popupContent, {
+          closeButton: false,
+          offset: [0, -20],
+          className: 'custom-hover-popup'
+        });
     });
   };
 
@@ -1012,6 +1164,338 @@ export default function InteractiveMap({
               </svg>
               Navigate in Google Maps
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* 1. INSTANT CHECKOUT MODAL */}
+      {activeCheckoutDest && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(5, 6, 12, 0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '24px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '420px',
+            background: 'rgba(15, 18, 30, 0.9)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '24px',
+            padding: '28px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.8)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            color: 'white',
+            fontFamily: 'var(--font-body)'
+          }}>
+            {!bookingSuccess ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '20px', fontWeight: 900, margin: 0, background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    ⚡ Instant Booking Checkout
+                  </h3>
+                  <button 
+                    onClick={() => setActiveCheckoutDest(null)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer', padding: 0 }}
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <img src={activeCheckoutDest.img} style={{ width: '70px', height: '70px', borderRadius: '8px', objectFit: 'cover' }} />
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 4px' }}>{activeCheckoutDest.name}</h4>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{activeCheckoutDest.category} • ★ {activeCheckoutDest.ratingNum}</span>
+                    <span style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--primary)', marginTop: '4px' }}>${activeCheckoutDest.price}/night</span>
+                  </div>
+                </div>
+
+                {/* Date Inputs */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Check In</label>
+                    <input 
+                      type="date" 
+                      value={checkInDate}
+                      onChange={(e) => setCheckInDate(e.target.value)}
+                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Check Out</label>
+                    <input 
+                      type="date" 
+                      value={checkOutDate}
+                      onChange={(e) => setCheckOutDate(e.target.value)}
+                      style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Guest Count */}
+                <div>
+                  <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Guests</label>
+                  <select 
+                    value={guestCount}
+                    onChange={(e) => setGuestCount(Number(e.target.value))}
+                    style={{ width: '100%', padding: '10px', background: 'rgba(15, 18, 30, 0.9)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
+                  >
+                    <option value={1}>1 Guest</option>
+                    <option value={2}>2 Guests</option>
+                    <option value={3}>3 Guests</option>
+                    <option value={4}>4 Guests</option>
+                  </select>
+                </div>
+
+                {/* Promo Code input */}
+                <div>
+                  <label style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Promo Referral Code</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input 
+                      type="text" 
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder="e.g. SOPHIA10"
+                      style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontSize: '12px' }}
+                    />
+                    <button 
+                      onClick={() => {
+                        const subtotal = activeCheckoutDest.price * 3;
+                        let discount = 0;
+                        let applied = false;
+                        const codeUpper = couponCode.toUpperCase().trim();
+                        if (codeUpper.endsWith('10') || codeUpper.includes('SOPHIA')) {
+                          discount = subtotal * 0.10;
+                          applied = true;
+                        } else if (codeUpper.endsWith('15') || codeUpper.includes('AMALFI')) {
+                          discount = subtotal * 0.15;
+                          applied = true;
+                        } else if (codeUpper.includes('FREE') || codeUpper.includes('MARCUS') || codeUpper.includes('ICELAND')) {
+                          discount = subtotal * 0.20;
+                          applied = true;
+                        } else if (codeUpper.length > 0) {
+                          discount = subtotal * 0.05;
+                          applied = true;
+                        }
+
+                        if (applied) {
+                          setIsCouponApplied(true);
+                          setCouponDiscount(Number(discount.toFixed(2)));
+                          setCommissionAmount(Number((subtotal * 0.05).toFixed(2)));
+                        } else {
+                          alert("Invalid coupon code.");
+                        }
+                      }}
+                      style={{ padding: '0 16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {isCouponApplied && (
+                    <span style={{ fontSize: '10px', color: '#10b981', display: 'block', marginTop: '6px', fontWeight: 600 }}>
+                      ✓ Discount Code Applied! (5% commission allocated to sponsoring Creator)
+                    </span>
+                  )}
+                </div>
+
+                {/* Price Summary */}
+                <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>${activeCheckoutDest.price} x 3 nights</span>
+                    <span>${activeCheckoutDest.price * 3}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Occupancy Taxes &amp; Fees (10%)</span>
+                    <span>${(activeCheckoutDest.price * 3 * 0.10).toFixed(2)}</span>
+                  </div>
+                  {isCouponApplied && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#10b981' }}>
+                      <span>Sponsor Code Discount</span>
+                      <span>-${couponDiscount}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '8px', fontWeight: 800 }}>
+                    <span>Total Price</span>
+                    <span style={{ color: 'white' }}>${(activeCheckoutDest.price * 3 * 1.10 - (isCouponApplied ? couponDiscount : 0)).toFixed(2)}</span>
+                  </div>
+
+                  {isCouponApplied && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#eab308', background: 'rgba(234,179,8,0.05)', padding: '6px 8px', borderRadius: '4px', border: '1px solid rgba(234,179,8,0.1)', marginTop: '4px' }}>
+                      <span>Vlogger Commission Paid:</span>
+                      <strong>${commissionAmount}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: '12px', marginTop: '4px' }}>
+                  <button 
+                    onClick={() => {
+                      const total = activeCheckoutDest.price * 3 * 1.10 - (isCouponApplied ? couponDiscount : 0);
+                      
+                      // Write to local storage for Venture Dashboard tracking
+                      const currentBookings = JSON.parse(localStorage.getItem('traveholic_bookings') || '[]');
+                      currentBookings.push({
+                        id: 'book-' + Date.now(),
+                        hotel: activeCheckoutDest.name,
+                        price: total,
+                        referralCode: isCouponApplied ? couponCode.toUpperCase() : 'DIRECT',
+                        commission: isCouponApplied ? commissionAmount : 0,
+                        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                        guests: guestCount
+                      });
+                      localStorage.setItem('traveholic_bookings', JSON.stringify(currentBookings));
+                      
+                      setBookingSuccess(true);
+                    }}
+                    style={{ flex: 1, padding: '14px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 800, fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(236,72,153,0.3)' }}
+                  >
+                    Confirm &amp; Pay
+                  </button>
+                  <button 
+                    onClick={() => setActiveCheckoutDest(null)}
+                    style={{ padding: '14px 20px', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 0' }}>
+                <span style={{ fontSize: '48px' }}>🎉</span>
+                <h3 style={{ fontSize: '20px', fontWeight: 900, margin: 0, color: 'white' }}>Booking Confirmed!</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.6', margin: 0 }}>
+                  Your stay at <strong>{activeCheckoutDest.name}</strong> is confirmed. A traveler referral credit voucher has been linked to your profile.
+                </p>
+                {isCouponApplied && (
+                  <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '8px', padding: '10px', fontSize: '11px', color: '#34d399' }}>
+                    Sponsor discount code <strong>{couponCode.toUpperCase()}</strong> validated. A 5% marketing affiliate reward has been dispatched to the creator's wallet.
+                  </div>
+                )}
+                <button 
+                  onClick={() => {
+                    setActiveCheckoutDest(null);
+                    // trigger page refresh or custom event for dashboard tracking if needed
+                  }}
+                  style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontWeight: 700, fontSize: '12px', cursor: 'pointer', marginTop: '12px' }}
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 2. QUEST CHECK-IN MODAL (Scratch Card) */}
+      {activeQuest && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(5, 6, 12, 0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '24px'
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: '380px',
+            background: 'rgba(15, 18, 30, 0.9)',
+            border: '1.5px solid #eab308',
+            borderRadius: '24px',
+            padding: '28px',
+            boxShadow: '0 24px 64px rgba(234,179,8,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', color: '#eab308', fontWeight: 800 }}>✨ LOCAL CHECK-IN QUEST</span>
+              <button 
+                onClick={() => setActiveQuest(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer', padding: 0 }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <h3 style={{ fontSize: '18px', fontWeight: 900, margin: '4px 0 0' }}>{activeQuest.name}</h3>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+              Physical check-in success! Scratch below to reveal your co-branded sponsor reward.
+            </p>
+
+            {/* Scratch area */}
+            <div style={{ position: 'relative', height: '140px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '8px 0' }}>
+              {!scratchProgress ? (
+                <div 
+                  onClick={() => {
+                    setScratchProgress(true);
+                    // Pre-fill localStorage with quest coupon for easy use
+                    localStorage.setItem('active_sponsorship_code', activeQuest.rewardCode);
+                  }}
+                  style={{
+                    position: 'absolute',
+                    inset: 4,
+                    background: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)',
+                    transition: 'opacity 0.3s'
+                  }}
+                >
+                  <span style={{ fontSize: '24px' }}>🪙</span>
+                  <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>Click to Scratch Card</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', animation: 'scaleUp 0.3s forwards' }}>
+                  <span style={{ fontSize: '28px' }}>🎉</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>PROMO REWARD CODE</span>
+                  <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', padding: '8px 24px', borderRadius: '8px', fontSize: '18px', fontWeight: 900, color: '#f59e0b', letterSpacing: '2px' }}>
+                    {activeQuest.rewardCode}
+                  </div>
+                  <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 600 }}>{activeQuest.rewardDesc}</span>
+                </div>
+              )}
+            </div>
+
+            {scratchProgress ? (
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(activeQuest.rewardCode);
+                  alert(`Code "${activeQuest.rewardCode}" copied to clipboard! Try applying it at checkout.`);
+                  setActiveQuest(null);
+                }}
+                style={{ width: '100%', padding: '12px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 800, fontSize: '11px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(236,72,153,0.3)' }}
+              >
+                Copy Coupon &amp; Use Checkout
+              </button>
+            ) : (
+              <button 
+                disabled
+                style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: 'rgba(255,255,255,0.2)', fontWeight: 800, fontSize: '11px' }}
+              >
+                Scratch Card to Claim
+              </button>
+            )}
           </div>
         </div>
       )}

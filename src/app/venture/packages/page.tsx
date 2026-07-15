@@ -17,7 +17,7 @@ interface PackageItem {
 }
 
 export default function VenturePackagesPage() {
-  const [packages, setPackages] = useState<PackageItem[]>([
+  const [packages, setPackages] = useState<any[]>([
     {
       id: 'pack-1',
       name: 'Bali Getaway Adventure (Stay + Tour)',
@@ -26,7 +26,8 @@ export default function VenturePackagesPage() {
       isFeatured: true,
       views: 1204,
       bookingsCount: 42,
-      conversionRate: 3.4
+      conversionRate: 3.4,
+      isGroupTrip: false
     },
     {
       id: 'pack-2',
@@ -36,9 +37,39 @@ export default function VenturePackagesPage() {
       isFeatured: false,
       views: 843,
       bookingsCount: 18,
-      conversionRate: 2.1
+      conversionRate: 2.1,
+      isGroupTrip: false
+    },
+    {
+      id: 'pack-gt-default',
+      name: '🌴 Co-Created Ubud Zen Group Trip with @sophia_travels',
+      durationDays: 4,
+      price: 499,
+      isFeatured: true,
+      views: 520,
+      bookingsCount: 3,
+      minTravelers: 5,
+      hostCommission: 12,
+      conversionRate: 5.7,
+      isGroupTrip: true
     }
   ]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('traveholic_created_packages');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setPackages(prev => {
+        const merged = [...prev];
+        parsed.forEach((p: any) => {
+          if (!merged.some(m => m.id === p.id)) {
+            merged.push(p);
+          }
+        });
+        return merged;
+      });
+    }
+  }, []);
 
   // discount states
   const [promoCode, setPromoCode] = useState('');
@@ -106,41 +137,100 @@ export default function VenturePackagesPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Active Bundles</h3>
           
-          {packages.map(p => (
-            <div 
-              key={p.id} 
-              className="discover-premium-card" 
-              style={{
-                padding: '20px',
-                borderRadius: '16px',
-                background: 'var(--card-bg)',
-                border: '1px solid var(--card-border)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-            >
-              <div>
-                <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{p.name}</h4>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
-                  <span>Duration: <strong>{p.durationDays} Days</strong></span>
-                  <span>Price: <strong>${p.price}</strong></span>
-                  <span>Views: <strong>{p.views}</strong></span>
-                  <span>Bookings: <strong>{p.bookingsCount}</strong></span>
-                </div>
-              </div>
+          {packages.map(p => {
+            const isConfirmed = p.bookingsCount >= (p.minTravelers || 5);
+            return (
+              <div 
+                key={p.id} 
+                className="discover-premium-card" 
+                style={{
+                  padding: '20px',
+                  borderRadius: '16px',
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{p.name}</h4>
+                      {p.isGroupTrip && (
+                        <span style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px', background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.2)', color: '#f59e0b', borderRadius: '20px' }}>
+                          👥 Group Trip
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                      <span>Duration: <strong>{p.durationDays} Days</strong></span>
+                      <span>Price: <strong>${p.price}</strong></span>
+                      <span>Views: <strong>{p.views}</strong></span>
+                      <span>Bookings: <strong>{p.bookingsCount}</strong></span>
+                      {p.isGroupTrip && <span>Co-Host Comm: <strong>{p.hostCommission}%</strong></span>}
+                    </div>
+                  </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>FEATURED PROMO</span>
-                  <span style={{ fontSize: '11px', color: p.isFeatured ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: 700 }}>
-                    {p.isFeatured ? 'Active slot' : 'Inactive'}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>FEATURED PROMO</span>
+                      <span style={{ fontSize: '11px', color: p.isFeatured ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: 700 }}>
+                        {p.isFeatured ? 'Active slot' : 'Inactive'}
+                      </span>
+                    </div>
+                    <ToggleSwitch checked={p.isFeatured} onChange={() => handleToggleFeatured(p.id, p.isFeatured)} />
+                  </div>
                 </div>
-                <ToggleSwitch checked={p.isFeatured} onChange={() => handleToggleFeatured(p.id, p.isFeatured)} />
+
+                {/* If group trip, render progress bar */}
+                {p.isGroupTrip && (
+                  <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>
+                        <strong>Occupancy Meter:</strong> {p.bookingsCount} of {p.minTravelers || 5} seats booked
+                      </span>
+                      <span style={{ color: isConfirmed ? '#10b981' : '#eab308', fontWeight: 800 }}>
+                        {isConfirmed ? '✓ Confirmed (Holds Charged)' : '⏳ Awaiting Min Occupancy (Holds Authorized)'}
+                      </span>
+                    </div>
+                    
+                    {/* Progress Bar Container */}
+                    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${Math.min((p.bookingsCount / (p.minTravelers || 5)) * 100, 100)}%`,
+                        height: '100%',
+                        background: isConfirmed ? 'linear-gradient(90deg, #10b981 0%, #34d399 100%)' : 'linear-gradient(90deg, #eab308 0%, #fbbf24 100%)',
+                        transition: 'width 0.5s ease-in-out'
+                      }} />
+                    </div>
+                    
+                    {/* Simulate Traveler Join (Booking) button for testing */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                      <button 
+                        onClick={() => {
+                          setPackages(packages.map(item => item.id === p.id ? { ...item, bookingsCount: item.bookingsCount + 1 } : item));
+                        }}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '6px',
+                          color: 'var(--text-primary)',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '6px 12px',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s'
+                        }}
+                      >
+                        + Simulate Traveler Booking
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Promo Creator */}

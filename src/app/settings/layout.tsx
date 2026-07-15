@@ -78,6 +78,12 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         <line x1="8" y1="12" x2="16" y2="12" />
       </svg>
     ), href: '/?tab=create' },
+    { id: 'trip-planner', label: 'Trip Planner', icon: (fill: boolean) => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+        <circle cx="12" cy="10" r="3" />
+      </svg>
+    ), href: '/trip-planner' },
     { id: 'profile', label: 'Profile', icon: (fill: boolean) => (
       <img 
         src={user?.avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.fullName || 'Traveler')}`} 
