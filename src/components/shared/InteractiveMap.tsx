@@ -22,12 +22,12 @@ interface InteractiveMapProps {
 }
 
 const destinationCoordinates: Record<string, { lat: number; lng: number }> = {
-  'Manali, Himachal Pradesh 🏔️': { lat: 32.2396, lng: 77.1887 },
-  'Ubud, Bali 🌴': { lat: -8.5069, lng: 115.2625 },
-  'Seminyak, Goa 🌊': { lat: 15.4909, lng: 73.8278 },
-  'Paris, France 🗼': { lat: 48.8566, lng: 2.3522 },
-  'Reykjavik, Iceland ❄️': { lat: 64.1466, lng: -21.9426 },
-  'Amalfi Coast, Italy 🍋': { lat: 40.6333, lng: 14.6028 }
+  'Manali, Himachal Pradesh': { lat: 32.2396, lng: 77.1887 },
+  'Ubud, Bali': { lat: -8.5069, lng: 115.2625 },
+  'Seminyak, Goa': { lat: 15.4909, lng: 73.8278 },
+  'Paris, France': { lat: 48.8566, lng: 2.3522 },
+  'Reykjavik, Iceland': { lat: 64.1466, lng: -21.9426 },
+  'Amalfi Coast, Italy': { lat: 40.6333, lng: 14.6028 }
 };
 
 export default function InteractiveMap({
@@ -174,8 +174,8 @@ export default function InteractiveMap({
     })
       .addTo(map)
       .bindPopup(`
-        <div style="padding: 4px; font-size: 11px; font-weight: 700; color: white;">
-          📍 Your Location
+        <div style="padding: 4px; font-size: 11px; font-weight: 700; color: white; display: flex; align-items: center; gap: 4px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" /><circle cx="12" cy="10" r="3" /></svg> Your Location
         </div>
       `, { closeButton: false, className: 'custom-hover-popup' });
 
@@ -281,6 +281,7 @@ export default function InteractiveMap({
           const destName = dirBtn.getAttribute('data-dest');
           if (destName) {
             calculateRouteRef.current?.(destName);
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destName)}`, '_blank');
           }
         });
       }
@@ -533,7 +534,9 @@ export default function InteractiveMap({
           className: 'custom-map-marker-container',
           html: `
             <div class="custom-map-marker ${isHovered ? 'hovered' : ''} ${isSelected ? 'selected' : ''}">
-              <span class="marker-pin-icon">📍</span>
+              <span class="marker-pin-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; color: var(--primary);">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" /><circle cx="12" cy="10" r="3" /></svg>
+              </span>
               <span class="marker-location">${cleanName}</span>
               <div class="marker-tail"></div>
             </div>

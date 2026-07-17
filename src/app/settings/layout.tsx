@@ -115,7 +115,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         
         {/* SIDEBAR */}
         <div className="instagram-sidebar-wrapper">
-          <aside className="instagram-sidebar">
+          <aside 
+            className="instagram-sidebar"
+            onMouseLeave={() => setShowMoreMenu(false)}
+          >
             <div className="instagram-sidebar-logo-container" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
               <span className="instagram-sidebar-logo-icon">
                 <Logo theme={theme} width={26} showText={false} />
@@ -171,14 +174,23 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                     <span>⚙️</span> Settings
                   </button>
                   <button className="instagram-more-menu-item" onClick={() => { router.push('/?tab=home'); setShowMoreMenu(false); }}>
-                    <span>🧭</span> AI Guide
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
+                      <img src="/ai-guide.png" alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: theme === 'dark' ? 'invert(1)' : 'none' }} />
+                    </span>
+                    AI Guide
                   </button>
                   <button className="instagram-more-menu-item" onClick={() => { toggleTheme(); setShowMoreMenu(false); }}>
-                    <span>{theme === 'light' ? '🌙' : '☀️'}</span> Switch Appearance
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
+                      <img src="/theme-switcher.png" alt="Theme" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </span>
+                    Switch Appearance
                   </button>
                   <div style={{ height: '1px', background: 'var(--card-border)', margin: '4px 0' }} />
                   <button className="instagram-more-menu-item" style={{ color: '#ef4444' }} onClick={() => { logout(); setShowMoreMenu(false); }}>
-                    <span>🚪</span> Log Out
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
+                      <img src="/logout-icon.png" alt="Log Out" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'invert(37%) sepia(93%) saturate(3025%) hue-rotate(338deg) brightness(96%) contrast(98%)' }} />
+                    </span>
+                    Log Out
                   </button>
                 </div>
               )}

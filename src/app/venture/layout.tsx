@@ -13,13 +13,24 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname() || '';
   const safePathId = pathname.replace(/[^a-zA-Z0-9]/g, '-');
 
+  // Identify public listing detail pages (e.g., /venture/listings/list-5)
+  const isPublicListingPage = pathname.startsWith('/venture/listings/') && 
+                              pathname.split('/').length === 4 &&
+                              !pathname.endsWith('/new') && 
+                              !pathname.includes('/edit');
+
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isPublicListingPage) {
       if (!user || user.role !== 'business') {
         router.push('/');
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isPublicListingPage]);
+
+  // Bypass business layout wrapping for public travellers viewing listings
+  if (isPublicListingPage) {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

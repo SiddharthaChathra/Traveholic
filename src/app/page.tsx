@@ -285,6 +285,14 @@ const requestButtonsVariants = {
   expanded: { opacity: 1, scale: 1, transition: { duration: 0.25, delay: 0.1 } }
 };
 
+const stripEmojis = (str: string): string => {
+  if (!str) return '';
+  return str
+    .replace(/[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\uFE0F]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const { user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword } = useAuth();
@@ -651,6 +659,29 @@ export default function Home() {
   // Premium Social Feed States
   // ==========================================
   const [activeTab, setActiveTab] = useState<'home' | 'reels' | 'search' | 'create' | 'messages' | 'profile' | 'live' | 'live-studio' | 'live-dashboard'>('home');
+  const [plannedTrips, setPlannedTrips] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = JSON.parse(localStorage.getItem('traveholic_planned_trips') || '[]');
+        setPlannedTrips(stored);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [activeTab]);
+
+  const deletePlannedTrip = (tripId: string) => {
+    try {
+      const updated = plannedTrips.filter(trip => trip.id !== tripId);
+      setPlannedTrips(updated);
+      localStorage.setItem('traveholic_planned_trips', JSON.stringify(updated));
+      showToast('Trip plan deleted successfully');
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Map interaction states
   const [hoveredDestinationName, setHoveredDestinationName] = useState<string | null>(null);
@@ -798,6 +829,8 @@ export default function Home() {
   const [showBookingSuccess, setShowBookingSuccess] = useState(false);
   const [bookingDates, setBookingDates] = useState({ checkIn: '2026-07-20', checkOut: '2026-07-23' });
   const [selectedExploreDestination, setSelectedExploreDestination] = useState<any | null>(null);
+  const [showLiveFeaturedStay, setShowLiveFeaturedStay] = useState(true);
+  const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
 
   // Refs
   const viewerVideoRef = useRef<HTMLVideoElement>(null);
@@ -829,6 +862,7 @@ export default function Home() {
       setIsCaptionsEnabled(false);
       setActiveCaption("Welcome to the adventure! Let me know if you can hear me. 🏔️✈️");
       setReactionCount(1420 + Math.floor(Math.random() * 200));
+      setShowLiveFeaturedStay(true);
     }
   }, [viewerLiveStream]);
 
@@ -1112,6 +1146,9 @@ export default function Home() {
     { id: 'fr-2', username: 'jenny_travels', fullName: 'Jenny Travels', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', active: true },
     { id: 'fr-3', username: 'alex_vlogs', fullName: 'Alex Vlogs', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', active: true }
   ]);
+  const [myFollowersCount, setMyFollowersCount] = useState(12500);
+  const [replyingNotificationId, setReplyingNotificationId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   // Dynamic system time for mobile device status bar
   const [systemTime, setSystemTime] = useState('9:41');
@@ -1377,7 +1414,7 @@ export default function Home() {
       id: 'vlog-1',
       username: 'nomad_alex',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-      location: 'Leh-Ladakh 🏔️',
+      location: 'Leh-Ladakh',
       title: 'Solo biking across the highest motorable road in Khardung La! 🏍️ Peak adventure vibes.',
       views: '42.8K views',
       likes: 1254,
@@ -1389,7 +1426,7 @@ export default function Home() {
       id: 'vlog-2',
       username: 'wanderlust_jenny',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      location: 'Seminyak, Bali 🌴',
+      location: 'Seminyak, Bali',
       title: 'Top 5 secret beach cafes you must visit in Bali this year! 🍹🌴 Saved the best for last.',
       views: '89.2K views',
       likes: 3821,
@@ -1401,7 +1438,7 @@ export default function Home() {
       id: 'vlog-3',
       username: 'nomad_vlogs',
       avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
-      location: 'Cappadocia, Turkey 🎈',
+      location: 'Cappadocia, Turkey',
       title: 'Waking up at 5 AM to witness hundreds of hot air balloons fill the sky! Absolutely magical ✨',
       views: '112.5K views',
       likes: 5410,
@@ -1413,7 +1450,7 @@ export default function Home() {
       id: 'vlog-4',
       username: 'backpack_guide',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      location: 'Kyoto, Japan ⛩️',
+      location: 'Kyoto, Japan',
       title: 'Exploring the quiet bamboo forests of Arashiyama in the early morning. Sound on 🔊',
       views: '61.4K views',
       likes: 2901,
@@ -1464,7 +1501,7 @@ export default function Home() {
       id: 'post-1',
       username: 'wanderlust_jenny',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      location: 'Ubud, Bali 🌴',
+      location: 'Ubud, Bali',
       images: [
         'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
         'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=600&auto=format&fit=crop&q=80',
@@ -1482,7 +1519,7 @@ export default function Home() {
       id: 'post-2',
       username: 'backpacker_sam',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      location: 'Solang Valley, Manali 🏔️',
+      location: 'Solang Valley, Manali',
       images: [
         'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80',
         'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
@@ -1498,7 +1535,7 @@ export default function Home() {
       id: 'post-3',
       username: 'stay_luxury_bali',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-      location: 'Seminyak, Goa 🌊',
+      location: 'Seminyak, Goa',
       images: [
         'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
         'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=80'
@@ -1849,12 +1886,12 @@ export default function Home() {
 
   // Search places mock dataset
   const travelDestinations = [
-    { name: 'Manali, Himachal Pradesh 🏔️', count: '4.8k posts', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=300&auto=format&fit=crop&q=80', category: 'Mountains' },
-    { name: 'Ubud, Bali 🌴', count: '12.5k posts', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&auto=format&fit=crop&q=80', category: 'Tropical' },
-    { name: 'Seminyak, Goa 🌊', count: '9.2k posts', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80', category: 'Beaches' },
-    { name: 'Paris, France 🗼', count: '24.1k posts', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&auto=format&fit=crop&q=80', category: 'Cities' },
-    { name: 'Reykjavik, Iceland ❄️', count: '3.5k posts', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=300&auto=format&fit=crop&q=80', category: 'Winter' },
-    { name: 'Amalfi Coast, Italy 🍋', count: '18.7k posts', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=300&auto=format&fit=crop&q=80', category: 'Cultural' }
+    { name: 'Manali, Himachal Pradesh', count: '4.8k posts', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=300&auto=format&fit=crop&q=80', category: 'Mountains' },
+    { name: 'Ubud, Bali', count: '12.5k posts', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&auto=format&fit=crop&q=80', category: 'Tropical' },
+    { name: 'Seminyak, Goa', count: '9.2k posts', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80', category: 'Beaches' },
+    { name: 'Paris, France', count: '24.1k posts', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300&auto=format&fit=crop&q=80', category: 'Cities' },
+    { name: 'Reykjavik, Iceland', count: '3.5k posts', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=300&auto=format&fit=crop&q=80', category: 'Winter' },
+    { name: 'Amalfi Coast, Italy', count: '18.7k posts', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=300&auto=format&fit=crop&q=80', category: 'Cultural' }
   ];
 
   // Verified Venture listings dataset
@@ -2098,10 +2135,10 @@ export default function Home() {
 
   // --- DESTINATION DISCOVERY REDESIGN HELPERS & EFFECTS ---
   const heroDestinations = [
-    { name: 'Ubud, Bali 🌴', desc: "Experience the calming spiritual energy, lush green rice terraces, and beautiful waterfalls of Bali's cultural heart.", visitors: '12.5k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Reykjavik, Iceland ❄️', desc: 'Marvel at the magical Northern lights, geothermal pools, and active volcanoes in this icy Nordic wonderland.', visitors: '3.5k posts', rating: '4.8', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Amalfi Coast, Italy 🍋', desc: 'Wander along vertical cliffs, colorful fishing villages, and cliffside lemon gardens overlooking the Tyrrhenian Sea.', visitors: '18.7k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Manali, Himachal Pradesh 🏔️', desc: 'Explore snow-covered valleys, local wooden temples, and active winter sports routes in the high Himalayas.', visitors: '4.8k posts', rating: '4.7', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80' }
+    { name: 'Ubud, Bali', desc: "Experience the calming spiritual energy, lush green rice terraces, and beautiful waterfalls of Bali's cultural heart.", visitors: '12.5k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Reykjavik, Iceland', desc: 'Marvel at the magical Northern lights, geothermal pools, and active volcanoes in this icy Nordic wonderland.', visitors: '3.5k posts', rating: '4.8', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1483168527879-c66136b56105?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Amalfi Coast, Italy', desc: 'Wander along vertical cliffs, colorful fishing villages, and cliffside lemon gardens overlooking the Tyrrhenian Sea.', visitors: '18.7k posts', rating: '4.9', stars: '★★★★★', img: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800&auto=format&fit=crop&q=80' },
+    { name: 'Manali, Himachal Pradesh', desc: 'Explore snow-covered valleys, local wooden temples, and active winter sports routes in the high Himalayas.', visitors: '4.8k posts', rating: '4.7', stars: '★★★★½', img: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80' }
   ];
 
   // Synthesize Web Audio click/pop sound dynamically without audio assets
@@ -2568,7 +2605,7 @@ export default function Home() {
         id: `post-${Date.now()}`,
         username: user?.username || 'isabella_nilsson',
         avatar: user?.avatarUrl || '🌟',
-        location: newPostLocation.trim() || 'Travel Heaven 📍',
+        location: stripEmojis(newPostLocation.trim()) || 'Travel Heaven',
         image: primaryImage,
         images: postImages.length > 0 ? postImages : [primaryImage],
         title: postTitle.trim(),
@@ -2931,7 +2968,7 @@ export default function Home() {
   useEffect(() => {
     if (activeTab === 'profile') {
       const postsTarget = profileOwnerUser ? parseInt(profileOwnerUser.postsCount) : userPosts.length;
-      const followersTarget = profileOwnerUser ? 24800 : 12500;
+      const followersTarget = profileOwnerUser ? 24800 : myFollowersCount;
       const followingTarget = profileOwnerUser ? 412 : 595;
       const countriesTarget = profileOwnerUser ? parseInt(profileOwnerUser.countriesCount) : 6;
       const badgesTarget = profileOwnerUser ? parseInt(profileOwnerUser.badgesCount) : milestones.filter(m => m.unlocked).length;
@@ -2987,7 +3024,7 @@ export default function Home() {
 
       return () => clearInterval(interval);
     }
-  }, [activeTab, profileOwnerUser, userPosts, milestones]);
+  }, [activeTab, profileOwnerUser, userPosts, milestones, myFollowersCount]);
 
   const openUserProfile = (username: string) => {
     // Look up in reels or mock one
@@ -3533,7 +3570,10 @@ export default function Home() {
 
         {/* DESKTOP ONLY: Left Navigation Sidebar Wrapper and Sidebar */}
         <div className="instagram-sidebar-wrapper">
-          <aside className="instagram-sidebar">
+          <aside 
+            className="instagram-sidebar"
+            onMouseLeave={() => setShowMoreMenu(false)}
+          >
             
             {/* Logo */}
             <div className="instagram-sidebar-logo-container">
@@ -3895,11 +3935,17 @@ export default function Home() {
                     AI Travel Assistant
                   </button>
                   <button className="instagram-more-menu-item" onClick={() => { toggleTheme(); setShowMoreMenu(false); }}>
-                    <span>{theme === 'light' ? '🌙' : '☀️'}</span> Switch Appearance
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
+                      <img src="/theme-switcher.png" alt="Theme" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </span>
+                    Switch Appearance
                   </button>
                   <div style={{ height: '1px', background: 'var(--card-border)', margin: '4px 0' }} />
                   <button className="instagram-more-menu-item" style={{ color: '#ef4444' }} onClick={() => { setShowLogoutConfirm(true); setShowMoreMenu(false); playUISound('click'); }}>
-                    <span>🚪</span> Log Out
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px' }}>
+                      <img src="/logout-icon.png" alt="Log Out" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'invert(37%) sepia(93%) saturate(3025%) hue-rotate(338deg) brightness(96%) contrast(98%)' }} />
+                    </span>
+                    Log Out
                   </button>
                 </div>
               )}
@@ -4115,6 +4161,7 @@ export default function Home() {
                                 playUISound('click');
                                 showToast(`Confirmed follow request from @${req.username}`);
                                 setFollowRequests(prev => prev.filter(r => r.id !== req.id));
+                                setMyFollowersCount(prev => prev + 1);
                               }}
                               style={{
                                 padding: '6px 12px',
@@ -4175,17 +4222,111 @@ export default function Home() {
                         )}
                       </span>
                     </div>
-                    <div className="drawer-notification-content">
+                    <div className="drawer-notification-content" style={{ width: '100%' }}>
                       <p className="drawer-notification-text">
                         <span className="drawer-notification-username">{n.username}</span>
                         {n.text}
                       </p>
-                      <span className="drawer-notification-time">{n.time}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '2px' }}>
+                        <span className="drawer-notification-time">{n.time}</span>
+                        {n.type === 'comment' && (
+                          <button
+                            onClick={() => {
+                              playUISound('click');
+                              setReplyingNotificationId(replyingNotificationId === n.id ? null : n.id);
+                              setReplyText('');
+                            }}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--primary)',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          >
+                            {replyingNotificationId === n.id ? 'Cancel' : 'Reply'}
+                          </button>
+                        )}
+                      </div>
+                      
+                      {n.type === 'comment' && replyingNotificationId === n.id && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', width: '100%' }}>
+                          <input 
+                            type="text" 
+                            placeholder={`Reply to @${n.username}...`}
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            style={{
+                              flex: 1,
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              color: 'white',
+                              fontSize: '12px',
+                              outline: 'none'
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                if (replyText.trim()) {
+                                  playUISound('click');
+                                  showToast(`Reply sent to @${n.username}: "${replyText}"`);
+                                  setReplyText('');
+                                  setReplyingNotificationId(null);
+                                }
+                              }
+                            }}
+                          />
+                          <button 
+                            onClick={() => {
+                              if (replyText.trim()) {
+                                playUISound('click');
+                                showToast(`Reply sent to @${n.username}: "${replyText}"`);
+                                setReplyText('');
+                                setReplyingNotificationId(null);
+                              }
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              background: 'var(--brand-gradient)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              color: 'white',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Send
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {n.type === 'follow' && (
                       <div className="drawer-notification-buttons">
-                        <button className="notification-btn-confirm" onClick={() => alert('Confirmed follow!')}>Confirm</button>
-                        <button className="notification-btn-delete" onClick={() => alert('Request deleted.')}>Delete</button>
+                        <button 
+                          className="notification-btn-confirm" 
+                          onClick={() => {
+                            playUISound('click');
+                            showToast(`Confirmed follow request from @${n.username}`);
+                            setNotifications(prev => prev.filter(item => item.id !== n.id));
+                            setMyFollowersCount(prev => prev + 1);
+                          }}
+                        >
+                          Confirm
+                        </button>
+                        <button 
+                          className="notification-btn-delete" 
+                          onClick={() => {
+                            playUISound('click');
+                            showToast(`Deleted follow request from @${n.username}`);
+                            setNotifications(prev => prev.filter(item => item.id !== n.id));
+                          }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     )}
                   </div>
@@ -4308,10 +4449,11 @@ export default function Home() {
                                     post.avatar
                                   )}
                                 </div>
-                                <div>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                   <span className="post-card-username">{post.username}</span>
-                                  <span className="post-card-location" onClick={() => setActiveMapPostId(prev => prev === post.id ? null : post.id)}>
-                                    📍 {post.location}
+                                  <span className="post-card-location" onClick={() => setActiveMapPostId(prev => prev === post.id ? null : post.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    {post.location}
                                   </span>
                                 </div>
                               </div>
@@ -4332,7 +4474,9 @@ export default function Home() {
                                   <div className="radar-grid-bg"></div>
                                   <div className="radar-ping"></div>
                                   <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '28px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}>📍</span>
+                                    <span style={{ display: 'inline-flex', color: 'var(--primary)', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}>
+                                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    </span>
                                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#ffffff', background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '12px', marginTop: '4px' }}>
                                       {post.location}
                                     </span>
@@ -4343,7 +4487,10 @@ export default function Home() {
                                 </div>
                                 <div className="map-card-footer">
                                   <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Coordinates: 8.4095° S, 115.1889° E</span>
-                                  <button className="map-directions-btn" onClick={() => { showToast(`Opening Google Maps for ${post.location}...`); }}>
+                                  <button className="map-directions-btn" onClick={() => { 
+                                    showToast(`Opening Google Maps for ${post.location}...`); 
+                                    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(post.location)}`, '_blank');
+                                  }}>
                                     Get Directions
                                   </button>
                                 </div>
@@ -4996,14 +5143,16 @@ export default function Home() {
                             </span>
                             <div className="vlog-user-details">
                               <span className="vlog-username">{vlog.username}</span>
-                              <span className="vlog-location">📍 {vlog.location}</span>
+                              <span className="vlog-location" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {vlog.location}
+                              </span>
                             </div>
                           </div>
-                          <span className="vlog-duration-badge">{vlog.duration}</span>
                         </div>
 
                         {/* Vlog Thumbnail Media */}
-                        <div className="vlog-media-container" onClick={() => showToast(`Opening Vlog Player: Solo Trekking...`)}>
+                        <div className="vlog-media-container" onClick={() => router.push(`/vlog/${vlog.id}`)}>
                           <img src={vlog.thumbnail} alt={vlog.title} className="vlog-img" />
                           <div className="vlog-play-overlay">
                             <div className="vlog-play-button">
@@ -5012,6 +5161,7 @@ export default function Home() {
                               </svg>
                             </div>
                           </div>
+                          <span className="vlog-duration-badge">{vlog.duration}</span>
                           {hoveredVlogId === vlog.id && (
                             <div className="vlog-playback-progress-bar-container">
                               <div className="vlog-playback-progress-bar-fill"></div>
@@ -6058,7 +6208,9 @@ export default function Home() {
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span className="palette-pin">📍</span>
+                                <span className="palette-pin" style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </span>
                                 <span className="result-name">{dest.name}</span>
                               </div>
                               <span className="result-category">{dest.category}</span>
@@ -6419,7 +6571,9 @@ export default function Home() {
                           <div className="form-group location-autocomplete-container">
                             <label className="form-label" htmlFor="post-location-input">Location</label>
                             <div className="form-input-with-icon">
-                              <span className="input-icon">📍</span>
+                              <span className="input-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                              </span>
                               <input 
                                 type="text" 
                                 id="post-location-input" 
@@ -6448,7 +6602,9 @@ export default function Home() {
                                         setLocationSuggestionsExpanded(false);
                                       }}
                                     >
-                                      <span className="suggestion-icon">📍</span>
+                                      <span className="suggestion-icon" style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--text-muted)' }}>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                      </span>
                                       <span className="suggestion-name">{dest.name}</span>
                                     </div>
                                   ))}
@@ -6957,7 +7113,7 @@ export default function Home() {
                                 </div>
                                 <div className="user-text-meta">
                                   <span className="preview-username">@{user?.username || 'Suvarnatest'}</span>
-                                  <span className="preview-location">{newPostLocation ? newPostLocation.split(',')[0] : 'Travel Heaven 📍'}</span>
+                                  <span className="preview-location">{newPostLocation ? stripEmojis(newPostLocation.split(',')[0]) : 'Travel Heaven'}</span>
                                 </div>
                               </div>
                               <button type="button" className="post-header-more-btn">
@@ -7114,8 +7270,10 @@ export default function Home() {
 
                               {newPostLocation && (
                                 <div className="preview-location-chip">
-                                  <span className="chip-icon">📍</span>
-                                  <span className="chip-text">{newPostLocation}</span>
+                                  <span className="chip-icon" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                  </span>
+                                  <span className="chip-text">{stripEmojis(newPostLocation)}</span>
                                 </div>
                               )}
                             </div>
@@ -8714,39 +8872,288 @@ export default function Home() {
 
                   {/* TAB B: SAVED ITEMS GRID (Mocks Saved Reels) */}
                   {profileTab === 'saved' && (
-                    <div className="profile-media-grid">
-                      {/* Show first 3 vlogs from global vlogs to act as saved items */}
-                      {vlogs.slice(0, 3).map((vlog) => (
-                        <div 
-                          key={vlog.id} 
-                          className="profile-media-grid-item"
-                          onClick={() => {
-                            setActiveTab('reels');
-                            const rIdx = reels.findIndex(r => r.username === vlog.username);
-                            if (rIdx !== -1) setActiveReelIndex(rIdx);
-                          }}
-                        >
-                          <img src={vlog.thumbnail} alt={vlog.title} className="profile-media-thumbnail" />
-                          <div className="profile-media-hover-overlay">
-                            <div className="profile-media-hover-metrics">
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                  <polygon points="5 3 19 12 5 21 5 3"/>
-                                </svg>
-                                Play
-                              </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+                      
+                      {/* Planned Trips Sub-section */}
+                      <div>
+                        <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'white', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', color: 'var(--primary)' }}>
+                            <rect x="3" y="4" width="18" height="18" rx="3" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                            <path d="M9 16l2 2 4-4" />
+                          </svg>
+                          My Planned Trips
+                          <span style={{ fontSize: '10px', background: 'rgba(236,72,153,0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '20px', fontWeight: 700 }}>
+                            {plannedTrips.length}
+                          </span>
+                        </h3>
+                        
+                        {plannedTrips.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {plannedTrips.map((trip: any) => (
+                              <div 
+                                key={trip.id} 
+                                onClick={() => {
+                                  router.push(`/trip-planner/${encodeURIComponent(trip.destination.toLowerCase())}`);
+                                }}
+                                style={{
+                                  background: 'rgba(255,255,255,0.01)',
+                                  border: '1px solid rgba(255,255,255,0.05)',
+                                  borderRadius: '16px',
+                                  padding: '20px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '12px',
+                                  transition: 'all 0.3s ease',
+                                  cursor: 'pointer'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
+                                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                  <div>
+                                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: 'white', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                      {trip.destination}
+                                    </h4>
+                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', verticalAlign: 'middle', opacity: 0.7 }}>
+                                        <rect x="3" y="4" width="18" height="18" rx="3" />
+                                        <line x1="16" y1="2" x2="16" y2="6" />
+                                        <line x1="8" y1="2" x2="8" y2="6" />
+                                        <line x1="3" y1="10" x2="21" y2="10" />
+                                        <path d="M9 16l2 2 4-4" />
+                                      </svg>
+                                      {trip.startDate} &rarr; {trip.endDate} ({trip.stayNights} Nights)
+                                    </span>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{ fontSize: '16px', fontWeight: 800, color: '#10b981', display: 'block' }}>
+                                      {trip.currency.split(' ')[0]}{trip.budget}
+                                    </span>
+                                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Target Budget</span>
+                                  </div>
+                                </div>
+                                
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px', display: 'flex', gap: '20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  {trip.flight && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+                                      </svg>
+                                      <span>{trip.flight.airline} (${trip.flight.price})</span>
+                                    </div>
+                                  )}
+                                  {trip.stay && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span>🏨</span>
+                                      <span>{trip.stay.name} (${trip.stay.price}/night)</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeletingTripId(trip.id);
+                                    }}
+                                    style={{
+                                      padding: '8px 12px',
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      border: '1px solid rgba(239, 68, 68, 0.15)',
+                                      borderRadius: '8px',
+                                      color: '#f87171',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; }}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="3 6 5 6 21 6" />
+                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                      <line x1="10" y1="11" x2="10" y2="17" />
+                                      <line x1="14" y1="11" x2="14" y2="17" />
+                                    </svg>
+                                    Delete Plan
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      router.push(`/trip-planner/${encodeURIComponent(trip.destination.toLowerCase())}`);
+                                    }}
+                                    style={{
+                                      padding: '8px 16px',
+                                      background: 'rgba(236,72,153,0.1)',
+                                      border: '1px solid rgba(236,72,153,0.2)',
+                                      borderRadius: '8px',
+                                      color: 'var(--primary)',
+                                      fontSize: '11px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(236,72,153,0.15)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(236,72,153,0.1)'; }}
+                                  >
+                                    View Full Planner &rarr;
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ 
+                            background: 'rgba(255,255,255,0.01)', 
+                            border: '1px solid rgba(255,255,255,0.05)', 
+                            borderRadius: '16px', 
+                            padding: '32px', 
+                            textAlign: 'center' 
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                              <img 
+                                src="/no-trips-placeholder.png" 
+                                alt="No planned trips" 
+                                style={{ width: '84px', height: '84px', objectFit: 'contain' }} 
+                              />
+                            </div>
+                            <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: 0 }}>No Planned Trips Yet</h4>
+                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '8px 0 16px 0', lineHeight: '1.5' }}>
+                              Plan details for flights, premium stays, visual itineraries, and checklists.
+                            </p>
+                            <button 
+                              onClick={() => router.push('/trip-planner')}
+                              style={{
+                                padding: '8px 20px',
+                                background: 'var(--brand-gradient)',
+                                border: 'none',
+                                borderRadius: '10px',
+                                color: 'white',
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Open Planner
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Saved Vlogs & Reels */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                          <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'white', margin: 0 }}>
+                            🎥 Bookmarked Vlogs &amp; Reels
+                          </h3>
+                          
+                          {/* Controls */}
+                          <div className="milestones-controls-row" style={{ marginTop: 0 }}>
+                            {/* Grid/Timeline switcher with sliding indicator */}
+                            <div className="view-mode-toggle-group">
+                              <div className={`sliding-indicator ${milestonesView === 'timeline' ? 'slide-right' : ''}`} />
+                              <button 
+                                type="button"
+                                className={`view-mode-btn ${milestonesView === 'grid' ? 'active' : ''}`}
+                                onClick={() => setMilestonesView('grid')}
+                              >
+                                Grid
+                              </button>
+                              <button 
+                                type="button"
+                                className={`view-mode-btn ${milestonesView === 'timeline' ? 'active' : ''}`}
+                                onClick={() => setMilestonesView('timeline')}
+                              >
+                                Timeline
+                              </button>
                             </div>
                           </div>
                         </div>
-                      ))}
-                      {/* Plus save placeholders */}
-                      <div className="profile-saved-empty-placeholder">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <h4>Save Travel Guides</h4>
-                        <p>Toggle bookmark save on reels to catalog guides here.</p>
+
+                        {milestonesView === 'grid' ? (
+                          <div className="profile-media-grid">
+                            {vlogs.slice(0, 3).map((vlog) => (
+                              <div 
+                                key={vlog.id} 
+                                className="profile-media-grid-item"
+                                onClick={() => {
+                                  setActiveTab('reels');
+                                  const rIdx = reels.findIndex(r => r.username === vlog.username);
+                                  if (rIdx !== -1) setActiveReelIndex(rIdx);
+                                }}
+                              >
+                                <img src={vlog.thumbnail} alt={vlog.title} className="profile-media-thumbnail" />
+                                <div className="profile-media-hover-overlay">
+                                  <div className="profile-media-hover-metrics">
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                        <polygon points="5 3 19 12 5 21 5 3"/>
+                                      </svg>
+                                      Play
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {vlogs.slice(0, 3).map((vlog) => (
+                              <div 
+                                key={vlog.id} 
+                                onClick={() => {
+                                  setActiveTab('reels');
+                                  const rIdx = reels.findIndex(r => r.username === vlog.username);
+                                  if (rIdx !== -1) setActiveReelIndex(rIdx);
+                                }}
+                                style={{
+                                  background: 'rgba(255,255,255,0.01)',
+                                  border: '1px solid rgba(255,255,255,0.05)',
+                                  borderRadius: '16px',
+                                  padding: '16px',
+                                  display: 'flex',
+                                  gap: '16px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.3s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+                                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
+                                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                                }}
+                              >
+                                <img src={vlog.thumbnail} alt={vlog.title} style={{ width: '120px', height: '68px', borderRadius: '8px', objectFit: 'cover' }} />
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                  <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 800 }}>@{vlog.username}</span>
+                                  <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: '4px 0 6px 0' }}>{vlog.title}</h4>
+                                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                    <span>{vlog.views}</span>
+                                    <span>❤️ {vlog.likes}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                     </div>
                   )}
 
@@ -8791,14 +9198,6 @@ export default function Home() {
 
                         {/* Controls */}
                         <div className="milestones-controls-row">
-                          <button 
-                            type="button"
-                            className="milestones-control-btn sound-toggle"
-                            onClick={() => setSoundMuted(!soundMuted)}
-                            title={soundMuted ? 'Unmute achievement sounds' : 'Mute achievement sounds'}
-                          >
-                            {soundMuted ? '🔇' : '🔊'}
-                          </button>
                           
                           {/* Grid/Timeline switcher with sliding indicator */}
                           <div className="view-mode-toggle-group">
@@ -9937,14 +10336,16 @@ export default function Home() {
                     }) || travelVentureListings.find(l => l.id === 'list-2');
                     if (!matchedListing) return null;
 
-                    return (
+                    return showLiveFeaturedStay && (
                       <motion.div 
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 1 }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedBookingListing(matchedListing);
+                          playUISound('click');
+                          setViewerLiveStream(null); // Close the stream modal
+                          router.push(`/venture/listings/${matchedListing.id}`);
                         }}
                         style={{
                           position: 'absolute',
@@ -9976,6 +10377,37 @@ export default function Home() {
                           e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
+                        {/* Close button on stay card */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowLiveFeaturedStay(false);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            right: '-6px',
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            background: '#ef4444',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: 'white',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                            zIndex: 42
+                          }}
+                          title="Dismiss card"
+                        >
+                          &times;
+                        </button>
+
                         <img src={matchedListing.image} alt="" style={{ width: '48px', height: '48px', borderRadius: '6px', objectFit: 'cover' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ fontSize: '8px', fontWeight: 800, color: '#ec4899', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block' }}>
@@ -11294,7 +11726,13 @@ export default function Home() {
                   <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{selectedBookingListing.rating}</span>
                   <span>({selectedBookingListing.reviewsCount} reviews)</span>
                   <span>&bull;</span>
-                  <span>📍 {selectedBookingListing.location}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {selectedBookingListing.location}
+                  </span>
                 </div>
 
                 <div style={{
@@ -11364,10 +11802,8 @@ export default function Home() {
                   <button
                     onClick={() => {
                       playUISound('click');
-                      // Redirect to the Venture's public dashboard or dashboard view
-                      setActiveTab('home');
                       setSelectedBookingListing(null);
-                      showToast(`Navigating to ${selectedBookingListing.name} public profile`);
+                      router.push(`/venture/listings/${selectedBookingListing.id}`);
                     }}
                     style={{
                       flex: 1,
@@ -11380,6 +11816,7 @@ export default function Home() {
                       fontWeight: 600,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
+                      textAlign: 'center'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
@@ -11768,6 +12205,120 @@ export default function Home() {
                   })()}
                 </div>
 
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Delete Trip Confirmation Modal */}
+      <AnimatePresence>
+        {deletingTripId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(5, 6, 12, 0.85)',
+              backdropFilter: 'blur(16px)',
+              zIndex: 100000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => setDeletingTripId(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              style={{
+                width: '90%',
+                maxWidth: '400px',
+                background: 'rgba(19, 21, 36, 0.95)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '24px',
+                padding: '32px 24px',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
+                textAlign: 'center'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Trash Icon Shield */}
+              <div style={{
+                width: '56px',
+                height: '56px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#ef4444',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '22px',
+                margin: '0 auto 20px'
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 8px 0', color: 'white', fontFamily: 'var(--font-title)' }}>
+                Delete Trip Plan?
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5, margin: '0 0 28px 0' }}>
+                Are you sure you want to remove this saved itinerary? This action will permanently discard all flight and lodging details.
+              </p>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setDeletingTripId(null)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 16px',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    deletePlannedTrip(deletingTripId);
+                    setDeletingTripId(null);
+                  }}
+                  style={{
+                    flex: 1.2,
+                    padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  Delete Plan
+                </button>
               </div>
             </motion.div>
           </motion.div>

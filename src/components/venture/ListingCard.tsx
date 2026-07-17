@@ -124,6 +124,31 @@ export default function ListingCard({ listing, onToggleStatus, style }: ListingC
                 style={{ display: 'inline-flex' }}
               >
                 <Link 
+                  href={`/venture/listings/${listing.id}`}
+                  style={{
+                    background: 'rgba(236, 72, 153, 0.1)',
+                    border: '1px solid rgba(236, 72, 153, 0.25)',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    color: '#ec4899',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  View
+                </Link>
+              </motion.div>
+              
+              <motion.div
+                whileHover={{ scale: 1.03, filter: 'brightness(1.1)' }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: 'inline-flex' }}
+              >
+                <Link 
                   href={`/venture/listings/${listing.id}/edit`}
                   style={{
                     background: 'var(--glass-bg-subtle, rgba(255,255,255,0.04))',

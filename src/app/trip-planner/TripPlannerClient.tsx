@@ -393,6 +393,7 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
   const [selectedReturnFlight, setSelectedReturnFlight] = useState<any | null>(null);
   const [isFlightBooked, setIsFlightBooked] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isBookingReturnFlight, setIsBookingReturnFlight] = useState(false);
 
   // Stay states (Step 5)
   const [bookedStay, setBookedStay] = useState<any | null>(null);
@@ -401,26 +402,105 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
 
   // Itinerary states (Step 6)
   const [activeItinerary, setActiveItinerary] = useState<any[]>([]);
+  const [selectedItineraryDay, setSelectedItineraryDay] = useState(1);
 
   // Manual Expenses list (Step 8)
   const [manualExpenses, setManualExpenses] = useState<Array<{ id: string; name: string; amount: number }>>([]);
   const [newExpenseName, setNewExpenseName] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
 
+  // Itinerary generator to plan a full trip guide for all days of the trip
+  const generateItinerary = (destination: string, nights: number) => {
+    if (!destination) return [];
+    const data = getDestinationData(destination);
+    const numDays = nights + 1;
+    const itinerary = [];
+
+    const genericActivities = [
+      { title: 'Morning yoga session & healthy breakfast', time: '08:30 AM', cost: 10 },
+      { title: 'Explore local traditional food markets', time: '11:00 AM', cost: 5 },
+      { title: 'Cozy café lunch & regional tea tasting', time: '01:30 PM', cost: 12 },
+      { title: 'Neighborhood guided walking tour', time: '03:30 PM', cost: 15 },
+      { title: 'Scenic sunset viewpoint & photos', time: '06:00 PM', cost: 0 },
+      { title: 'Local cultural dinner feast', time: '08:00 PM', cost: 25 },
+      { title: 'Sightseeing at historical architecture', time: '10:00 AM', cost: 8 },
+      { title: 'Leisurely garden walk & afternoon tea', time: '03:00 PM', cost: 10 },
+      { title: 'Drinks and live music at regional lounge', time: '09:30 PM', cost: 20 }
+    ];
+
+    const attractions = [...(data.attractions || [])];
+
+    for (let day = 1; day <= numDays; day++) {
+      const activities = [];
+      
+      // If mock itinerary has this day's details, use them
+      if (data.itinerary && data.itinerary[day - 1]) {
+        activities.push(...data.itinerary[day - 1].activities.map((act: any, idx: number) => ({
+          ...act,
+          id: act.id || `act-mock-${day}-${idx}-${Date.now()}`
+        })));
+      } else {
+        // Distribute local attractions if available
+        if (attractions.length > 0) {
+          const attr = attractions[(day - 1) % attractions.length];
+          activities.push({
+            id: `act-attr-${day}-${attr.id}`,
+            title: attr.name,
+            time: '10:00 AM',
+            cost: attr.cost
+          });
+        }
+        
+        // Add 2 generic activities to fill out the day
+        const genIdx1 = (day * 2) % genericActivities.length;
+        const genIdx2 = (day * 2 + 3) % genericActivities.length;
+        
+        activities.push({
+          id: `act-gen-${day}-1`,
+          title: genericActivities[genIdx1].title,
+          time: '02:30 PM',
+          cost: genericActivities[genIdx1].cost
+        });
+        
+        activities.push({
+          id: `act-gen-${day}-2`,
+          title: genericActivities[genIdx2].title,
+          time: '07:30 PM',
+          cost: genericActivities[genIdx2].cost
+        });
+      }
+
+      itinerary.push({
+        day,
+        activities
+      });
+    }
+
+    return itinerary;
+  };
+
+  // Sync active itinerary when destination or trip duration changes
+  useEffect(() => {
+    if (activeDestination) {
+      const generated = generateItinerary(activeDestination, stayNights);
+      setActiveItinerary(generated);
+      setSelectedItineraryDay(1);
+    }
+  }, [activeDestination, stayNights]);
+
   // ----------------------------------------------------
   // Sync Route pre-fills on load
   // ----------------------------------------------------
   useEffect(() => {
     if (initialDestination) {
-      handleSetDestination(initialDestination);
+      const decoded = decodeURIComponent(initialDestination);
+      handleSetDestination(decoded);
+      setDestinationInput(decoded);
     }
   }, [initialDestination]);
 
   const handleSetDestination = (dest: string) => {
     setActiveDestination(dest.toLowerCase());
-    const data = getDestinationData(dest);
-    // Auto-fill active itinerary matching destination
-    setActiveItinerary(data.itinerary);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -568,22 +648,23 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
 
   const getFlightRouteDetails = () => {
     const key = activeDestination.toLowerCase().trim();
+    let details = { from: 'NYC', fromCity: 'New York', to: 'DEST', toCity: 'Destination' };
     if (key.includes('bali') || key.includes('seminyak') || key.includes('ubud')) {
-      return { from: 'JFK', fromCity: 'New York', to: 'DPS', toCity: 'Bali' };
+      details = { from: 'JFK', fromCity: 'New York', to: 'DPS', toCity: 'Bali' };
+    } else if (key.includes('manali') || key.includes('himachal')) {
+      details = { from: 'DEL', fromCity: 'Delhi', to: 'KUU', toCity: 'Kullu' };
+    } else if (key.includes('paris') || key.includes('france')) {
+      details = { from: 'JFK', fromCity: 'New York', to: 'CDG', toCity: 'Paris' };
+    } else if (key.includes('amalfi') || key.includes('naples')) {
+      details = { from: 'JFK', fromCity: 'New York', to: 'NAP', toCity: 'Naples' };
+    } else if (key.includes('reykjavik') || key.includes('iceland')) {
+      details = { from: 'JFK', fromCity: 'New York', to: 'KEF', toCity: 'Reykjavik' };
     }
-    if (key.includes('manali') || key.includes('himachal')) {
-      return { from: 'DEL', fromCity: 'Delhi', to: 'KUU', toCity: 'Kullu' };
+    
+    if (isBookingReturnFlight) {
+      return { from: details.to, fromCity: details.toCity, to: details.from, toCity: details.fromCity };
     }
-    if (key.includes('paris') || key.includes('france')) {
-      return { from: 'JFK', fromCity: 'New York', to: 'CDG', toCity: 'Paris' };
-    }
-    if (key.includes('amalfi') || key.includes('naples')) {
-      return { from: 'JFK', fromCity: 'New York', to: 'NAP', toCity: 'Naples' };
-    }
-    if (key.includes('reykjavik') || key.includes('iceland')) {
-      return { from: 'JFK', fromCity: 'New York', to: 'KEF', toCity: 'Reykjavik' };
-    }
-    return { from: 'NYC', fromCity: 'New York', to: 'DEST', toCity: 'Destination' };
+    return details;
   };
 
   const getSkyscannerUrl = (destination: string) => {
@@ -600,7 +681,7 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
     } else if (term.includes('reykjavik') || term.includes('iceland')) {
       code = 'kef';
     }
-    return `https://www.skyscanner.com/transport/flights/anywhere/${code}/?utm_source=travora`;
+    return `https://www.skyscanner.com/transport/flights/anywhere/${code}/?utm_source=travora&adults=${travelersCount}`;
   };
 
   // ----------------------------------------------------
@@ -653,8 +734,7 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
     { number: 6, title: 'Itinerary Plan', subtitle: 'Day timeline & activity additions' },
     { number: 7, title: 'Food & Attractions', subtitle: 'Top dishes & attractions checklist' },
     { number: 8, title: 'Budget Analytics', subtitle: 'Planned spend tracker' },
-    { number: 9, title: 'Buffer & Emergency', subtitle: 'Backup plans & contacts' },
-    { number: 10, title: 'Return Checklist', subtitle: 'Boarding pass & baggage' }
+    { number: 9, title: 'Return Checklist', subtitle: 'Boarding pass & baggage' }
   ];
 
   // Itinerary helper triggers
@@ -2137,9 +2217,75 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                   </svg>
 
                   <div className="discover-premium-card" style={{ padding: '28px', borderRadius: '20px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, fontFamily: 'var(--font-title)' }}>Step 4: Licensed Partner Flight Comparisons</h3>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, fontFamily: 'var(--font-title)' }}>
+                      {isBookingReturnFlight ? 'Step 4: Licensed Partner Return Flight Comparisons' : 'Step 4: Licensed Partner Flight Comparisons'}
+                    </h3>
                     
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Prices update live from our booking partners.</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {isBookingReturnFlight ? 'Booking return flights back to your home destination.' : 'Prices update live from our booking partners.'}
+                    </span>
+
+                    {/* Passengers Selector */}
+                    {!isFlightBooked && (
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '16px 20px', 
+                        background: 'rgba(255,255,255,0.02)', 
+                        border: '1px solid rgba(255,255,255,0.05)', 
+                        borderRadius: '14px',
+                        textAlign: 'left'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: 'white', display: 'block' }}>Number of Passengers</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Adjust the number of tickets to book</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <button 
+                            type="button"
+                            onClick={() => { playUISound('click'); setTravelersCount(prev => Math.max(1, prev - 1)); }}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            -
+                          </button>
+                          <span style={{ fontSize: '15px', fontWeight: 800, color: 'white', minWidth: '20px', textAlign: 'center' }}>
+                            {travelersCount}
+                          </span>
+                          <button 
+                            type="button"
+                            onClick={() => { playUISound('click'); setTravelersCount(prev => Math.min(20, prev + 1)); }}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '16px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Flight list */}
                     {!isFlightBooked ? (
@@ -2269,6 +2415,11 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                                 <div style={{ textAlign: 'right' }}>
                                   <span style={{ fontSize: '22px', fontWeight: 900, color: 'white', display: 'block', fontFamily: 'var(--font-title)' }}>${flight.price}</span>
                                   <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>round-trip</span>
+                                  {travelersCount > 1 && (
+                                    <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                                      ${flight.price * travelersCount} total ({travelersCount} tickets)
+                                    </span>
+                                  )}
                                 </div>
 
                                 <button
@@ -2375,6 +2526,11 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                                 <div style={{ textAlign: 'right' }}>
                                   <span style={{ fontSize: '20px', fontWeight: 900, color: '#10b981', display: 'block' }}>${selectedOutboundFlight.price}</span>
                                   <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>round-trip</span>
+                                  {travelersCount > 1 && (
+                                    <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                                      ${selectedOutboundFlight.price * travelersCount} total ({travelersCount} tickets)
+                                    </span>
+                                  )}
                                 </div>
                                 
                                 <button
@@ -2416,9 +2572,9 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                         gap: '24px' 
                       }}>
                         <div>
-                          <span style={{ fontSize: '14px', fontWeight: 800, color: 'white', display: 'block' }}>Selected: {selectedOutboundFlight.airline} (${selectedOutboundFlight.price})</span>
+                          <span style={{ fontSize: '14px', fontWeight: 800, color: 'white', display: 'block' }}>Selected: {selectedOutboundFlight.airline} (${selectedOutboundFlight.price} x {travelersCount} = ${selectedOutboundFlight.price * travelersCount})</span>
                           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginTop: '4px', lineHeight: '1.4' }}>
-                            We will redirect you to Skyscanner to search live seat inventory and finalize payment.
+                            We will redirect you to Skyscanner to search live seat inventory for {travelersCount} travelers and finalize payment.
                           </span>
                         </div>
                         <button 
@@ -2546,8 +2702,32 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
 
                   {/* Actions */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <button onClick={() => setCurrentStep(3)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>&larr; Back</button>
-                    <button onClick={() => setCurrentStep(5)} style={{ padding: '12px 24px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>Next: Stays &amp; Accommodation &rarr;</button>
+                    <button 
+                      onClick={() => {
+                        if (isBookingReturnFlight) {
+                          setIsBookingReturnFlight(false);
+                          setCurrentStep(9);
+                        } else {
+                          setCurrentStep(3);
+                        }
+                      }} 
+                      style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                    >
+                      &larr; Back
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (isBookingReturnFlight) {
+                          setIsBookingReturnFlight(false);
+                          setCurrentStep(9);
+                        } else {
+                          setCurrentStep(5);
+                        }
+                      }} 
+                      style={{ padding: '12px 24px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}
+                    >
+                      {isBookingReturnFlight ? 'Return to Checklist \u2192' : 'Next: Stays & Accommodation \u2192'}
+                    </button>
                   </div>
                 </>
               )}
@@ -2670,56 +2850,247 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                   <div className="discover-premium-card" style={{ padding: '28px', borderRadius: '20px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Step 6: Editable Itinerary Timeline</h3>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                      {activeItinerary.map((dayPlan, dayIdx) => (
-                        <div key={dayPlan.day} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', paddingBottom: '20px' }}>
-                          <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary)', marginBottom: '12px' }}>Day {dayPlan.day} Timeline</h4>
-                          
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {dayPlan.activities.map((act: any, actIdx: number) => (
-                              <div 
-                                key={act.id} 
+                    {/* Day Navigator */}
+                    {activeItinerary.length > 0 && (
+                      <div style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        gap: '12px',
+                        padding: '16px',
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: '16px',
+                        marginBottom: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', width: '100%', justifyContent: 'space-between' }}>
+                          <button
+                            type="button"
+                            disabled={selectedItineraryDay === 1}
+                            onClick={() => { playUISound('click'); setSelectedItineraryDay(prev => Math.max(1, prev - 1)); }}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              background: selectedItineraryDay === 1 ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: selectedItineraryDay === 1 ? 'var(--text-muted)' : 'white',
+                              cursor: selectedItineraryDay === 1 ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            ◀
+                          </button>
+
+                          <div style={{ textAlign: 'center' }}>
+                            <span style={{ fontSize: '18px', fontWeight: 900, color: 'white', display: 'block', fontFamily: 'var(--font-title)' }}>
+                              Day {selectedItineraryDay}
+                            </span>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                              of {activeItinerary.length} Days Trip Guide
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={selectedItineraryDay === activeItinerary.length}
+                            onClick={() => { playUISound('click'); setSelectedItineraryDay(prev => Math.min(activeItinerary.length, prev + 1)); }}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              borderRadius: '50%',
+                              background: selectedItineraryDay === activeItinerary.length ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: selectedItineraryDay === activeItinerary.length ? 'var(--text-muted)' : 'white',
+                              cursor: selectedItineraryDay === activeItinerary.length ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            ▶
+                          </button>
+                        </div>
+
+                        {/* Progress Dots */}
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                          {activeItinerary.map((dayPlan) => {
+                            const isCurrent = dayPlan.day === selectedItineraryDay;
+                            return (
+                              <div
+                                key={dayPlan.day}
+                                onClick={() => { playUISound('tap'); setSelectedItineraryDay(dayPlan.day); }}
                                 style={{
+                                  width: isCurrent ? '24px' : '8px',
+                                  height: '8px',
+                                  borderRadius: '4px',
+                                  background: isCurrent ? 'var(--brand-gradient)' : 'rgba(255,255,255,0.15)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.3s ease'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Day Timeline Activities */}
+                    <div style={{ position: 'relative', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '16px' }}>
+                      {/* Vertical line connecting the dots */}
+                      {activeItinerary[selectedItineraryDay - 1]?.activities.length > 1 && (
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: '12px', 
+                          bottom: '12px', 
+                          left: '7px', 
+                          width: '2px', 
+                          background: 'linear-gradient(to bottom, var(--primary), var(--secondary))',
+                          opacity: 0.4
+                        }} />
+                      )}
+
+                      {activeItinerary[selectedItineraryDay - 1]?.activities.map((act: any, actIdx: number) => (
+                        <div 
+                          key={act.id} 
+                          style={{
+                            display: 'flex',
+                            position: 'relative',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: 'rgba(255,255,255,0.015)',
+                            padding: '16px 20px',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            transition: 'all 0.25s ease',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                          }}
+                        >
+                          {/* Dot on the left timeline */}
+                          <div style={{
+                            position: 'absolute',
+                            left: '-21px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: 'var(--primary)',
+                            boxShadow: '0 0 8px var(--primary)',
+                            zIndex: 2
+                          }} />
+
+                          {/* Left contents: Time and title */}
+                          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', textAlign: 'left' }}>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 800,
+                              color: 'white', 
+                              background: 'rgba(255,255,255,0.05)', 
+                              padding: '6px 12px', 
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }}>
+                              {act.time}
+                            </span>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>{act.title}</span>
+                          </div>
+
+                          {/* Right contents: Cost, Up/Down, Remove */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 800 }}>${act.cost}</span>
+                            
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button 
+                                onClick={() => handleMoveActivity(selectedItineraryDay - 1, actIdx, 'up')} 
+                                disabled={actIdx === 0} 
+                                style={{ 
+                                  background: 'rgba(255,255,255,0.03)', 
+                                  border: '1px solid rgba(255,255,255,0.05)', 
+                                  color: actIdx === 0 ? 'rgba(255,255,255,0.1)' : 'white', 
+                                  borderRadius: '6px',
+                                  width: '24px',
+                                  height: '24px',
                                   display: 'flex',
-                                  justifyContent: 'space-between',
                                   alignItems: 'center',
-                                  background: 'rgba(255,255,255,0.02)',
-                                  padding: '12px 16px',
-                                  borderRadius: '10px',
-                                  border: '1px solid rgba(255,255,255,0.04)'
+                                  justifyContent: 'center',
+                                  cursor: actIdx === 0 ? 'not-allowed' : 'pointer',
+                                  fontSize: '10px',
+                                  transition: 'all 0.2s'
                                 }}
                               >
-                                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.04)', padding: '4px 8px', borderRadius: '4px' }}>{act.time}</span>
-                                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>{act.title}</span>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                                  <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>${act.cost}</span>
-                                  
-                                  {/* Shift controls */}
-                                  <button onClick={() => handleMoveActivity(dayIdx, actIdx, 'up')} disabled={actIdx === 0} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>▲</button>
-                                  <button onClick={() => handleMoveActivity(dayIdx, actIdx, 'down')} disabled={actIdx === dayPlan.activities.length - 1} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}>▼</button>
-                                  
-                                  {/* Delete */}
-                                  <button 
-                                    onClick={() => handleRemoveActivity(dayIdx, act.id)}
-                                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '11px', fontWeight: 800, marginLeft: '6px' }}
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-
-                            {dayPlan.activities.length === 0 && (
-                              <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '11px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '10px' }}>
-                                No activities scheduled for Day {dayPlan.day}. Add attractions or custom plans.
-                              </div>
-                            )}
+                                ▲
+                              </button>
+                              <button 
+                                onClick={() => handleMoveActivity(selectedItineraryDay - 1, actIdx, 'down')} 
+                                disabled={actIdx === activeItinerary[selectedItineraryDay - 1].activities.length - 1} 
+                                style={{ 
+                                  background: 'rgba(255,255,255,0.03)', 
+                                  border: '1px solid rgba(255,255,255,0.05)', 
+                                  color: actIdx === activeItinerary[selectedItineraryDay - 1].activities.length - 1 ? 'rgba(255,255,255,0.1)' : 'white', 
+                                  borderRadius: '6px',
+                                  width: '24px',
+                                  height: '24px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: actIdx === activeItinerary[selectedItineraryDay - 1].activities.length - 1 ? 'not-allowed' : 'pointer',
+                                  fontSize: '10px',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                ▼
+                              </button>
+                            </div>
+                            
+                            <button 
+                              onClick={() => handleRemoveActivity(selectedItineraryDay - 1, act.id)}
+                              style={{ 
+                                background: 'rgba(239,68,68,0.05)', 
+                                border: '1px solid rgba(239,68,68,0.15)', 
+                                color: '#f87171', 
+                                borderRadius: '8px',
+                                padding: '6px 12px',
+                                fontSize: '11px', 
+                                fontWeight: 800, 
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.15)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.05)'; }}
+                            >
+                              Remove
+                            </button>
                           </div>
                         </div>
                       ))}
+
+                      {(!activeItinerary[selectedItineraryDay - 1] || activeItinerary[selectedItineraryDay - 1].activities.length === 0) && (
+                        <div style={{ 
+                          padding: '32px 16px', 
+                          textAlign: 'center', 
+                          color: 'var(--text-muted)', 
+                          fontSize: '12px', 
+                          background: 'rgba(255,255,255,0.01)', 
+                          border: '2px dashed rgba(255,255,255,0.05)', 
+                          borderRadius: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <span style={{ fontSize: '24px' }}>🗺️</span>
+                          <span>No activities scheduled for Day {selectedItineraryDay}.</span>
+                          <span style={{ fontSize: '11px' }}>Browse and add spots from the next step!</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2740,48 +3111,83 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                     <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Step 7: Local Spots, Cuisine &amp; Souvenirs</h3>
 
                     {/* Grid of options */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '28px' }}>
+                      
                       {/* Attractions list with Add to Itinerary triggers */}
-                      <div>
-                        <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '12px' }}>Curated Local Attractions</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', color: 'var(--primary)' }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                          </span>
+                          <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'white', margin: 0, fontFamily: 'var(--font-title)' }}>Curated Local Attractions</h4>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                           {destData.attractions.map((attr) => (
                             <div 
                               key={attr.id}
                               style={{
-                                padding: '16px',
-                                background: 'rgba(255,255,255,0.02)',
+                                padding: '20px',
+                                background: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%)',
                                 border: '1px solid rgba(255,255,255,0.05)',
-                                borderRadius: '12px',
+                                borderLeft: '4px solid var(--primary)',
+                                borderRadius: '14px',
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                gap: '12px'
+                                alignItems: 'center',
+                                gap: '16px',
+                                transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.borderColor = 'rgba(236,72,153,0.3)';
+                                e.currentTarget.style.boxShadow = '0 8px 30px rgba(236,72,153,0.08)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)';
+                                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
                               }}
                             >
-                              <div>
-                                <span style={{ fontSize: '12px', fontWeight: 700, color: 'white', display: 'block' }}>{attr.name}</span>
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>{attr.duration} • Cost: ${attr.cost}</span>
-                                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '6px 0 0 0', lineHeight: '1.4' }}>{attr.desc}</p>
+                              <div style={{ textAlign: 'left', flex: 1 }}>
+                                <span style={{ fontSize: '14px', fontWeight: 800, color: 'white', display: 'block' }}>{attr.name}</span>
+                                
+                                <div style={{ display: 'flex', gap: '8px', margin: '8px 0', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '10px', color: 'white', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: '20px' }}>
+                                    ⏱️ {attr.duration}
+                                  </span>
+                                  <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)', padding: '3px 8px', borderRadius: '20px' }}>
+                                    Cost: {attr.cost === 0 ? 'Free' : `$${attr.cost}`}
+                                  </span>
+                                </div>
+                                
+                                <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.4' }}>{attr.desc}</p>
                               </div>
+                              
                               <button
                                 onClick={() => {
-                                  handleAddActivity(0, attr.name, attr.cost);
-                                  alert(`"${attr.name}" added to Day 1 Timeline! Check Step 6.`);
+                                  playUISound('click');
+                                  handleAddActivity(selectedItineraryDay - 1, attr.name, attr.cost);
+                                  alert(`"${attr.name}" added to Day ${selectedItineraryDay} Timeline! Check Step 6.`);
                                 }}
                                 style={{
-                                  background: 'rgba(255,255,255,0.04)',
-                                  border: '1px solid rgba(255,255,255,0.08)',
-                                  color: 'var(--text-primary)',
-                                  padding: '8px 12px',
-                                  borderRadius: '8px',
+                                  background: 'var(--brand-gradient)',
+                                  border: 'none',
+                                  color: 'white',
+                                  padding: '10px 16px',
+                                  borderRadius: '10px',
                                   fontSize: '11px',
-                                  fontWeight: 700,
+                                  fontWeight: 800,
                                   cursor: 'pointer',
-                                  alignSelf: 'flex-start',
-                                  whiteSpace: 'nowrap'
+                                  alignSelf: 'center',
+                                  whiteSpace: 'nowrap',
+                                  boxShadow: '0 4px 12px rgba(236,72,153,0.2)',
+                                  transition: 'all 0.2s'
                                 }}
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                               >
-                                + Add Day 1
+                                + Add Day {selectedItineraryDay}
                               </button>
                             </div>
                           ))}
@@ -2789,36 +3195,115 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                       </div>
 
                       {/* Food & Souvenirs */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        {/* Food */}
-                        <div>
-                          <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '12px' }}>Signature Cuisine</h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        
+                        {/* Food / Cuisine Card */}
+                        <div style={{ 
+                          padding: '20px', 
+                          background: 'rgba(255,255,255,0.01)', 
+                          border: '1px solid rgba(255,255,255,0.04)', 
+                          borderRadius: '16px' 
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px' }}>
+                              <img src="/cuisine-icon.png" alt="Cuisine" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            </span>
+                            <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', margin: 0, fontFamily: 'var(--font-title)' }}>Local Signature Cuisine</h4>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {destData.food.map((dish, dIdx) => (
-                              <div key={dIdx} style={{ background: 'rgba(255,255,255,0.01)', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '10px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', display: 'block' }}>{dish.name}</span>
-                                <span style={{ fontSize: '9px', color: '#fbbf24', display: 'block' }}>★ {dish.rating} review score</span>
-                                <p style={{ fontSize: '10px', color: 'var(--text-muted)', margin: '4px 0 0' }}>{dish.desc}</p>
+                              <div 
+                                key={dIdx} 
+                                style={{ 
+                                  background: 'rgba(255,255,255,0.015)', 
+                                  padding: '12px 14px', 
+                                  border: '1px solid rgba(255,255,255,0.03)', 
+                                  borderRadius: '12px',
+                                  textAlign: 'left',
+                                  transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.015)'; }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'white' }}>{dish.name}</span>
+                                  <span style={{ 
+                                    fontSize: '9px', 
+                                    color: '#fbbf24', 
+                                    fontWeight: 800, 
+                                    background: 'rgba(251,191,36,0.08)', 
+                                    padding: '2px 6px', 
+                                    borderRadius: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}>
+                                    ★ {dish.rating}
+                                  </span>
+                                </div>
+                                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>{dish.desc}</p>
                               </div>
                             ))}
                           </div>
                         </div>
 
-                        {/* Souvenirs */}
-                        <div>
-                          <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '12px' }}>Local Souvenirs</h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {/* Souvenirs Card */}
+                        <div style={{ 
+                          padding: '20px', 
+                          background: 'rgba(255,255,255,0.01)', 
+                          border: '1px solid rgba(255,255,255,0.04)', 
+                          borderRadius: '16px' 
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px' }}>
+                              <img src="/souvenirs-icon.png" alt="Souvenirs" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            </span>
+                            <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', margin: 0, fontFamily: 'var(--font-title)' }}>Recommended Souvenirs</h4>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {destData.souvenirs.map((item, sIdx) => (
-                              <div key={sIdx} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.01)', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+                              <div 
+                                key={sIdx} 
+                                style={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between', 
+                                  alignItems: 'center',
+                                  background: 'rgba(255,255,255,0.015)', 
+                                  padding: '12px 14px', 
+                                  border: '1px solid rgba(255,255,255,0.03)', 
+                                  borderRadius: '12px',
+                                  textAlign: 'left',
+                                  transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.015)'; }}
+                              >
                                 <div>
-                                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'white', display: 'block' }}>{item.name}</span>
-                                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Location: {item.location}</span>
+                                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'white', display: 'block' }}>{item.name}</span>
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', marginTop: '2px' }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg>
+                                      {item.location}
+                                    </span>
+                                  </span>
                                 </div>
-                                <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399' }}>{item.price}</span>
+                                <span style={{ 
+                                  fontSize: '11px', 
+                                  fontWeight: 800, 
+                                  color: '#34d399',
+                                  background: 'rgba(52,211,153,0.08)',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px'
+                                }}>
+                                  {item.price}
+                                </span>
                               </div>
                             ))}
                           </div>
                         </div>
+
                       </div>
                     </div>
                   </div>
@@ -2841,79 +3326,270 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
 
                     {/* Warning state if over budget */}
                     {isOverBudget && (
-                      <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '12px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '20px' }}>🚨</span>
+                      <div style={{ 
+                        background: 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(239,68,68,0.02) 100%)', 
+                        border: '1px solid rgba(239,68,68,0.15)', 
+                        borderLeft: '4px solid #ef4444',
+                        borderRadius: '16px', 
+                        padding: '18px 24px', 
+                        display: 'flex', 
+                        gap: '16px', 
+                        alignItems: 'center',
+                        boxShadow: '0 4px 30px rgba(239,68,68,0.03)',
+                        backdropFilter: 'blur(4px)',
+                        textAlign: 'left'
+                      }}>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', flexShrink: 0 }}>
+                          <img src="/budget-warning-icon.png" alt="Warning" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </span>
                         <div>
-                          <span style={{ fontSize: '12px', fontWeight: 800, color: '#f87171', display: 'block' }}>Warning: Budget Limit Exceeded</span>
-                          <p style={{ fontSize: '11px', color: '#fca5a5', margin: '2px 0 0 0' }}>
-                            Your current projected expenditure (${costBreakdown.subtotal}) exceeds your target budget (${targetBudget}) by ${costBreakdown.subtotal - targetBudget}.
+                          <span style={{ fontSize: '13px', fontWeight: 900, color: '#f87171', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Warning: Budget Limit Exceeded</span>
+                          <p style={{ fontSize: '11.5px', color: '#fca5a5', margin: '4px 0 0 0', lineHeight: '1.4' }}>
+                            Your current projected expenditure (${costBreakdown.subtotal}) exceeds your target budget (${targetBudget}) by <strong style={{ color: '#ef4444' }}>${costBreakdown.subtotal - targetBudget}</strong>.
                           </p>
                         </div>
                       </div>
                     )}
 
                     {/* Chart layout card */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '28px' }}>
                       
                       {/* Breakdown list */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Visa VoA Pre-auth:</span>
-                          <span style={{ fontWeight: 700 }}>${costBreakdown.visaCost}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Selected Outbound/Return Flights:</span>
-                          <span style={{ fontWeight: 700 }}>${costBreakdown.flightCost}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Hotel Stay (Venture):</span>
-                          <span style={{ fontWeight: 700 }}>${costBreakdown.accommodationCost}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                          <span style={{ color: 'var(--text-muted)' }}>Itinerary Activities:</span>
-                          <span style={{ fontWeight: 700 }}>${costBreakdown.activitiesCost}</span>
-                        </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         
-                        {/* Manual expenses */}
-                        {manualExpenses.map(item => (
-                          <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', color: '#fbbf24' }}>
-                            <span>{item.name}:</span>
-                            <div>
-                              <span style={{ fontWeight: 700, marginRight: '10px' }}>${item.amount}</span>
-                              <button onClick={() => handleRemoveManualExpense(item.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '10px', cursor: 'pointer' }}>&times;</button>
+                        {/* Predefined expense items in progress cards */}
+                        {[
+                          { icon: '/budget-visa-icon.png', label: 'Visa VoA Pre-auth', amount: costBreakdown.visaCost, color: 'var(--primary)' },
+                          { icon: '/budget-flights-icon.png', label: 'Outbound/Return Flights', amount: costBreakdown.flightCost, color: '#3b82f6' },
+                          { icon: '/budget-stay-icon.png', label: 'Hotel Accommodation', amount: costBreakdown.accommodationCost, color: '#10b981' },
+                          { icon: '/budget-activities-icon.png', label: 'Itinerary Activities', amount: costBreakdown.activitiesCost, color: '#fbbf24' }
+                        ].map((card, idx) => {
+                          const cardRatio = targetBudget > 0 ? (card.amount / targetBudget) * 100 : 0;
+                          return (
+                            <div 
+                              key={idx} 
+                              style={{
+                                padding: '14px 18px',
+                                background: 'rgba(255,255,255,0.015)',
+                                border: '1px solid rgba(255,255,255,0.04)',
+                                borderRadius: '14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px',
+                                transition: 'all 0.2s ease',
+                                textAlign: 'left'
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.015)'; }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px' }}>
+                                    <img 
+                                      src={card.icon} 
+                                      alt={card.label} 
+                                      style={{ 
+                                        width: '100%', 
+                                        height: '100%', 
+                                        objectFit: 'contain',
+                                        filter: card.icon.includes('visa') ? 'brightness(0) invert(1)' : 'none'
+                                      }} 
+                                    />
+                                  </span>
+                                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>{card.label}</span>
+                                </div>
+                                <span style={{ fontSize: '13px', fontWeight: 800, color: 'white' }}>${card.amount}</span>
+                              </div>
+                              {/* Mini progress bar */}
+                              <div style={{ height: '4px', background: 'rgba(255,255,255,0.04)', borderRadius: '2px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(100, cardRatio)}%`, height: '100%', background: card.color, borderRadius: '2px' }} />
+                              </div>
                             </div>
+                          );
+                        })}
+
+                        {/* Manual expenses */}
+                        {manualExpenses.length > 0 && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'left', marginBottom: '2px' }}>
+                              Additional Expenses
+                            </span>
+                            {manualExpenses.map(item => (
+                              <div key={item.id} style={{
+                                padding: '12px 16px',
+                                background: 'rgba(251,191,36,0.015)',
+                                border: '1px solid rgba(251,191,36,0.08)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                textAlign: 'left'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px' }}>
+                                    <img src="/budget-manual-icon.png" alt="Expense" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                  </span>
+                                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>{item.name}</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#fbbf24' }}>${item.amount}</span>
+                                  <button 
+                                    onClick={() => { playUISound('click'); handleRemoveManualExpense(item.id); }}
+                                    style={{ 
+                                      background: 'rgba(239,68,68,0.08)', 
+                                      border: 'none', 
+                                      color: '#f87171', 
+                                      fontSize: '12px', 
+                                      cursor: 'pointer',
+                                      width: '20px',
+                                      height: '20px',
+                                      borderRadius: '50%',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      lineHeight: 1
+                                    }}
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
 
                       {/* Visual gauge chart */}
-                      <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: `conic-gradient(${isOverBudget ? '#ef4444' : '#ec4899'} ${budgetRatio * 3.6}deg, rgba(255,255,255,0.05) 0deg)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                          <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: '#09080f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '18px', fontWeight: 900 }}>{Math.round(budgetRatio)}%</span>
-                            <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>BUDGET SPENT</span>
+                      <div style={{ 
+                        background: 'rgba(255,255,255,0.01)', 
+                        padding: '24px', 
+                        borderRadius: '20px', 
+                        border: '1px solid rgba(255,255,255,0.04)', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '20px'
+                      }}>
+                        <div style={{ position: 'relative', width: '150px', height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {/* High-tech rotating dashed ring in background */}
+                          <svg width="150" height="150" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
+                            <circle
+                              cx="75"
+                              cy="75"
+                              r="68"
+                              fill="none"
+                              stroke="rgba(255,255,255,0.02)"
+                              strokeWidth="1.5"
+                              strokeDasharray="4 6"
+                            />
+                            {/* Main Track */}
+                            <circle
+                              cx="75"
+                              cy="75"
+                              r="58"
+                              fill="none"
+                              stroke="rgba(255,255,255,0.04)"
+                              strokeWidth="8"
+                            />
+                            {/* Progress Arc */}
+                            <circle
+                              cx="75"
+                              cy="75"
+                              r="58"
+                              fill="none"
+                              stroke={isOverBudget ? '#f87171' : 'url(#gauge-grad)'}
+                              strokeWidth="8"
+                              strokeDasharray={`${2 * Math.PI * 58}`}
+                              strokeDashoffset={`${2 * Math.PI * 58 * (1 - Math.min(100, budgetRatio) / 100)}`}
+                              strokeLinecap="round"
+                              style={{ transition: 'stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                            />
+                            <defs>
+                              <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#ec4899" />
+                                        <stop offset="100%" stopColor="#8b5cf6" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                          
+                          {/* Readout labels */}
+                          <div style={{ zIndex: 1, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <span style={{ fontSize: '26px', fontWeight: 900, color: 'white', letterSpacing: '-0.5px', fontFamily: 'monospace' }}>
+                              {Math.round(budgetRatio)}%
+                            </span>
+                            <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginTop: '2px' }}>
+                              Spent
+                            </span>
+                            <span style={{ fontSize: '10px', color: isOverBudget ? '#f87171' : '#34d399', fontWeight: 700, marginTop: '4px' }}>
+                              {isOverBudget ? 'Over Budget' : `$${targetBudget - costBreakdown.subtotal} Left`}
+                            </span>
                           </div>
+                        </div>
+                        
+                        {/* Budget summary */}
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}>Target Budget: ${targetBudget}</span>
+                          <span style={{ fontSize: '13px', fontWeight: 800, color: 'white', display: 'block', marginTop: '2px' }}>Total Spent: ${costBreakdown.subtotal}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Add Manual Expense Form */}
-                    <form onSubmit={handleAddManualExpense} style={{ display: 'flex', gap: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                    <form onSubmit={handleAddManualExpense} style={{ display: 'flex', gap: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
                       <input 
                         type="text" 
                         value={newExpenseName} 
                         onChange={(e) => setNewExpenseName(e.target.value)} 
                         placeholder="Expense name, e.g. Taxi tips" 
-                        style={{ flex: 1, padding: '10px 12px', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '8px', color: 'white', fontSize: '12px' }} 
+                        required
+                        style={{ 
+                          flex: 1, 
+                          padding: '12px 16px', 
+                          background: 'var(--input-bg)', 
+                          border: '1px solid var(--input-border)', 
+                          borderRadius: '10px', 
+                          color: 'white', 
+                          fontSize: '12px',
+                          outline: 'none',
+                          transition: 'all 0.2s'
+                        }} 
                       />
                       <input 
                         type="number" 
                         value={newExpenseAmount} 
                         onChange={(e) => setNewExpenseAmount(e.target.value)} 
                         placeholder="Amount ($)" 
-                        style={{ width: '100px', padding: '10px 12px', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: '8px', color: 'white', fontSize: '12px' }} 
+                        required
+                        min={1}
+                        style={{ 
+                          width: '120px', 
+                          padding: '12px 16px', 
+                          background: 'var(--input-bg)', 
+                          border: '1px solid var(--input-border)', 
+                          borderRadius: '10px', 
+                          color: 'white', 
+                          fontSize: '12px',
+                          outline: 'none',
+                          transition: 'all 0.2s'
+                        }} 
                       />
-                      <button type="submit" style={{ padding: '10px 18px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                      <button 
+                        type="submit" 
+                        style={{ 
+                          padding: '12px 20px', 
+                          background: 'var(--brand-gradient)', 
+                          border: 'none', 
+                          borderRadius: '10px', 
+                          color: 'white', 
+                          fontSize: '12px', 
+                          fontWeight: 800, 
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 12px rgba(236,72,153,0.2)',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                         + Add Expense
                       </button>
                     </form>
@@ -2922,72 +3598,18 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                   {/* Actions */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <button onClick={() => setCurrentStep(7)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>&larr; Back</button>
-                    <button onClick={() => setCurrentStep(9)} style={{ padding: '12px 24px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>Next: Contingency &amp; Buffers &rarr;</button>
+                    <button onClick={() => setCurrentStep(9)} style={{ padding: '12px 24px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>Next: Return Checklist &rarr;</button>
                   </div>
                 </>
               )}
 
               {/* ---------------------------------------------------- */}
-              {/* STEP 9: BUFFER & CONTINGENCY PLANS */}
+              {/* STEP 9: RETURN CHECKLIST */}
               {/* ---------------------------------------------------- */}
               {currentStep === 9 && (
                 <>
                   <div className="discover-premium-card" style={{ padding: '28px', borderRadius: '20px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Step 9: Weather Buffers &amp; Contingency Plans</h3>
-
-                    {/* Weather alternatives */}
-                    <div>
-                      <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>Rainy Day Alternatives</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {destData.weatherBackup.map((item, idx) => (
-                          <div key={idx} style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            <span>☔</span>
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Insurance reminder */}
-                    <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.15)', borderRadius: '12px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '20px' }}>🛡️</span>
-                      <div>
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#60a5fa', display: 'block' }}>Travel Insurance Recommendation</span>
-                        <p style={{ fontSize: '11px', color: '#93c5fd', margin: '2px 0 0 0', lineHeight: '1.4' }}>
-                          Medical costs and travel delays are common at remote destinations. We recommend pre-authorizing travel insurance policies through our license partners (Allianz / World Nomads) with 10% premium member discount codes.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Emergency contacts */}
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-                      <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '8px' }}>Destination Emergency Contacts</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {destData.emergencyContacts.map((contact, idx) => (
-                          <div key={idx} style={{ display: 'flex', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            <span>📞</span>
-                            <span>{contact}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <button onClick={() => setCurrentStep(8)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>&larr; Back</button>
-                    <button onClick={() => setCurrentStep(10)} style={{ padding: '12px 24px', background: 'var(--brand-gradient)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>Next: Return checklist &rarr;</button>
-                  </div>
-                </>
-              )}
-
-              {/* ---------------------------------------------------- */}
-              {/* STEP 10: RETURN PLANNING */}
-              {/* ---------------------------------------------------- */}
-              {currentStep === 10 && (
-                <>
-                  <div className="discover-premium-card" style={{ padding: '28px', borderRadius: '20px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Step 10: Return Checklist &amp; departure preps</h3>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Step 9: Return Checklist &amp; departure preps</h3>
 
                     {/* Return flight widget */}
                     <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2997,9 +3619,35 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                           {selectedOutboundFlight ? `${selectedOutboundFlight.airline} return trip` : 'No return flight selected'}
                         </span>
                       </div>
-                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
-                        {selectedOutboundFlight ? '✓ Pre-booked' : '⏳ Awaiting flight selection'}
-                      </span>
+                      {selectedOutboundFlight ? (
+                        <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
+                          ✓ Pre-booked
+                        </span>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>
+                            ⏳ Awaiting flight selection
+                          </span>
+                          <button 
+                            onClick={() => {
+                              setIsBookingReturnFlight(true);
+                              setCurrentStep(4);
+                            }} 
+                            style={{ 
+                              padding: '8px 16px', 
+                              background: 'var(--brand-gradient)', 
+                              border: 'none', 
+                              borderRadius: '8px', 
+                              color: 'white', 
+                              fontSize: '11px', 
+                              fontWeight: 700, 
+                              cursor: 'pointer' 
+                            }}
+                          >
+                            Book Flights
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Pre-departure checklist */}
@@ -3022,7 +3670,9 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
                     </div>
 
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', textAlign: 'center' }}>
-                      <span style={{ fontSize: '18px', display: 'block', marginBottom: '8px' }}>🎉</span>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '64px', marginBottom: '12px' }}>
+                        <img src="/congrats-badge.png" alt="Congrats" style={{ height: '100%', objectFit: 'contain' }} />
+                      </span>
                       <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'white', margin: '4px 0 0 0' }}>Your Trip Planning is Ready!</h4>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '380px', margin: '8px auto 0 auto', lineHeight: '1.6' }}>
                         All flights, hotel checkouts, visa application forms, and budget limits are logged to your personal profile.
@@ -3032,11 +3682,39 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
 
                   {/* Actions */}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <button onClick={() => setCurrentStep(9)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>&larr; Back</button>
+                    <button onClick={() => setCurrentStep(8)} style={{ padding: '12px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 700 }}>&larr; Back</button>
                     <button 
                       onClick={() => {
-                        alert('All details saved successfully! Navigating back to explore feed.');
-                        router.push('/');
+                        const newTrip = {
+                          id: 'trip-' + Date.now(),
+                          destination: activeDestination,
+                          stayNights,
+                          startDate: startDate || '2026-10-12',
+                          endDate: endDate || '2026-10-15',
+                          budget: targetBudget,
+                          currency: currency,
+                          flight: selectedOutboundFlight ? {
+                            airline: selectedOutboundFlight.airline,
+                            price: selectedOutboundFlight.price,
+                            duration: selectedOutboundFlight.duration,
+                            stops: selectedOutboundFlight.stops
+                          } : null,
+                          stay: bookedStay ? {
+                            name: bookedStay.name,
+                            price: bookedStay.price,
+                            rating: bookedStay.rating
+                          } : null,
+                          savedAt: new Date().toISOString()
+                        };
+                        try {
+                          const existing = JSON.parse(localStorage.getItem('traveholic_planned_trips') || '[]');
+                          existing.push(newTrip);
+                          localStorage.setItem('traveholic_planned_trips', JSON.stringify(existing));
+                        } catch (e) {
+                          console.error(e);
+                        }
+                        alert('All details saved successfully! Navigating to your profile where you can view this trip.');
+                        router.push('/?tab=profile');
                       }} 
                       style={{ padding: '12px 24px', background: 'linear-gradient(90deg, #10b981 0%, #34d399 100%)', border: 'none', borderRadius: '12px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 800 }}
                     >
