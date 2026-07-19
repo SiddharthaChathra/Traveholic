@@ -15,7 +15,7 @@ export default function Home() {
   const [contentVisible, setContentVisible] = useState(false);
 
   // Form Switch States
-  const [formMode, setFormMode] = useState<'login' | 'signup'>('login');
+  const [formMode, setFormMode] = useState<'login' | 'signup' | 'forgot_password' | 'verify_otp'>('login');
   const [userRole, setUserRole] = useState<'traveller' | 'business'>('traveller');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -24,6 +24,8 @@ export default function Home() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -73,7 +75,46 @@ export default function Home() {
     setSubmitting(true);
 
     try {
-      if (formMode === 'login') {
+      if (formMode === 'forgot_password') {
+        const res = await fetch('/api/auth/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSuccessMsg(`${data.message} ${data.otp ? '(Simulated Email) Your OTP is: ' + data.otp : ''}`);
+          setFormMode('verify_otp');
+        } else {
+          setErrorMsg(data.error || 'Failed to send OTP');
+        }
+      } else if (formMode === 'verify_otp') {
+        if (password !== confirmPassword) {
+          setErrorMsg('Passwords do not match');
+          setSubmitting(false);
+          return;
+        }
+        if (password.length < 6) {
+          setErrorMsg('Password must be at least 6 characters');
+          setSubmitting(false);
+          return;
+        }
+        const res = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, otp, newPassword: password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSuccessMsg('Password successfully reset! You can now log in.');
+          setFormMode('login');
+          setOtp('');
+          setPassword('');
+          setConfirmPassword('');
+        } else {
+          setErrorMsg(data.error || 'Failed to reset password');
+        }
+      } else if (formMode === 'login') {
         const result = await login(identifier, password);
         if (result.success) {
           setSuccessMsg('Logged in successfully!');
@@ -355,7 +396,108 @@ export default function Home() {
               {errorMsg && <div className="status-msg error">{errorMsg}</div>}
               {successMsg && <div className="status-msg success">{successMsg}</div>}
 
-              {formMode === 'login' ? (
+              {formMode === 'forgot_password' ? (
+                /* --- FORGOT PASSWORD VIEW --- */
+                <form onSubmit={handleSubmit}>
+                  <h2 className="form-title" style={{ textAlign: 'left', marginBottom: '4px' }}>Reset Password</h2>
+                  <p className="form-subtitle" style={{ textAlign: 'left', marginBottom: '24px' }}>Enter your email address and we'll generate a link to get back into your account.</p>
+                  
+                  <div className="form-group">
+                    <div className="form-input-container">
+                      <input
+                        type="email"
+                        className="form-input"
+                        placeholder="Email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? 'Sending link...' : 'Send Reset Link'}
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', width: '100%' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--input-border)' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '0 18px', textTransform: 'uppercase' }}>or</span>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--input-border)' }} />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => { setFormMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                  >
+                    Back to Log in
+                  </button>
+                </form>
+              ) : formMode === 'verify_otp' ? (
+                /* --- VERIFY OTP VIEW --- */
+                <form onSubmit={handleSubmit}>
+                  <h2 className="form-title" style={{ textAlign: 'left', marginBottom: '4px' }}>Enter OTP</h2>
+                  <p className="form-subtitle" style={{ textAlign: 'left', marginBottom: '24px' }}>Enter the 6-digit code sent to your email to reset your password.</p>
+                  
+                  <div className="form-group">
+                    <div className="form-input-container">
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="6-digit OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        maxLength={6}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <div className="form-input-container">
+                      <input
+                        type="password"
+                        className="form-input"
+                        placeholder="New Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <div className="form-input-container">
+                      <input
+                        type="password"
+                        className="form-input"
+                        placeholder="Confirm Password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-primary" disabled={submitting}>
+                    {submitting ? 'Resetting...' : 'Reset Password'}
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', width: '100%' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--input-border)' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', margin: '0 18px', textTransform: 'uppercase' }}>or</span>
+                    <div style={{ flex: 1, height: '1px', background: 'var(--input-border)' }} />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => { setFormMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                  >
+                    Back to Log in
+                  </button>
+                </form>
+              ) : formMode === 'login' ? (
                 /* --- LOG IN VIEW --- */
                 <form onSubmit={handleSubmit}>
                   <h2 className="form-title" style={{ display: 'none' }}>Log into Travora</h2>
@@ -398,7 +540,7 @@ export default function Home() {
                     {submitting ? 'Logging in...' : 'Log in'}
                   </button>
 
-                  <a className="text-link-center" href="#forgot" onClick={(e) => { e.preventDefault(); alert('Password reset is simulated.'); }}>
+                  <a className="text-link-center" href="#forgot" onClick={(e) => { e.preventDefault(); setFormMode('forgot_password'); setErrorMsg(''); setSuccessMsg(''); }}>
                     Forgot password?
                   </a>
 
