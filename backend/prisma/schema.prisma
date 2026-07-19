@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id              String           @id @default(uuid())
+  username        String           @unique
+  email           String?          @unique
+  passwordHash    String           @map("password_hash")
+  fullName        String           @map("full_name")
+  phone           String?          @unique
+  avatarUrl       String?          @map("avatar_url")
+  role            String           // "traveller" or "business"
+  travellerType   String?          @default("normal") @map("traveller_type") // "normal" or "vlogger"
+  resetOtp        String?          @map("reset_otp")
+  resetOtpExpiry  DateTime?        @map("reset_otp_expiry")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  businessProfile BusinessProfile?
+  bookings        Booking[]
+
+  @@map("users")
+}
+
+model BusinessProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique @map("user_id")
+  businessType       String   @map("business_type") // "agency" or "hotel"
+  businessName       String   @map("business_name")
+  registrationNumber String   @map("registration_number")
+  phone              String
+  address            String
+  websiteUrl         String?  @map("website_url")
+  bookingModel       String   @map("booking_model") // "direct" or "redirect"
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings           Listing[]
+
+  @@map("business_profiles")
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  caption   String
+  images    String    // Comma-separated or JSON list of URLs
+  location  String
+  likesCount Int      @default(0) @map("likes_count")
+  creatorId String    @map("creator_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  comments  Comment[]
+  
+  @@map("posts")
+}
+
+model Vlog {
+  id         String    @id @default(uuid())
+  username   String
+  avatar     String
+  location   String
+  title      String
+  views      String
+  likes      Int       @default(0)
+  videoUrl   String    @map("video_url")
+  duration   String
+  category   String
+  followers  String
+  isVerified Boolean   @default(false) @map("is_verified")
+  
+  comments   Comment[]
+
+  @@map("vlogs")
+}
+
+model Comment {
+  id            String    @id @default(uuid())
+  text          String
+  user          String
+  avatarColor   String    @map("avatar_color")
+  postId        String?   @map("post_id")
+  vlogId        String?   @map("vlog_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  post          Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  vlog          Vlog?     @relation(fields: [vlogId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Listing {
+  id                 String    @id @default(uuid())
+  name               String
+  price              Float
+  rating             Float     @default(5.0)
+  reviewsCount       Int       @default(0) @map("reviews_count")
+  location           String
+  category           String
+  image              String
+  businessProfileId  String    @map("business_profile_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  
+  businessProfile    BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  bookings           Booking[]
+
+  @@map("listings")
+}
+
+model Booking {
+  id           String    @id @default(uuid())
+  checkIn      DateTime  @map("check_in")
+  checkOut     DateTime  @map("check_out")
+  price        Float
+  guestCount   Int       @default(1) @map("guest_count")
+  status       String    @default("upcoming") // "upcoming", "ongoing", "completed"
+  listingId    String    @map("listing_id")
+  userId       String    @map("user_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  
+  listing      Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  senderId   String    @map("sender_id")
+  receiverId String    @map("receiver_id")
+  text       String
+  timestamp  DateTime  @default(now())
+
+  @@map("messages")
+}
+
+model Destination {
+  id                String   @id // e.g. "bali" or "manali"
+  fullName          String   @map("full_name")
+  visaStatus        String   @map("visa_status")
+  visaDetails       String   @map("visa_details")
+  visaUrl           String   @map("visa_url")
+  visaTime          String   @map("visa_time")
+  visaDocuments     String   @map("visa_documents") // JSON array string
+  exchangeRate      String   @map("exchange_rate")
+  exchangeAdvice    String   @map("exchange_advice")
+  cardAcceptance    Int      @map("card_acceptance")
+  flights           String   @map("flights")          // JSON list string
+  itinerary         String   @map("itinerary")        // JSON list string
+  attractions       String   @map("attractions")      // JSON list string
+  food              String   @map("food")             // JSON list string
+  souvenirs         String   @map("souvenirs")        // JSON list string
+  weatherBackup     String   @map("weather_backup")   // JSON list string
+  emergencyContacts String   @map("emergency_contacts") // JSON list string
+
+  @@map("destinations")
+}

@@ -1,0 +1,104 @@
+# CEIP - Coastal Erosion Intelligence Platform
+# Docker Compose for production deployment
+
+version: '3.8'
+
+services:
+  # Frontend - Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend - FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/ceip.db
+      - PLANETARY_COMPUTER_API_KEY=${PLANETARY_COMPUTER_API_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - DEBUG=false
+    volumes:
+      - backend_data:/app/data
+      - backend_models:/app/models
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MLflow for experiment tracking (optional)
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri file:///mlflow
+    restart: unless-stopped
+    profiles: ["ml"]
+
+  # PostgreSQL (optional, for production)
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=ceip
+      - POSTGRES_USER=ceip_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    profiles: ["prod"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ceip_user -d ceip"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching/sessions (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    profiles: ["prod"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  backend_data:
+  backend_models:
+  mlflow_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: ceip-network
