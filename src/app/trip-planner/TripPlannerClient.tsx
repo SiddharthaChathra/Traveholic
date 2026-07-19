@@ -510,8 +510,25 @@ export default function TripPlannerClient({ initialDestination = '' }: TripPlann
     }
   };
 
-  // Helper values
-  const destData = getDestinationData(activeDestination || 'bali');
+  // Dynamic destination data state
+  const [destData, setDestData] = useState<DestinationData>(getDestinationData('bali'));
+
+  useEffect(() => {
+    const destName = activeDestination || 'bali';
+    fetch(`/api/destinations/${destName}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) {
+          setDestData(data);
+        } else {
+          setDestData(getDestinationData(destName));
+        }
+      })
+      .catch(err => {
+        console.error("Error loading destination from DB:", err);
+        setDestData(getDestinationData(destName));
+      });
+  }, [activeDestination]);
 
   const getDynamicCountryData = (dest: string): CountryData => {
     let text = dest.toLowerCase().trim();

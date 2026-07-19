@@ -308,6 +308,7 @@ export default function Home() {
     }
   }, []);
 
+
   useEffect(() => {
     if (!loading && user) {
       if (user.role === 'business') {
@@ -1496,58 +1497,7 @@ export default function Home() {
   }
 
   // Custom posts list state
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: 'post-1',
-      username: 'wanderlust_jenny',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      location: 'Ubud, Bali',
-      images: [
-        'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80'
-      ],
-      caption: 'Waking up to tropical jungle sounds in Bali... this place is absolute heaven! 💚 Who wants to join my next backpacking trip here?',
-      hashtags: ['#bali', '#backpacking', '#nature', '#travelbuddy'],
-      likesCount: 142,
-      comments: [
-        { id: 'c1', username: 'backpacker_sam', text: 'Stunning! I am planning to visit Ubud next month. Let’s connect!' },
-        { id: 'c2', username: 'nomad_alex', text: 'Which villa is this? Looks incredible.' }
-      ]
-    },
-    {
-      id: 'post-2',
-      username: 'backpacker_sam',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      location: 'Solang Valley, Manali',
-      images: [
-        'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
-      ],
-      caption: 'First summit climb of the year! The thin air, cold wind, and majestic views are worth every step. 🏔️ Solang Valley never ceases to amaze.',
-      hashtags: ['#manali', '#climbing', '#adventure', '#mountains'],
-      likesCount: 98,
-      comments: [
-        { id: 'c3', username: 'wanderlust_jenny', text: 'So proud of you Sam! Safe travels!' }
-      ]
-    },
-    {
-      id: 'post-3',
-      username: 'stay_luxury_bali',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-      location: 'Seminyak, Goa',
-      images: [
-        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=600&auto=format&fit=crop&q=80'
-      ],
-      caption: 'Golden hour at our beachside resort. Private pool villas available direct. Link in bio! 🌅🍹',
-      hashtags: ['#goa', '#luxuryresort', '#sunset', '#beachlife'],
-      likesCount: 215,
-      comments: [
-        { id: 'c4', username: 'nomad_alex', text: 'Just booked a weekend stay here, can’t wait!' }
-      ]
-    }
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   // Stories list state
   const [stories, setStories] = useState([
@@ -1705,6 +1655,104 @@ export default function Home() {
       { sender: 'me', text: 'Hostels are great for meeting people, homestays are better for peace.', time: '2 days ago' }
     ]
   });
+
+  // Fetch social feed posts on initial load
+  useEffect(() => {
+    fetch('/api/posts')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(post => {
+            let imagesArr: string[] = [];
+            try {
+              if (post.images.startsWith('[')) {
+                imagesArr = JSON.parse(post.images);
+              } else {
+                imagesArr = post.images.split(',');
+              }
+            } catch (e) {
+              imagesArr = [post.images];
+            }
+            // Map seed posts or default fallbacks
+            let username = post.username;
+            let avatar = post.avatar;
+            if (!username) {
+              if (post.id === 'post-1') {
+                username = 'wanderlust_jenny';
+                avatar = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80';
+              } else if (post.id === 'post-2') {
+                username = 'backpacker_sam';
+                avatar = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80';
+              } else {
+                username = 'wanderer_buddy';
+                avatar = '🌟';
+              }
+            }
+
+            const hashtags = (post.caption.match(/#[a-zA-Z0-9_]+/g) || []) as string[];
+
+            return {
+              ...post,
+              username,
+              avatar,
+              hashtags,
+              images: imagesArr,
+              comments: (post.comments || []).map((c: any) => ({
+                id: c.id,
+                username: c.user,
+                text: c.text
+              }))
+            };
+          });
+          setPosts(mapped);
+        }
+      })
+      .catch(err => console.error("Error loading posts from DB:", err));
+  }, []);
+
+  // Load message history from backend DB
+  useEffect(() => {
+    if (!user) return;
+    const currentBuddy = activeChatBuddy;
+    fetch(`/api/messages?senderId=${user.username}&receiverId=${currentBuddy}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(m => ({
+            sender: (m.senderId === user.username ? 'me' : 'them') as 'me' | 'them',
+            text: m.text,
+            time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setConversations(prev => ({
+            ...prev,
+            [currentBuddy]: mapped
+          }));
+        }
+      })
+      .catch(err => console.error("Error loading chat history:", err));
+  }, [activeChatBuddy, user]);
+
+  // Load mini chat message history from backend DB
+  useEffect(() => {
+    if (!user || !miniActiveChatBuddy) return;
+    const currentBuddy = miniActiveChatBuddy;
+    fetch(`/api/messages?senderId=${user.username}&receiverId=${currentBuddy}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const mapped = data.map(m => ({
+            sender: (m.senderId === user.username ? 'me' : 'them') as 'me' | 'them',
+            text: m.text,
+            time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setConversations(prev => ({
+            ...prev,
+            [currentBuddy]: mapped
+          }));
+        }
+      })
+      .catch(err => console.error("Error loading mini chat history:", err));
+  }, [miniActiveChatBuddy, user]);
 
   // Reels list data & interactions
   const [reels, setReels] = useState([
@@ -1991,6 +2039,17 @@ export default function Home() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [isHeroHovered, setIsHeroHovered] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showSuggestedModal, setShowSuggestedModal] = useState(false);
+  const [suggestedPeople, setSuggestedPeople] = useState([
+    { id: 1, name: 'Jenny Wanderlust', username: 'wanderlust_jenny', bio: 'Travel Blogger & Digital Nomad | Ubud, Bali 🌴', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by backpacker_sam + 12 others', isOpenToWork: false, verified: true, linkedin: false, connected: false },
+    { id: 2, name: 'Backpacker Sam', username: 'backpacker_sam', bio: 'Budget Backpacker | Budget Trails & Street Food 🎒', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by nomad_vlogs + 3 others', isOpenToWork: false, verified: false, linkedin: false, connected: false },
+    { id: 3, name: 'Luxury Bali Stays', username: 'stay_luxury_bali', bio: 'Venture Partner | Curating Premium Bali Stays 🌊', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', mutualText: 'wanderlust_jenny and 18 others like this', isOpenToWork: false, verified: true, linkedin: false, connected: false },
+    { id: 4, name: 'Alex Nomad', username: 'nomad_alex', bio: 'Remote Engineer | Working from beaches & summits 💻', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by backpacker_sam + 5 others', isOpenToWork: true, verified: false, linkedin: true, connected: false },
+    { id: 5, name: 'Nature Explorer', username: 'nature_explorer', bio: 'Wilderness Guide & Peak Conqueror 🏔️', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by wander_soul + 2 others', isOpenToWork: false, verified: false, linkedin: false, connected: false },
+    { id: 6, name: 'Siddharth Vlogs', username: 'sid_vlogs', bio: 'Drone Pilot & Culture Documentarian 🎥', avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by nomad_vlogs + 9 others', isOpenToWork: false, verified: true, linkedin: false, connected: false },
+    { id: 7, name: 'Wandering Soul', username: 'wander_soul', bio: 'Solo Traveler & Road Trip Enthusiast ✨', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80', mutualText: 'Sanjana and 24 other mutual connections', isOpenToWork: false, verified: false, linkedin: false, connected: false },
+    { id: 8, name: 'Nomad Vlogs', username: 'nomad_vlogs', bio: 'Cinematic Travel Creator | Full-time Nomad 📼', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80', mutualAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', mutualText: 'Followed by wanderlust_jenny + 14 others', isOpenToWork: false, verified: true, linkedin: false, connected: false }
+  ]);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [liveUpticks, setLiveUpticks] = useState<Record<number, number>>({});
   const [categoryMoodColor, setCategoryMoodColor] = useState('rgba(139, 92, 246, 0.15)'); // default violet glow
@@ -2372,7 +2431,19 @@ export default function Home() {
       ...prev,
       [miniActiveChatBuddy]: [...(prev[miniActiveChatBuddy] || []), newMsg]
     }));
+    const messageText = miniChatInput.trim();
     setMiniChatInput('');
+
+    // Save user message to database
+    fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        senderId: user?.username || 'me',
+        receiverId: miniActiveChatBuddy,
+        text: messageText
+      })
+    }).catch(err => console.error("Error saving mini message:", err));
 
     // Buddy Auto response
     const currentBuddy = miniActiveChatBuddy;
@@ -2381,7 +2452,7 @@ export default function Home() {
         'backpacker_sam': [
           'Wow, that sounds awesome! 🏔️ Can’t wait to meet up.',
           'Let’s catch up later, going out for a trek now! 🚶‍♂️',
-          'Perfect! Let know if you need anything from the local guides.'
+          'Perfect! Let me know if you need anything from the local guides.'
         ],
         'wanderlust_jenny': [
           'Amazing! Bali has so many hidden gems. 🌴',
@@ -2408,6 +2479,17 @@ export default function Home() {
         ...prev,
         [currentBuddy]: [...(prev[currentBuddy] || []), replyMsg]
       }));
+
+      // Save buddy auto-response to database
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: currentBuddy,
+          receiverId: user?.username || 'me',
+          text: randomResponse
+        })
+      }).catch(err => console.error("Error saving mini buddy response:", err));
     }, 1200);
   };
 
@@ -2425,7 +2507,19 @@ export default function Home() {
       ...prev,
       [activeChatBuddy]: [...(prev[activeChatBuddy] || []), newMsg]
     }));
+    const messageText = chatInput.trim();
     setChatInput('');
+
+    // Save message to database
+    fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        senderId: user?.username || 'me',
+        receiverId: activeChatBuddy,
+        text: messageText
+      })
+    }).catch(err => console.error("Error saving message:", err));
 
     // Buddy Auto response
     setTimeout(() => {
@@ -2460,6 +2554,17 @@ export default function Home() {
         ...prev,
         [activeChatBuddy]: [...(prev[activeChatBuddy] || []), replyMsg]
       }));
+
+      // Save buddy auto-response to database
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: activeChatBuddy,
+          receiverId: user?.username || 'me',
+          text: randomResponse
+        })
+      }).catch(err => console.error("Error saving buddy response:", err));
     }, 1200);
   };
 
@@ -2532,7 +2637,8 @@ export default function Home() {
   };
 
   // Like Toggle
-  const toggleLike = (id: string) => {
+  const toggleLike = async (id: string) => {
+    const isCurrentlyLiked = likedPosts.has(id);
     setLikedPosts((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -2548,6 +2654,16 @@ export default function Home() {
       }
       return next;
     });
+
+    try {
+      await fetch(`/api/posts/${id}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ increment: !isCurrentlyLiked })
+      });
+    } catch (err) {
+      console.error("Error toggling like on post:", err);
+    }
   };
 
   // Save Toggle
@@ -2564,83 +2680,127 @@ export default function Home() {
   };
 
   // Inline Comment Adding
-  const handleAddComment = (postId: string) => {
+  const handleAddComment = async (postId: string) => {
     const text = commentInputs[postId]?.trim();
     if (!text) return;
     
-    setPosts((prevPosts) =>
-      prevPosts.map((p) => {
-        if (p.id === postId) {
-          return {
-            ...p,
-            comments: [
-              ...p.comments,
-              { id: `c-${Date.now()}`, username: user?.username || 'travel_buddy', text }
-            ]
-          };
-        }
-        return p;
-      })
-    );
+    const userDisplayName = user?.username || 'travel_buddy';
     setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: userDisplayName,
+          text,
+          avatarColor: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)'
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.comment) {
+        setPosts((prevPosts) =>
+          prevPosts.map((p) => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                comments: [
+                  ...p.comments,
+                  { id: data.comment.id, username: data.comment.user, text: data.comment.text }
+                ]
+              };
+            }
+            return p;
+          })
+        );
+      } else {
+        // Fallback local append
+        setPosts((prevPosts) =>
+          prevPosts.map((p) => {
+            if (p.id === postId) {
+              return {
+                ...p,
+                comments: [
+                  ...p.comments,
+                  { id: `c-${Date.now()}`, username: userDisplayName, text }
+                ]
+              };
+            }
+            return p;
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Error adding comment to post:", err);
+    }
   };
 
   // Create custom post handler
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostCaption.trim()) return;
 
     setPublishStatus('loading');
 
-    setTimeout(() => {
-      setPublishStatus('success');
+    const primaryImage = postImages.length > 0 ? postImages[0] : 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80';
+    const imagesToSave = postImages.length > 0 ? postImages : [primaryImage];
+    const loc = stripEmojis(newPostLocation.trim()) || 'Travel Heaven';
 
-      // Parse hashtags dynamically from the caption, fallback if none found
-      const parsedHashtags = (newPostCaption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust']) as string[];
-      
-      // Choose the first image in the attached images as the primary thumbnail/image for feed compatibility
-      const primaryImage = postImages.length > 0 ? postImages[0] : 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80';
-
-      const newPost: Post = {
-        id: `post-${Date.now()}`,
-        username: user?.username || 'isabella_nilsson',
-        avatar: user?.avatarUrl || '🌟',
-        location: stripEmojis(newPostLocation.trim()) || 'Travel Heaven',
-        image: primaryImage,
-        images: postImages.length > 0 ? postImages : [primaryImage],
-        title: postTitle.trim(),
-        caption: newPostCaption.trim(),
-        hashtags: parsedHashtags,
-        likesCount: 0,
-        comments: [],
-        categories: selectedCategories,
-        platform: selectedPlatform,
-        scheduleDate,
-        scheduleTime,
-        visibility,
-        allowComments
-      };
-
-      setPosts((prev) => [newPost, ...prev]);
-    
-      setTimeout(() => {
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caption: newPostCaption.trim(),
+          images: JSON.stringify(imagesToSave),
+          location: loc,
+          creatorId: user?.id || 'anonymous_user'
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.post) {
+        const mappedPost = {
+          id: data.post.id,
+          username: user?.username || 'me',
+          avatar: user?.avatarUrl || '🌟',
+          location: data.post.location,
+          images: imagesToSave,
+          caption: data.post.caption,
+          hashtags: (data.post.caption.match(/#[a-zA-Z0-9_]+/g) || ['#travora', '#explore', '#wanderlust']) as string[],
+          likesCount: 0,
+          comments: []
+        };
+        setPosts((prev) => [mappedPost, ...prev]);
+        setPublishStatus('success');
+      } else {
         setPublishStatus('idle');
+        showToast('Failed to publish post to backend. ❌');
+        return;
+      }
+    } catch (err) {
+      console.error("Error creating post:", err);
+      setPublishStatus('idle');
+      showToast('Error publishing post. ❌');
+      return;
+    }
 
-        // Reset states after publishing
-        setNewPostCaption('');
-        setNewPostLocation('');
-        setPostTitle('');
-        setTaggedFriends(['@wanderlust.jenny', '@markstravels']);
-        setSelectedCategories(['Adventure']);
-        setPostImages([
-          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80'
-        ]);
-        
-        showToast('Post published successfully! ✨');
-        setActiveTab('home');
-        setCurrentStep(1); // Reset wizard to step 1
-      }, 1200);
-    }, 1800);
+    setTimeout(() => {
+      setPublishStatus('idle');
+
+      // Reset states after publishing
+      setNewPostCaption('');
+      setNewPostLocation('');
+      setPostTitle('');
+      setTaggedFriends(['@wanderlust.jenny', '@markstravels']);
+      setSelectedCategories(['Adventure']);
+      setPostImages([
+        'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80'
+      ]);
+      
+      showToast('Post published successfully! ✨');
+      setActiveTab('home');
+      setCurrentStep(1); // Reset wizard to step 1
+    }, 1200);
   };
 
   // Media panel helper functions
@@ -5079,7 +5239,7 @@ export default function Home() {
                   {/* Suggestions Header */}
                   <div className="instagram-suggested-header">
                     <span>Suggested for you</span>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => showToast('Displaying travel creators near Ubud...')}>See all</button>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontWeight: 700, cursor: 'pointer' }} onClick={() => { setShowSuggestedModal(true); playUISound('open'); }}>See all</button>
                   </div>
 
                   {/* Suggested list */}
@@ -6217,12 +6377,45 @@ export default function Home() {
                             </div>
                           ))}
                         {travelDestinations.filter(dest => dest.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                          <div className="palette-no-results">No matching destinations found. Press ESC to close.</div>
+                          <div className="palette-no-results">No matching destinations found.</div>
                         )}
+
+                        <div className="palette-section-title" style={{ marginTop: '16px' }}>MATCHING PEOPLE & LOCAL BUDDIES</div>
+                        {[
+                          { username: 'wanderlust_jenny', fullName: 'Jenny Wanderlust', relation: 'Suggested for you', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'backpacker_sam', fullName: 'Backpacker Sam', relation: 'Followed by nomad_vlogs + 2 others', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'stay_luxury_bali', fullName: 'Luxury Bali Stays', relation: 'Suggested Stay partner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'nomad_alex', fullName: 'Alex Nomad', relation: 'Digital Nomad Expert', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'nature_explorer', fullName: 'Nature Explorer', relation: 'Hiking Guide', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'sid_vlogs', fullName: 'Siddharth Vlogs', relation: 'Travel Vlogger', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80' },
+                          { username: 'wander_soul', fullName: 'Wandering Soul', relation: 'Adventure Seeker', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80' }
+                        ]
+                          .filter(buddy => buddy.username.toLowerCase().includes(searchQuery.toLowerCase()) || buddy.fullName.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((buddy, idx) => (
+                            <div 
+                              key={idx}
+                              className="palette-result-item"
+                              onClick={() => {
+                                setActiveTab('messages');
+                                setActiveChatBuddy(buddy.username);
+                                setShowCommandPalette(false);
+                                playUISound('tap');
+                                showToast(`Chatting with @${buddy.username} ✨`);
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <img src={buddy.avatar} alt="avatar" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                                <span className="result-name">@{buddy.username} ({buddy.fullName})</span>
+                              </div>
+                              <span className="result-category" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Chat Now</span>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   </div>
                 )}
+
+
               </div>
             )}
 
@@ -12324,6 +12517,90 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Suggested Creators Grid Modal Overlay */}
+      {showSuggestedModal && (
+        <div className="suggested-creators-modal-overlay" onClick={() => setShowSuggestedModal(false)}>
+          <div className="suggested-creators-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="suggested-creators-header">
+              <div>
+                <h3 className="suggested-modal-title">Suggested For You</h3>
+                <p className="suggested-modal-subtitle">Travel creators and buddies you might know from your travels</p>
+              </div>
+              <button className="suggested-modal-close" onClick={() => setShowSuggestedModal(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div className="suggested-creators-grid">
+              {suggestedPeople.map((person) => (
+                <div key={person.id} className="suggested-person-card">
+                  <button className="card-dismiss-btn" onClick={() => {
+                    setSuggestedPeople(prev => prev.filter(p => p.id !== person.id));
+                    playUISound('tap');
+                  }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                  
+                  <div className="card-header-bg"></div>
+                  
+                  <div className="card-avatar-wrapper">
+                    <img src={person.avatar} alt={person.name} className="card-avatar-img" />
+                    {person.isOpenToWork && (
+                      <div className="open-to-work-badge">
+                        <span>#OPENTOWORK</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="card-body">
+                    <h4 className="card-name">
+                      {person.name}
+                      {person.verified && (
+                        <svg className="verified-badge-svg" viewBox="0 0 24 24" fill="#38bdf8" style={{ width: '14px', height: '14px', marginLeft: '4px' }}><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                      )}
+                      {person.linkedin && (
+                        <span className="linkedin-icon-span" style={{ marginLeft: '4px' }}>in</span>
+                      )}
+                    </h4>
+                    
+                    <p className="card-bio">{person.bio}</p>
+                    
+                    <div className="card-mutual-connections">
+                      <img src={person.mutualAvatar} alt="mutual" className="mutual-avatar-img" />
+                      <span>{person.mutualText}</span>
+                    </div>
+
+                    <button 
+                      className={`card-connect-btn ${person.connected ? 'connected' : ''}`}
+                      onClick={() => {
+                        setSuggestedPeople(prev => prev.map(p => p.id === person.id ? { ...p, connected: !p.connected } : p));
+                        playUISound('success');
+                        showToast(person.connected ? `Removed connection request to ${person.name}` : `Connection request sent to ${person.name}! 🚀`);
+                      }}
+                    >
+                      {person.connected ? (
+                        <>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          Pending
+                        </>
+                      ) : (
+                        <>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                          Connect
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {suggestedPeople.length === 0 && (
+                <div className="suggested-no-results">No more suggestions left. Check back later!</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
      </>
     );
   }
@@ -12848,6 +13125,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
 
 
     </div>

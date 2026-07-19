@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 interface VlogItem {
   id: string;
@@ -31,6 +32,7 @@ interface VlogItem {
 export default function VlogPlayerPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const id = typeof params?.id === 'string' ? params.id : '';
 
   const vlogsDatabase: Record<string, VlogItem> = {
@@ -152,7 +154,7 @@ export default function VlogPlayerPage() {
     }
   };
 
-  const vlog = vlogsDatabase[id] || vlogsDatabase['vlog-1'];
+  const [vlog, setVlog] = useState<VlogItem>(vlogsDatabase[id] || vlogsDatabase['vlog-1']);
 
   // Media Player States
   const [isPlaying, setIsPlaying] = useState(true);
@@ -185,12 +187,35 @@ export default function VlogPlayerPage() {
   ]);
   const [commentInput, setCommentInput] = useState('');
   const [isChatPanelOpen, setIsChatPanelOpen] = useState(true);
+  const [showFeaturedStay, setShowFeaturedStay] = useState(true);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset featured stay visibility when vlog ID changes
+  useEffect(() => {
+    setShowFeaturedStay(true);
+  }, [id]);
+
+  // Load vlog and comments from backend database
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/vlogs/${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) {
+          setVlog(data);
+          if (data.comments) {
+            setComments(data.comments);
+          }
+          setLikeCount(data.likes);
+        }
+      })
+      .catch(err => console.error("Error fetching vlog details:", err));
+  }, [id]);
 
   // Handle auto-scroll comments
   useEffect(() => {
@@ -293,10 +318,26 @@ export default function VlogPlayerPage() {
   };
 
   // Click Reactions
-  const handleReactLike = (e: React.MouseEvent) => {
+  const handleReactLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    setLikeCount(prev => (isLiked ? prev - 1 : prev + 1));
+    const nextIsLiked = !isLiked;
+    setIsLiked(nextIsLiked);
+    setLikeCount(prev => (nextIsLiked ? prev + 1 : prev - 1));
+
+    // Save to database
+    try {
+      const res = await fetch(`/api/vlogs/${vlog.id}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ increment: nextIsLiked })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLikeCount(data.likes);
+      }
+    } catch (err) {
+      console.error("Error liking vlog:", err);
+    }
 
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -314,18 +355,39 @@ export default function VlogPlayerPage() {
   };
 
   // Submit Comments
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentInput.trim()) return;
 
-    const newComment = {
-      id: String(Date.now()),
-      user: 'me',
-      text: commentInput.trim(),
-      avatarColor: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)'
-    };
+    const userDisplayName = user?.username || 'me';
+    const avatarColor = 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)';
 
-    setComments(prev => [...prev, newComment]);
+    try {
+      const res = await fetch(`/api/vlogs/${vlog.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: userDisplayName,
+          text: commentInput.trim(),
+          avatarColor
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.comment) {
+        setComments(prev => [...prev, data.comment]);
+      } else {
+        // Fallback local append
+        setComments(prev => [...prev, {
+          id: String(Date.now()),
+          user: userDisplayName,
+          text: commentInput.trim(),
+          avatarColor
+        }]);
+      }
+    } catch (err) {
+      console.error("Error submitting comment:", err);
+    }
+
     setCommentInput('');
   };
 

@@ -1,0 +1,20 @@
+# .dockerignore for frontend
+node_modules
+.next
+out
+build
+dist
+.env
+*.env
+.env.*
+*.log
+npm-debug.log*
+.DS_Store
+*.md
+!README.md
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+*.yaml
+*.yml
