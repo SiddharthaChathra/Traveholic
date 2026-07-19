@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -17,13 +17,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = await getDb();
-
     // Query user by username or email
-    const user = await db.get(
-      `SELECT * FROM users WHERE username = ? OR email = ?`,
-      [identifier.trim().toLowerCase(), identifier.trim().toLowerCase()]
-    );
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .or(`username.eq.${identifier.trim().toLowerCase()},email.eq.${identifier.trim().toLowerCase()}`)
+      .single();
 
     if (!user) {
       return NextResponse.json(
@@ -44,10 +43,12 @@ export async function POST(request: Request) {
     // Fetch business profile if user is business type
     let businessProfile = null;
     if (user.role === 'business') {
-      businessProfile = await db.get(
-        'SELECT * FROM business_profiles WHERE user_id = ?',
-        [user.id]
-      );
+      const { data: profile } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      businessProfile = profile;
     }
 
     // Generate JWT token

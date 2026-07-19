@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -41,13 +41,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = await getDb();
-
     // Check if user already exists
-    const existingUser = await db.get(
-      'SELECT id FROM users WHERE username = ? OR email = ?',
-      [username.trim().toLowerCase(), email.trim().toLowerCase()]
-    );
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .or(`username.eq.${username.trim().toLowerCase()},email.eq.${email.trim().toLowerCase()}`)
+      .single();
 
     if (existingUser) {
       return NextResponse.json(
@@ -63,26 +62,21 @@ export async function POST(request: Request) {
     // Generate unique ID
     const userId = crypto.randomUUID();
 
-    // Start transaction to ensure atomic inserts
-    await db.run('BEGIN TRANSACTION');
-
     try {
       if (role === 'traveller') {
         // Insert standard traveller
-        await db.run(
-          `INSERT INTO users (id, username, email, password_hash, full_name, phone, role, traveller_type)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            username.trim().toLowerCase(),
-            email.trim().toLowerCase(),
-            passwordHash,
-            fullName.trim(),
-            phone ? phone.trim() : null,
-            'traveller',
-            travellerType
-          ]
-        );
+        const { error: insertError } = await supabase.from('users').insert({
+          id: userId,
+          username: username.trim().toLowerCase(),
+          email: email.trim().toLowerCase(),
+          password_hash: passwordHash,
+          full_name: fullName.trim(),
+          phone: phone ? phone.trim() : null,
+          role: 'traveller',
+          traveller_type: travellerType
+        });
+
+        if (insertError) throw insertError;
       } else {
         // Validate business inputs
         if (!businessType || !businessName || !registrationNumber || !phone || !address || !bookingModel) {
@@ -98,41 +92,38 @@ export async function POST(request: Request) {
         }
 
         // Insert business credentials into user table
-        await db.run(
-          `INSERT INTO users (id, username, email, password_hash, full_name, role)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            userId,
-            username.trim().toLowerCase(),
-            email.trim().toLowerCase(),
-            passwordHash,
-            fullName.trim(),
-            'business'
-          ]
-        );
+        const { error: userInsertError } = await supabase.from('users').insert({
+          id: userId,
+          username: username.trim().toLowerCase(),
+          email: email.trim().toLowerCase(),
+          password_hash: passwordHash,
+          full_name: fullName.trim(),
+          role: 'business'
+        });
+        
+        if (userInsertError) throw userInsertError;
 
         // Insert business profile details
         const profileId = crypto.randomUUID();
-        await db.run(
-          `INSERT INTO business_profiles (id, user_id, business_type, business_name, registration_number, phone, address, website_url, booking_model)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            profileId,
-            userId,
-            businessType,
-            businessName.trim(),
-            registrationNumber.trim(),
-            phone.trim(),
-            address.trim(),
-            websiteUrl ? websiteUrl.trim() : null,
-            bookingModel
-          ]
-        );
-      }
+        const { error: profileInsertError } = await supabase.from('business_profiles').insert({
+          id: profileId,
+          user_id: userId,
+          business_type: businessType,
+          business_name: businessName.trim(),
+          registration_number: registrationNumber.trim(),
+          phone: phone.trim(),
+          address: address.trim(),
+          website_url: websiteUrl ? websiteUrl.trim() : null,
+          booking_model: bookingModel
+        });
 
-      await db.run('COMMIT');
+        if (profileInsertError) {
+            // If profile fails, manual rollback of user
+            await supabase.from('users').delete().eq('id', userId);
+            throw profileInsertError;
+        }
+      }
     } catch (err: any) {
-      await db.run('ROLLBACK');
       return NextResponse.json(
         { error: err.message || 'Database error occurred during signup' },
         { status: 500 }

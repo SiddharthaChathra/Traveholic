@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
@@ -38,10 +38,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    const db = await getDb();
-
     // Verify user exists and is a traveller
-    const user = await db.get('SELECT role FROM users WHERE id = ?', [decoded.userId]);
+    const { data: user } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', decoded.userId)
+      .single();
+
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -57,10 +60,10 @@ export async function PUT(request: Request) {
     }
 
     // Update user record
-    await db.run(
-      'UPDATE users SET traveller_type = ? WHERE id = ?',
-      [travellerType, decoded.userId]
-    );
+    await supabase
+      .from('users')
+      .update({ traveller_type: travellerType })
+      .eq('id', decoded.userId);
 
     return NextResponse.json({
       success: true,

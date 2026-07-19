@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
@@ -20,10 +20,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = await getDb();
-
     // Verify user exists
-    const user = await db.get('SELECT id FROM users WHERE email = ?', [email]);
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or OTP' },
@@ -32,10 +35,13 @@ export async function POST(request: Request) {
     }
 
     // Verify OTP
-    const resetRecord = await db.get(
-      'SELECT * FROM password_resets WHERE user_id = ? AND token = ? AND expires_at > CURRENT_TIMESTAMP',
-      [user.id, otp]
-    );
+    const { data: resetRecord } = await supabase
+      .from('password_resets')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('token', otp)
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
     if (!resetRecord) {
       return NextResponse.json(
@@ -49,13 +55,16 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     // Update the user's password
-    await db.run(
-      'UPDATE users SET password_hash = ? WHERE id = ?',
-      [hashedPassword, user.id]
-    );
+    await supabase
+      .from('users')
+      .update({ password_hash: hashedPassword })
+      .eq('id', user.id);
 
     // Delete the used token
-    await db.run('DELETE FROM password_resets WHERE token = ?', [otp]);
+    await supabase
+      .from('password_resets')
+      .delete()
+      .eq('token', otp);
 
     return NextResponse.json({
       success: true,

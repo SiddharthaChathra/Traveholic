@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -13,10 +13,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = await getDb();
-
     // Find user
-    const user = await db.get('SELECT id FROM users WHERE email = ?', [email]);
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
 
     if (!user) {
       // For security, don't reveal if user exists, just return success
@@ -29,10 +31,12 @@ export async function POST(request: Request) {
     const id = crypto.randomUUID();
 
     // Save to database
-    await db.run(
-      'INSERT INTO password_resets (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
-      [id, user.id, otp, expiresAt]
-    );
+    await supabase.from('password_resets').insert({
+      id: id,
+      user_id: user.id,
+      token: otp,
+      expires_at: expiresAt
+    });
 
     // For development/testing: log OTP
     console.log('--- PASSWORD RESET OTP ---');

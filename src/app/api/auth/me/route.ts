@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
@@ -28,13 +28,12 @@ export async function GET() {
       );
     }
 
-    const db = await getDb();
-
     // Fetch user details from database
-    const user = await db.get(
-      'SELECT id, username, email, full_name, phone, avatar_url, role, traveller_type FROM users WHERE id = ?',
-      [decoded.userId]
-    );
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, username, email, full_name, phone, avatar_url, role, traveller_type')
+      .eq('id', decoded.userId)
+      .single();
 
     if (!user) {
       return NextResponse.json(
@@ -46,10 +45,12 @@ export async function GET() {
     // Fetch business profile if applicable
     let businessProfile = null;
     if (user.role === 'business') {
-      businessProfile = await db.get(
-        'SELECT * FROM business_profiles WHERE user_id = ?',
-        [user.id]
-      );
+      const { data: profile } = await supabase
+        .from('business_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      businessProfile = profile;
     }
 
     return NextResponse.json({
