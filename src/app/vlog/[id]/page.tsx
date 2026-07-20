@@ -764,7 +764,7 @@ export default function VlogPlayerPage() {
                 <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>{formatTime(durationSec)}</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifycontent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
                   <button 
                     onClick={togglePlayPause}

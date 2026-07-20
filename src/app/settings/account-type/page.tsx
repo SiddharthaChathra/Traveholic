@@ -3,78 +3,21 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import RadioCard from '@/components/shared/RadioCard';
+import { motion } from 'framer-motion';
 
 export default function AccountTypeToolsPage() {
   const router = useRouter();
-  const { user, updateTravellerType } = useAuth();
+  const { user, savedAccounts, switchAccount, logout, removeAccount, logoutAll } = useAuth();
+  const [switching, setSwitching] = useState<string | null>(null);
 
-  const defaultUser = {
-    username: 'shashank._s',
-    role: 'traveller',
-    travellerType: 'normal'
-  };
-
-  const activeUser = user || defaultUser;
-  
-  // State
-  const [selectedType, setSelectedType] = useState(
-    activeUser.role === 'business' ? 'venture' : activeUser.travellerType === 'vlogger' ? 'vlogger' : 'traveler'
-  );
-
-  const accountOptions = [
-    { 
-      value: 'traveler', 
-      label: 'Traveler Account', 
-      description: 'Standard account. Browse destinations, bookmark itineraries, and write comments.' 
-    },
-    { 
-      value: 'vlogger', 
-      label: 'Vlogger Creator', 
-      description: 'Unlock video story publishing, map logs creation, and live-broadcast broadcasts.' 
-    },
-    { 
-      value: 'venture', 
-      label: 'Venture Partner', 
-      description: 'Business account. Sell packages, list hotels, sponsor vloggers, and view trust scores.' 
+  const handleSwitchAccount = async (userId: string) => {
+    setSwitching(userId);
+    const result = await switchAccount(userId);
+    setSwitching(null);
+    if (result.success) {
+      // If switched to a business account, redirect to venture dashboard
+      // Otherwise stay on the settings page
     }
-  ];
-
-  const handleSwitch = async (value: string) => {
-    if (value === 'traveler') {
-      if (activeUser.role === 'business') {
-        localStorage.setItem('user_view_mode', 'traveller');
-        alert('Switched to Traveler View');
-        router.push('/');
-      } else {
-        await updateTravellerType('normal');
-        alert('Switched to Standard Traveler Account');
-      }
-    } else if (value === 'vlogger') {
-      if (activeUser.role === 'business') {
-        localStorage.setItem('user_view_mode', 'traveller');
-        await updateTravellerType('vlogger');
-        alert('Switched to Vlogger Creator Account');
-        router.push('/');
-      } else {
-        await updateTravellerType('vlogger');
-        alert('Switched to Vlogger Creator Account');
-      }
-    } else if (value === 'venture') {
-      // Simulate switching to venture role or opening venture signup
-      if (activeUser.role !== 'business') {
-        if (confirm('Would you like to upgrade your profile to a Travora Venture Account? This allows listing stays and selling packages.')) {
-          // If we want to simulate role change:
-          alert('Upgrading profile to Travora Venture... Welcome to Venture Partner Dashboard!');
-          localStorage.removeItem('user_view_mode');
-          router.push('/venture/dashboard');
-        }
-      } else {
-        localStorage.removeItem('user_view_mode');
-        router.push('/venture/dashboard');
-      }
-    }
-    setSelectedType(value);
   };
 
   return (
@@ -101,56 +44,149 @@ export default function AccountTypeToolsPage() {
           </svg>
         </button>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, margin: 0 }}>Account Type & Tools</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Switch account types between Traveler, Vlogger, and Venture</p>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, margin: 0 }}>Account Management</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Manage and switch between your authenticated accounts</p>
         </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         
         {/* Info panel */}
-        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.6', background: 'rgba(255,255,255,0.02)', padding: '14px', borderRadius: '10px', border: '1px solid var(--card-border)' }}>
-          Travora provides unique features for each profile type. Travelers focus on exploration, Vloggers create immersive maps and guides, while Ventures manage commercial listings and sponsorships.
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+          Travora provides unique features for each profile type. Travelers focus on exploration, while Venture partners manage commercial listings. You must maintain separate accounts for different roles.
         </p>
 
-        {/* Choice list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <RadioCard 
-            options={accountOptions} 
-            selectedValue={selectedType} 
-            onChange={handleSwitch} 
-            columns={1}
-          />
-        </div>
+        {/* Saved Accounts list */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0 }}>Saved Accounts on This Device</h3>
+          
+          {savedAccounts.length === 0 && (
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              No additional accounts saved. Use "Add an Existing Account" below to add one.
+            </p>
+          )}
 
-        {/* Venture specific dashboard settings shortcut link */}
-        {activeUser.role === 'business' && (
-          <div 
-            className="discover-premium-card" 
-            style={{ 
-              padding: '20px 24px', 
-              borderRadius: '16px', 
-              background: 'var(--card-bg)', 
-              border: '1px solid var(--card-border)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>Venture Dashboard Settings</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Configure business registration number, VAT, tax metadata, and policies.</span>
-            </div>
-            <button
-              onClick={() => router.push('/venture/settings')}
-              className="btn-primary"
-              style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}
+          {savedAccounts.map((account, idx) => (
+            <div 
+              key={account.userId + '-' + idx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px',
+                background: user?.id === account.userId ? 'rgba(236, 72, 153, 0.08)' : 'var(--card-bg)',
+                border: `1px solid ${user?.id === account.userId ? 'var(--primary)' : 'var(--card-border)'}`,
+                borderRadius: '12px',
+                opacity: account.sessionExpired ? 0.6 : 1,
+              }}
             >
-              Go to Venture Settings
-            </button>
-          </div>
-        )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--brand-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: '20px' }}>
+                  {(account.username)[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>@{account.username}</div>
+                  <div style={{ fontSize: '12px', color: account.sessionExpired ? '#ef4444' : 'var(--text-muted)', marginTop: '2px' }}>
+                    {account.sessionExpired 
+                      ? 'Session expired — please log in again'
+                      : `${account.role === 'business' ? 'Venture Partner' : account.travellerType === 'vlogger' ? 'Vlogger Creator' : 'Traveler'}${user?.id === account.userId ? ' • Active' : ''}`
+                    }
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {user?.id !== account.userId && !account.sessionExpired && (
+                  <button 
+                    onClick={() => handleSwitchAccount(account.userId)}
+                    disabled={switching === account.userId}
+                    className="btn-primary"
+                    style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, opacity: switching === account.userId ? 0.5 : 1 }}
+                  >
+                    {switching === account.userId ? 'Switching...' : 'Switch'}
+                  </button>
+                )}
+                <button 
+                  onClick={() => removeAccount(account.userId)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--card-border)',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
 
+          {/* Add Account button */}
+          <button 
+            onClick={() => {
+              window.location.href = '/?action=add_account';
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '16px',
+              background: 'transparent',
+              border: '1px dashed var(--card-border)',
+              borderRadius: '12px',
+              color: 'var(--text-primary)',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              marginTop: '8px',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
+            onMouseOut={(e) => (e.currentTarget.style.borderColor = 'var(--card-border)')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add an Existing Account
+          </button>
+
+          {/* Logout All button */}
+          {savedAccounts.length > 1 && (
+            <button 
+              onClick={async () => {
+                await logoutAll();
+                router.push('/');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '12px',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginTop: '4px',
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Log Out All Accounts
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

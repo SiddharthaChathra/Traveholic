@@ -118,10 +118,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
               style={{ display: 'inline-flex' }}
             >
               <Link 
-                href="/"
-                onClick={() => {
-                  localStorage.setItem('user_view_mode', 'traveller');
-                }}
+                href="/settings/account-type"
                 style={{
                   textDecoration: 'none',
                   background: 'var(--brand-gradient)',
@@ -141,7 +138,7 @@ export default function VentureLayout({ children }: { children: React.ReactNode 
                   <polyline points="10 17 15 12 10 7" />
                   <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
-                Switch to Traveler View
+                Switch Accounts
               </Link>
             </motion.div>
 

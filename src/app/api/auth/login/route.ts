@@ -1,21 +1,31 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'travora_super_secret_jwt_key_12345';
+import { loginSchema } from '@/lib/validations';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  createOrUpdateDeviceSession,
+  getUserProfile,
+  extractDeviceId,
+} from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { identifier, password } = body; // identifier can be username or email
-
-    if (!identifier || !password) {
+    
+    // Validate inputs using Zod
+    const validationResult = loginSchema.safeParse(body);
+    
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Identifier and password are required' },
+        { error: 'Validation failed', details: validationResult.error.format() },
         { status: 400 }
       );
     }
+
+    const { identifier, password } = validationResult.data;
+    const deviceId = extractDeviceId(body, request);
 
     // Query user by username or email
     const { data: user } = await supabase
@@ -51,40 +61,46 @@ export async function POST(request: Request) {
       businessProfile = profile;
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, username: user.username, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    // Generate tokens
+    const accessToken = generateAccessToken({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    });
+    const refreshToken = generateRefreshToken();
+
+    // Create device session if deviceId is provided
+    if (deviceId) {
+      const userAgent = request.headers.get('user-agent') || undefined;
+      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined;
+      
+      await createOrUpdateDeviceSession({
+        deviceId,
+        userId: user.id,
+        refreshToken,
+        userAgent,
+        ipAddress: ip,
+        setActive: true,
+      });
+    }
+
+    const userProfile = getUserProfile(user, businessProfile);
 
     // Create success response
     const response = NextResponse.json({
       success: true,
       message: 'Logged in successfully',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.full_name,
-        role: user.role,
-        travellerType: user.role === 'traveller' ? user.traveller_type : undefined,
-        businessProfile: businessProfile ? {
-          businessType: businessProfile.business_type,
-          businessName: businessProfile.business_name,
-          registrationNumber: businessProfile.registration_number,
-          phone: businessProfile.phone,
-          address: businessProfile.address,
-          websiteUrl: businessProfile.website_url,
-          bookingModel: businessProfile.booking_model
-        } : undefined
-      }
+      user: userProfile,
+      token: accessToken, // backward compat
+      accessToken,
+      refreshToken: deviceId ? refreshToken : undefined,
     });
 
-    // Set cookie
+    // Set cookie for backward compatibility
     response.cookies.set({
       name: 'travora_session',
-      value: token,
+      value: accessToken,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

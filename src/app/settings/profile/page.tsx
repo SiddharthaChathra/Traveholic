@@ -9,26 +9,25 @@ export default function EditProfilePage() {
   const router = useRouter();
   const { user, updateTravellerType } = useAuth();
 
-  // If user is null (fallback)
-  const defaultUser = {
-    fullName: 'Shashank Suvarna',
-    username: 'shashank._s',
-    email: 'shashank@travora.com',
-    avatarUrl: '',
-    travellerType: 'normal',
-    role: 'traveller'
-  };
-
-  const activeUser = user || defaultUser;
-
   // States
-  const [fullName, setFullName] = useState(activeUser.fullName);
-  const [username, setUsername] = useState(activeUser.username);
-  const [email, setEmail] = useState(activeUser.email);
+  const [fullName, setFullName] = useState(user?.fullName || '');
+  const [username, setUsername] = useState(user?.username || '');
+  const [email, setEmail] = useState(user?.email || '');
   const [bio, setBio] = useState('Traveler, hiker, and visual storyteller exploring the hidden valleys of Southeast Asia.');
-  const [website, setWebsite] = useState('shashanksuvarna.com');
-  const [isVlogger, setIsVlogger] = useState(activeUser.travellerType === 'vlogger');
-  const [avatar, setAvatar] = useState(activeUser.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(activeUser.username)}`);
+  const [website, setWebsite] = useState('');
+  const [isVlogger, setIsVlogger] = useState(user?.travellerType === 'vlogger');
+  const [avatar, setAvatar] = useState(user?.avatarUrl || (user?.username ? `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.username)}` : ''));
+
+  // Update states when user loads
+  React.useEffect(() => {
+    if (user) {
+      setFullName(user.fullName);
+      setUsername(user.username);
+      setEmail(user.email);
+      setIsVlogger(user.travellerType === 'vlogger');
+      setAvatar(user.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user.username)}`);
+    }
+  }, [user]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,7 +211,7 @@ export default function EditProfilePage() {
         </div>
 
         {/* Creator mode toggler */}
-        {activeUser.role === 'traveller' && (
+        {user?.role === 'traveller' && (
           <div className="discover-premium-card" style={{ padding: '24px', borderRadius: '16px', background: 'var(--card-bg)', border: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', display: 'block' }}>Switch Creator Mode</span>

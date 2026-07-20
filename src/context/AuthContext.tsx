@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+// --- Types ---
+
 interface BusinessProfile {
   businessType: 'agency' | 'hotel';
   businessName: string;
@@ -24,12 +26,31 @@ interface User {
   businessProfile?: BusinessProfile;
 }
 
+export interface SavedAccount {
+  userId: string;
+  username: string;
+  email: string;
+  fullName: string;
+  avatarUrl?: string;
+  role: 'traveller' | 'business';
+  travellerType?: 'normal' | 'vlogger';
+  businessProfile?: BusinessProfile;
+  isActive: boolean;
+  lastActiveAt: string;
+  sessionExpired: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
+  savedAccounts: SavedAccount[];
   loading: boolean;
   login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (signupData: any) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
+  logout: (userId?: string) => Promise<void>;
+  logoutAll: () => Promise<void>;
+  switchAccount: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  removeAccount: (userId: string) => Promise<void>;
+  refreshSavedAccounts: () => Promise<void>;
   updateTravellerType: (type: 'normal' | 'vlogger') => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (identifier: string) => Promise<{ success: boolean; error?: string; simulatedOtp?: string }>;
   verifyOtp: (identifier: string, otp: string) => Promise<{ success: boolean; error?: string }>;
@@ -37,6 +58,41 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// --- Helpers ---
+
+function getDeviceId(): string {
+  if (typeof window === 'undefined') return '';
+  let deviceId = localStorage.getItem('travora_device_id');
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem('travora_device_id', deviceId);
+  }
+  return deviceId;
+}
+
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('travora_access_token');
+}
+
+function storeTokens(accessToken: string, refreshToken?: string) {
+  localStorage.setItem('travora_access_token', accessToken);
+  // Also store as travora_token for backward compatibility
+  localStorage.setItem('travora_token', accessToken);
+  if (refreshToken) {
+    localStorage.setItem('travora_refresh_token', refreshToken);
+  }
+}
+
+function clearTokens() {
+  localStorage.removeItem('travora_access_token');
+  localStorage.removeItem('travora_refresh_token');
+  localStorage.removeItem('travora_token');
+  // Clean up legacy items
+  localStorage.removeItem('travora_sessions');
+  localStorage.removeItem('travora_active_user_id');
+}
 
 async function handleResponse(response: Response, fallbackError: string) {
   try {
@@ -58,51 +114,134 @@ async function handleResponse(response: Response, fallbackError: string) {
   return { success: false, error: `${fallbackError} (Status: ${response.status})` };
 }
 
+// --- Provider ---
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Check user session on initial load
+  // Fetch saved accounts from backend
+  const refreshSavedAccounts = async () => {
+    const deviceId = getDeviceId();
+    const token = getStoredToken();
+    if (!deviceId || !token) return;
+
+    try {
+      const response = await fetch(`/api/auth/saved-accounts?deviceId=${encodeURIComponent(deviceId)}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.accounts) {
+          setSavedAccounts(data.accounts);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch saved accounts:', e);
+    }
+  };
+
+  // Initialize: check existing session, load saved accounts
   useEffect(() => {
-    async function checkSession() {
+    async function initSession() {
       try {
-        const token = localStorage.getItem('travora_token');
+        const token = getStoredToken();
+        const deviceId = getDeviceId();
+
+        // Migration: if old travora_sessions exists but no access_token, migrate
         if (!token) {
+          const oldToken = localStorage.getItem('travora_token');
+          if (oldToken && oldToken !== 'null' && oldToken !== 'undefined') {
+            localStorage.setItem('travora_access_token', oldToken);
+            // Try to validate this old token
+            const meResponse = await fetch('/api/auth/me', {
+              headers: { 'Authorization': `Bearer ${oldToken}` },
+            });
+            if (meResponse.ok) {
+              const meData = await meResponse.json();
+              if (meData.success && meData.user) {
+                setUser(meData.user);
+                storeTokens(oldToken);
+              }
+            }
+            setLoading(false);
+            return;
+          }
           setLoading(false);
           return;
         }
-        const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+
+        // Validate current access token
+        const meResponse = await fetch('/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` },
         });
-        if (response.ok) {
-          const data = await handleResponse(response, 'Session check failed');
-          if (data.success) {
-            setUser(data.user);
+
+        if (meResponse.ok) {
+          const meData = await meResponse.json();
+          if (meData.success && meData.user) {
+            setUser(meData.user);
+            // Load saved accounts from backend
+            if (deviceId) {
+              try {
+                const savedResponse = await fetch(`/api/auth/saved-accounts?deviceId=${encodeURIComponent(deviceId)}`, {
+                  headers: { 'Authorization': `Bearer ${token}` },
+                });
+                if (savedResponse.ok) {
+                  const savedData = await savedResponse.json();
+                  if (savedData.success && savedData.accounts) {
+                    setSavedAccounts(savedData.accounts);
+                  }
+                }
+              } catch {
+                // Saved accounts fetch is non-critical — device_sessions table may not exist yet
+              }
+            }
+          } else {
+            clearTokens();
+          }
+        } else {
+          // Token invalid — try refresh
+          const refreshToken = localStorage.getItem('travora_refresh_token');
+          if (refreshToken && deviceId) {
+            // Attempt refresh — but we need userId which we don't have if token is invalid
+            // In this case, just clear and require re-login
+            clearTokens();
+          } else {
+            clearTokens();
           }
         }
       } catch (error) {
-        console.error('Session check failed:', error);
+        console.error('Session init failed:', error);
       } finally {
         setLoading(false);
       }
     }
-    checkSession();
+
+    initSession();
   }, []);
+
+  // --- Auth Methods ---
 
   const login = async (identifier: string, password: string) => {
     try {
+      const deviceId = getDeviceId();
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ identifier, password, deviceId }),
       });
 
       const data = await handleResponse(response, 'Login failed');
       if (response.ok && data.success) {
-        localStorage.setItem('travora_token', data.token);
+        const accessToken = data.accessToken || data.token;
+        storeTokens(accessToken, data.refreshToken);
         setUser(data.user);
+
+        // Refresh saved accounts list
+        setTimeout(() => refreshSavedAccounts(), 100);
+
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Login failed' };
@@ -114,16 +253,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (signupData: any) => {
     try {
+      const deviceId = getDeviceId();
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signupData),
+        body: JSON.stringify({ ...signupData, deviceId }),
       });
 
       const data = await handleResponse(response, 'Signup failed');
       if (response.ok && data.success) {
-        localStorage.setItem('travora_token', data.token);
+        const accessToken = data.accessToken || data.token;
+        storeTokens(accessToken, data.refreshToken);
         setUser(data.user);
+
+        setTimeout(() => refreshSavedAccounts(), 100);
+
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Signup failed' };
@@ -133,35 +277,168 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  const switchAccount = async (userId: string) => {
     try {
-      localStorage.removeItem('travora_token');
-      localStorage.removeItem('user_view_mode');
-      // await fetch('/api/auth/me', { method: 'DELETE' }); // No longer needed with stateless JWT
+      const deviceId = getDeviceId();
+      const token = getStoredToken();
+
+      if (!token || !deviceId) {
+        return { success: false, error: 'Not authenticated' };
+      }
+
+      const response = await fetch('/api/auth/switch-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ deviceId, targetUserId: userId }),
+      });
+
+      const data = await handleResponse(response, 'Switch failed');
+
+      if (response.ok && data.success) {
+        const accessToken = data.accessToken || data.token;
+        storeTokens(accessToken, data.refreshToken);
+        setUser(data.user);
+
+        // Refresh saved accounts to update active states
+        setTimeout(() => refreshSavedAccounts(), 100);
+
+        return { success: true };
+      } else {
+        // If session expired, the UI should prompt re-login for that account
+        return { success: false, error: data.error || data.message || 'Switch failed' };
+      }
+    } catch (error: any) {
+      return { success: false, error: 'Network error during account switch.' };
+    }
+  };
+
+  const removeAccount = async (userId: string) => {
+    try {
+      const deviceId = getDeviceId();
+      const token = getStoredToken();
+      if (!token || !deviceId) return;
+
+      const response = await fetch('/api/auth/remove-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ deviceId, targetUserId: userId }),
+      });
+
+      const data = await handleResponse(response, 'Remove failed');
+
+      if (response.ok && data.success) {
+        if (data.newActiveUser) {
+          setUser(data.newActiveUser);
+          storeTokens(data.accessToken, data.refreshToken);
+        } else if (user?.id === userId) {
+          // No accounts left
+          setUser(null);
+          clearTokens();
+        }
+        setSavedAccounts(data.remainingAccounts || []);
+      }
     } catch (error) {
-      console.error('Logout request error:', error);
-    } finally {
+      console.error('Remove account error:', error);
+    }
+  };
+
+  const logout = async (userIdToLogout?: string) => {
+    try {
+      const targetId = userIdToLogout || user?.id;
+      if (!targetId) return;
+
+      if (targetId === user?.id) {
+        // Logging out the active account
+        const deviceId = getDeviceId();
+        const token = getStoredToken();
+        if (token && deviceId) {
+          const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ deviceId }),
+          });
+
+          const data = await handleResponse(response, 'Logout failed');
+          if (data.success) {
+            if (data.newActiveUser) {
+              setUser(data.newActiveUser);
+              storeTokens(data.accessToken, data.refreshToken);
+            } else {
+              setUser(null);
+              clearTokens();
+            }
+            setSavedAccounts(data.remainingAccounts || []);
+            return;
+          }
+        }
+      }
+
+      // Logging out a non-active account is the same as removing it
+      await removeAccount(targetId);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const logoutAll = async () => {
+    try {
+      const deviceId = getDeviceId();
+      const token = getStoredToken();
+      if (!token || !deviceId) {
+        setUser(null);
+        clearTokens();
+        setSavedAccounts([]);
+        return;
+      }
+
+      await fetch('/api/auth/logout-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ deviceId }),
+      });
+
       setUser(null);
+      clearTokens();
+      setSavedAccounts([]);
+    } catch (error) {
+      console.error('Logout all error:', error);
+      setUser(null);
+      clearTokens();
+      setSavedAccounts([]);
     }
   };
 
   const updateTravellerType = async (type: 'normal' | 'vlogger') => {
     try {
-      const token = localStorage.getItem('travora_token');
+      if (!user) return { success: false, error: 'Not logged in' };
+      const token = getStoredToken();
+      if (!token) return { success: false, error: 'Session not found' };
+
       const response = await fetch('/api/user/update', {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ travellerType: type }),
       });
 
       const data = await handleResponse(response, 'Profile update failed');
       if (response.ok && data.success) {
-        if (user) {
-          setUser({ ...user, travellerType: type });
-        }
+        const updatedUser = { ...user, travellerType: type };
+        setUser(updatedUser);
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Profile update failed' };
@@ -226,7 +503,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateTravellerType, forgotPassword, verifyOtp, resetPassword }}>
+    <AuthContext.Provider value={{
+      user,
+      savedAccounts,
+      loading,
+      login,
+      signup,
+      logout,
+      logoutAll,
+      switchAccount,
+      removeAccount,
+      refreshSavedAccounts,
+      updateTravellerType,
+      forgotPassword,
+      verifyOtp,
+      resetPassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );

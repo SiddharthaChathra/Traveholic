@@ -1,45 +1,40 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'travora_super_secret_jwt_key_12345';
+import { signupSchema } from '@/lib/validations';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  createOrUpdateDeviceSession,
+  extractDeviceId,
+} from '@/lib/session';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    
+    // Validate inputs using Zod
+    const validationResult = signupSchema.safeParse(body);
+    
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validationResult.error.format() },
+        { status: 400 }
+      );
+    }
+    
     const {
-      role, // 'traveller' or 'business'
+      role,
       username,
       email,
       password,
       fullName,
-      phone, // optional for travellers, required for business
-      // Traveller specific
-      travellerType = 'normal', // 'normal' or 'vlogger'
-      // Business specific
-      businessType, // 'agency' or 'hotel'
-      businessName,
-      registrationNumber,
-      address,
-      websiteUrl,
-      bookingModel, // 'direct' or 'redirect'
-    } = body;
+      phone,
+      travellerType,
+      businessProfile,
+    } = validationResult.data;
 
-    // Validate common inputs
-    if (!role || !username || !email || !password || !fullName) {
-      return NextResponse.json(
-        { error: 'Missing required signup fields' },
-        { status: 400 }
-      );
-    }
-
-    if (role !== 'traveller' && role !== 'business') {
-      return NextResponse.json(
-        { error: 'Invalid account role' },
-        { status: 400 }
-      );
-    }
+    const deviceId = extractDeviceId(body, request);
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -50,7 +45,7 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Username or email already registered' },
+        { error: 'This email or username is already in use. Note: If you already have a Traveller account and are trying to create a Venture account (or vice versa), you must use a different, unique email.' },
         { status: 400 }
       );
     }
@@ -64,7 +59,6 @@ export async function POST(request: Request) {
 
     try {
       if (role === 'traveller') {
-        // Insert standard traveller
         const { error: insertError } = await supabase.from('users').insert({
           id: userId,
           username: username.trim().toLowerCase(),
@@ -78,20 +72,6 @@ export async function POST(request: Request) {
 
         if (insertError) throw insertError;
       } else {
-        // Validate business inputs
-        if (!businessType || !businessName || !registrationNumber || !phone || !address || !bookingModel) {
-          throw new Error('Missing business-specific profile information');
-        }
-
-        if (businessType !== 'agency' && businessType !== 'hotel') {
-          throw new Error('Invalid business type');
-        }
-
-        if (bookingModel !== 'direct' && bookingModel !== 'redirect') {
-          throw new Error('Invalid booking model');
-        }
-
-        // Insert business credentials into user table
         const { error: userInsertError } = await supabase.from('users').insert({
           id: userId,
           username: username.trim().toLowerCase(),
@@ -103,24 +83,22 @@ export async function POST(request: Request) {
         
         if (userInsertError) throw userInsertError;
 
-        // Insert business profile details
         const profileId = crypto.randomUUID();
         const { error: profileInsertError } = await supabase.from('business_profiles').insert({
           id: profileId,
           user_id: userId,
-          business_type: businessType,
-          business_name: businessName.trim(),
-          registration_number: registrationNumber.trim(),
-          phone: phone.trim(),
-          address: address.trim(),
-          website_url: websiteUrl ? websiteUrl.trim() : null,
-          booking_model: bookingModel
+          business_type: businessProfile!.businessType,
+          business_name: businessProfile!.businessName.trim(),
+          registration_number: businessProfile!.registrationNumber.trim(),
+          phone: businessProfile!.phone.trim(),
+          address: businessProfile!.address.trim(),
+          website_url: businessProfile!.websiteUrl ? businessProfile!.websiteUrl.trim() : null,
+          booking_model: businessProfile!.bookingModel
         });
 
         if (profileInsertError) {
-            // If profile fails, manual rollback of user
-            await supabase.from('users').delete().eq('id', userId);
-            throw profileInsertError;
+          await supabase.from('users').delete().eq('id', userId);
+          throw profileInsertError;
         }
       }
     } catch (err: any) {
@@ -130,12 +108,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId, username, email, role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    // Generate tokens
+    const accessToken = generateAccessToken({ id: userId, username, email, role });
+    const refreshToken = generateRefreshToken();
+
+    // Create device session if deviceId is provided
+    if (deviceId) {
+      const userAgent = request.headers.get('user-agent') || undefined;
+      const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined;
+      
+      await createOrUpdateDeviceSession({
+        deviceId,
+        userId,
+        refreshToken,
+        userAgent,
+        ipAddress: ip,
+        setActive: true,
+      });
+    }
 
     // Return success
     const response = NextResponse.json({
@@ -148,17 +138,20 @@ export async function POST(request: Request) {
         fullName,
         role,
         travellerType: role === 'traveller' ? travellerType : undefined
-      }
+      },
+      token: accessToken, // backward compat
+      accessToken,
+      refreshToken: deviceId ? refreshToken : undefined,
     });
 
-    // Set cookie for HTTP session persistence
+    // Set cookie for backward compatibility
     response.cookies.set({
       name: 'travora_session',
-      value: token,
+      value: accessToken,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: '/'
     });
 

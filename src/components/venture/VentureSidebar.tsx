@@ -194,10 +194,7 @@ export default function VentureSidebar() {
       
       <div style={{ width: '100%', borderTop: '1px solid var(--card-border)', paddingTop: '12px', marginTop: 'auto' }}>
         <Link 
-          href="/" 
-          onClick={() => {
-            localStorage.setItem('user_view_mode', 'traveller');
-          }}
+          href="/settings/account-type" 
           className="instagram-sidebar-item" 
           style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
         >
@@ -209,7 +206,7 @@ export default function VentureSidebar() {
             </svg>
           </span>
           <span className="instagram-sidebar-item-label" style={{ color: 'var(--text-muted)' }}>
-            Traveler Mode
+            Switch Accounts
           </span>
         </Link>
       </div>

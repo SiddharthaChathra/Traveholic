@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Stepper from '@/components/shared/Stepper';
@@ -12,10 +12,16 @@ export default function VerifiedPage() {
   const [step, setStep] = useState(1);
 
   // Form State
-  const [fullName, setFullName] = useState(user?.fullName || 'Shashank Suvarna');
+  const [fullName, setFullName] = useState('');
   const [category, setCategory] = useState('vlogger');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [agreeTerms, setAgreeTerms] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFullName(user.fullName || '');
+    }
+  }, [user]);
 
   const steps = [
     { number: 1, label: 'Confirm Info' },
@@ -102,7 +108,7 @@ export default function VerifiedPage() {
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>Account Username</label>
               <input 
                 type="text" 
-                value={user?.username || 'shashank._s'} 
+                value={user?.username || ''} 
                 disabled
                 style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'not-allowed' }}
               />

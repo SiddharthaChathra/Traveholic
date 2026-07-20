@@ -144,7 +144,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 <button 
                   className="instagram-sidebar-item"
                   onClick={() => {
-                    localStorage.removeItem('user_view_mode');
                     router.push('/venture/dashboard');
                   }}
                   style={{

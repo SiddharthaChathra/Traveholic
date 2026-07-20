@@ -1,14 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'travora_super_secret_jwt_key_12345';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('travora_session')?.value;
+    // Priority: Authorization header (for multi-account) > Cookie (for single-account compat)
+    const authHeader = request.headers.get('authorization');
+    let token: string | undefined;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      // Explicit token provided — use it directly, do NOT fall back to cookie
+      token = authHeader.substring(7);
+    } else {
+      // No header — fall back to cookie (standard single-account flow)
+      const cookieStore = await cookies();
+      token = cookieStore.get('travora_session')?.value;
+    }
 
     if (!token) {
       return NextResponse.json(

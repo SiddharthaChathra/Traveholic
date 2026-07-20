@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -14,10 +14,20 @@ export default function AccountStatusPage() {
   const router = useRouter();
   const { user } = useAuth();
 
+  const [fullName, setFullName] = useState(user?.fullName || '');
+  const [currentTier, setCurrentTier] = useState('Platinum');
+  const [milesBalance, setMilesBalance] = useState(12450);
+
+  React.useEffect(() => {
+    if (user) {
+      setFullName(user.fullName);
+    }
+  }, [user]);
+
   const activeUser = {
-    username: user?.username || 'shashank._s',
-    fullName: user?.fullName || 'Shashank Suvarna',
-    avatarUrl: user?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user?.username || 'shashank._s')}`
+    username: user?.username || 'user',
+    fullName: fullName,
+    avatarUrl: user?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(user?.username || 'user')}`
   };
 
   const statusItems: StatusRowItem[] = [
